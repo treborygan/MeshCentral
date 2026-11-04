@@ -1,6 +1,6 @@
 # Night Shift — MeshCentral interface modernization
 
-Status: **web-override implementation committed; awaiting real-device acceptance**. Design direction **B / Night Shift** is approved. The branch contains responsive CSS, progressive JavaScript, a reversible installer and contract tests. No server/agent changes. The source baseline is the `treborygan/MeshCentral` fork at upstream MeshCentral **1.3.1** (2026-11-04).
+Status: **web-override implementation committed; awaiting live browser and phone acceptance**. Design direction **B / Night Shift** is approved. The branch contains responsive CSS, progressive JavaScript, a reversible installer, syntax/contract checks, and a mobile interaction harness. No server/agent changes. The source baseline is the `treborygan/MeshCentral` fork at upstream MeshCentral **1.3.1** (2026-11-04).
 
 ## Goal
 
@@ -26,7 +26,7 @@ The aesthetic follows the independently prototyped Night Shift concept: deep nav
 - [ ] Real-browser visual and functional acceptance on live MeshCentral pages
 - [x] Command search, labeled sidebar, streamlined navigation and mobile dock integrated with upstream markup (additive overlay, not a pixel-identical template replacement)
 - [x] Dark device detail, remote desktop, terminal, files and settings presentation without displacing original MeshCentral controls
-- [x] Mobile actions wired to existing MeshCentral Connect, RDP, Disconnect, trackpad, right-click, keyboard, zoom, fullscreen, monitor and settings handlers (requires real-session acceptance)
+- [x] Mobile actions wired to existing MeshCentral Connect, RDP, Disconnect, trackpad, right-click, keyboard, zoom, fullscreen, monitor and settings handlers (source-level interaction harness passes; real-session acceptance remains open)
 - [ ] Comprehensive MeshCentral feature parity and role permissions validation
 - [ ] PCRN deployment
 
@@ -93,5 +93,6 @@ References:
 - `node --check public/scripts/custom.js`
 - `node --test tests/night-shift.test.cjs`
 - Windows PowerShell parser validation is configured in `.github/workflows/night-shift-ui.yml`.
-- The tests check source syntax, native-action delegation, CSS structure, and installer safety. They do **not** prove live browser or mobile RDP functionality.
+- The tests check source syntax, native-action delegation, CSS structure, installer safety, mobile dock visibility, native RDP/trackpad/keyboard/zoom/right-click/fullscreen/monitor delegation, and hidden-rail navigation fallback. The Windows installer was also exercised against a disposable fixture with SHA-256 comparison and rollback.
+- These checks do **not** prove live browser rendering, real mobile touch input, authenticated RDP, iOS Safari, or permission-role acceptance.
 - Install/rollback: `scripts/Install-NightShift.ps1`; see [deployment](night-shift-deployment.md).

@@ -11,6 +11,89 @@ const css = read('public/styles/custom.css');
 const js = read('public/scripts/custom.js');
 const installer = read('scripts/Install-NightShift.ps1');
 
+function createMobileHarness() {
+  const byId = new Map();
+  const documentEvents = {};
+  let activeElement = null;
+  class Element {
+    constructor(tag, className = '', text = '') {
+      this.tagName = tag.toUpperCase(); this.className = className; this.textContent = text;
+      this.children = []; this.attributes = {}; this.style = {}; this.events = {}; this.dataset = {}; this.disabled = false;
+      this.hidden = false; this.isVisible = true; this.parentElement = null;
+      this.classList = {
+        values: new Set(className.split(/\s+/).filter(Boolean)),
+        add: (...names) => names.forEach(n => this.classList.values.add(n)),
+        remove: (...names) => names.forEach(n => this.classList.values.delete(n)),
+        contains: name => this.classList.values.has(name),
+        toggle: (name, force) => {
+          const enabled = force === undefined ? !this.classList.contains(name) : force;
+          enabled ? this.classList.add(name) : this.classList.remove(name);
+          return enabled;
+        }
+      };
+      Object.defineProperty(this, 'id', {
+        get: () => this._id || '',
+        set: value => { this._id = value; if (value) byId.set(value, this); }
+      });
+    }
+    append(...nodes) { for (const node of nodes) { node.parentElement = this; this.children.push(node); } }
+    prepend(node) { node.parentElement = this; this.children.unshift(node); }
+    replaceChildren(...nodes) { this.children = []; this.append(...nodes); }
+    setAttribute(name, value) { this.attributes[name] = String(value); }
+    getAttribute(name) { return this.attributes[name] ?? null; }
+    getClientRects() { return this.hidden || !this.isVisible ? [] : [{}]; }
+    addEventListener(name, fn) { (this.events[name] ||= []).push(fn); }
+    dispatchEvent(event) { for (const fn of this.events[event.type] || []) fn(event); return true; }
+    click() { this.clickCount = (this.clickCount || 0) + 1; this.dispatchEvent({ type: 'click', target: this, preventDefault() {} }); }
+    focus() { activeElement = this; }
+    querySelector(selector) {
+      if (selector.startsWith('.')) return this.children.find(child => child.classList.contains(selector.slice(1))) || null;
+      return null;
+    }
+    querySelectorAll() { return []; }
+  }
+  const document = {
+    readyState: 'complete', visibilityState: 'visible',
+    documentElement: new Element('html'), body: new Element('body'),
+    createElement: tag => new Element(tag),
+    getElementById: id => byId.get(id) || null,
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    addEventListener(name, fn) { documentEvents[name] = fn; }
+  };
+  const addExisting = (id, visible = true) => {
+    const el = new Element('button'); el.id = id; el.isVisible = visible; document.body.append(el); return el;
+  };
+  addExisting('container'); addExisting('LeftMenuMyDevices', false); addExisting('p11');
+  const agentConnect = addExisting('connectbutton1');
+  const rdpConnect = addExisting('connectbutton1r');
+  const disconnect = addExisting('disconnectbutton1', false);
+  addExisting('DeskScreens');
+  const calls = [];
+  const window = {
+    trackpadMode: false,
+    go: page => calls.push(['go', page]),
+    deskToggleTrackpad: () => calls.push(['trackpad']),
+    toggleMobileKeyboard: () => calls.push(['keyboard']),
+    deskMobileToggleZoom: () => calls.push(['zoom']),
+    deskToggleRightClickMode: () => calls.push(['right-click']),
+    deskToggleFull: event => calls.push(['fullscreen', event]),
+    deskToggleMobileActions: () => calls.push(['more-actions']),
+    showDesktopSettings: () => calls.push(['settings'])
+  };
+  const context = {
+    window, document, console,
+    matchMedia: () => ({ matches: true }),
+    getComputedStyle: () => ({ visibility: 'visible' }),
+    requestAnimationFrame: callback => callback(),
+    addEventListener() {}, setInterval() { return 1; }, clearTimeout() {}, setTimeout() { return 1; },
+    MutationObserver: class { observe() {} },
+    MouseEvent: class { constructor(type, init = {}) { this.type = type; Object.assign(this, init); } }
+  };
+  vm.runInNewContext(js, context, { timeout: 1000 });
+  return { document, byId, calls, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement };
+}
+
 test('custom JavaScript parses and registers without requiring a live server', () => {
   const compiled = new vm.Script(js, { filename: 'custom.js' });
   const callbacks = {};
@@ -37,6 +120,34 @@ test('UI customization is presentation-only, with native MeshCentral action dele
   for (const unsafe of [/new\s+WebSocket\s*\(/, /new\s+RTCPeerConnection\s*\(/, /fetch\s*\(\s*['"]\/api/, /localStorage\.clear\s*\(/]) {
     assert.doesNotMatch(js,unsafe,'Night Shift must not replace MeshCentral network or session layer');
   }
+});
+
+test('mobile remote dock delegates controls to MeshCentral handlers and keeps restricted navigation available', () => {
+  const h = createMobileHarness();
+  const dock = h.byId.get('ns-mobile-dock');
+  assert.ok(dock, 'mobile remote dock is installed');
+  assert.equal(dock.hidden, false, 'dock is visible while the desktop view is open');
+  assert.equal(h.byId.get('ns-agent-connect').hidden, false, 'native agent connect remains available');
+  assert.equal(h.byId.get('ns-rdp-connect').hidden, false, 'native browser RDP connect remains available');
+
+  h.byId.get('ns-rdp-connect').click();
+  h.byId.get('ns-trackpad').click();
+  h.byId.get('ns-keyboard').click();
+  h.byId.get('ns-zoom').click();
+  h.byId.get('ns-rightclick').click();
+  h.byId.get('DeskScreens').click();
+  const fullscreen = dock.children.flatMap(row => row.children).find(button => button.textContent === 'Fullscreen');
+  fullscreen.click();
+
+  assert.equal(h.rdpConnect.clickCount, 1, 'RDP is delegated to MeshCentral\'s existing connect handler');
+  assert.deepEqual(h.calls.map(call => call[0]), ['trackpad', 'keyboard', 'zoom', 'right-click', 'fullscreen']);
+  assert.equal(h.calls.find(call => call[0] === 'fullscreen')[1].shiftKey, false, 'fullscreen receives the native event shape');
+  assert.equal(h.byId.get('DeskScreens').clickCount, 1, 'monitor picker remains the native MeshCentral control');
+
+  const mobileNav = h.byId.get('ns-mobile-nav');
+  assert.ok(mobileNav, 'mobile workspace navigation is installed');
+  mobileNav.children[0].click();
+  assert.deepEqual(h.calls.at(-1), ['go', 1], 'hidden desktop navigation falls back to MeshCentral go()');
 });
 
 test('modern, responsive and fallback selectors remain present', () => {
