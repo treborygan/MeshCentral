@@ -82,3 +82,14 @@ The live root renders MeshCentral's `login2` template, which has `body.login` an
 - The original deployment backup (`20261104-172151-f30fb4`) still restores the pre-Night-Shift state. To remove the whole customization, roll back from that original backup; rolling back only from the incremental backup restores the prior Night Shift version.
 - After the update, local HTTP checks returned 200 for both files, matched their installed bytes, and confirmed the root HTML references both assets. The served JavaScript contains the login2 activation path and the CSS contains the login-specific background override.
 - Latest test suite: 8/8 Node checks passed. Browser rendering, authenticated flows and phone/RDP touch acceptance remain open.
+
+
+## Authenticated live UI acceptance — 2026-11-04
+
+After deployment, the authenticated browser review reproduced a navigation issue: the Night Shift More-menu route dispatcher called MeshCentral's native navigation through a synthetic click, while native sidebar routes listen for mouseup. The fix now dispatches the native mouseup event. Source revision `132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f` was deployed to PCRN. The incremental rollback backup is `C:\\ProgramData\\MeshCentral\\meshcentral-web\\.night-shift-backups\\20261104-201809-38aed5`.
+
+Live verification confirmed the public script returned HTTP 200 with a Cloudflare cache MISS and contained the patched dispatch. Authenticated read-only browser checks passed for device search/status filtering, dashboard and More-menu Events navigation, Files root, Users list, Server general/stats, and toggling between Night Shift cards and the native device list. The More-menu navigation now reaches Events successfully.
+
+At 390×844, the mobile bottom navigation and page changes worked. A visual issue remains: the account greeting and Logout text are clipped at the right edge of the mobile masthead. This needs a follow-up UI adjustment and phone recheck.
+
+No new remote desktop input, terminal command, file transfer, permission change, or administrative mutation was performed during this browser pass. Earlier remote desktop and server-file connection checks are recorded in the PCRN rollout notes above; this browser pass does not certify those workflows. Full touch/accessibility and broader remote-management acceptance remain open. The pull request remains a draft.
