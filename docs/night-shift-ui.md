@@ -93,6 +93,6 @@ References:
 - `node --check public/scripts/custom.js`
 - `node --test tests/night-shift.test.cjs`
 - Windows PowerShell parser validation is configured in `.github/workflows/night-shift-ui.yml`.
-- The tests check source syntax, native-action delegation, CSS structure, installer safety, mobile dock visibility, native RDP/trackpad/keyboard/zoom/right-click/fullscreen/monitor delegation, and hidden-rail navigation fallback. The Windows installer was also exercised against a disposable fixture with SHA-256 comparison and rollback.
+- The tests check source syntax, native-action delegation, CSS structure, installer safety, desktop/mobile navigation and dock visibility, native RDP/trackpad/keyboard/zoom/right-click/fullscreen/monitor delegation, and hidden-rail navigation fallback. The Windows installer was also exercised against a disposable fixture with SHA-256 comparison and rollback.
 - These checks do **not** prove live browser rendering, real mobile touch input, authenticated RDP, iOS Safari, or permission-role acceptance.
 - Install/rollback: `scripts/Install-NightShift.ps1`; see [deployment](night-shift-deployment.md).

@@ -11,7 +11,7 @@ const css = read('public/styles/custom.css');
 const js = read('public/scripts/custom.js');
 const installer = read('scripts/Install-NightShift.ps1');
 
-function createMobileHarness() {
+function createMobileHarness(isMobile = true) {
   const byId = new Map();
   const documentEvents = {};
   let activeElement = null;
@@ -83,7 +83,7 @@ function createMobileHarness() {
   };
   const context = {
     window, document, console,
-    matchMedia: () => ({ matches: true }),
+    matchMedia: () => ({ matches: isMobile }),
     getComputedStyle: () => ({ visibility: 'visible' }),
     requestAnimationFrame: callback => callback(),
     addEventListener() {}, setInterval() { return 1; }, clearTimeout() {}, setTimeout() { return 1; },
@@ -148,6 +148,14 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   assert.ok(mobileNav, 'mobile workspace navigation is installed');
   mobileNav.children[0].click();
   assert.deepEqual(h.calls.at(-1), ['go', 1], 'hidden desktop navigation falls back to MeshCentral go()');
+});
+
+test('desktop viewport keeps the mobile navigation and remote dock out of view', () => {
+  const h = createMobileHarness(false);
+  assert.equal(h.byId.get('ns-mobile-nav').hidden, true, 'workspace navigation is hidden on desktop');
+  assert.equal(h.byId.get('ns-mobile-dock').hidden, true, 'remote dock is hidden on desktop');
+  assert.equal(h.byId.get('connectbutton1').hidden, false, 'native desktop controls remain available');
+  assert.equal(h.byId.get('connectbutton1r').hidden, false, 'native desktop RDP control remains available');
 });
 
 test('modern, responsive and fallback selectors remain present', () => {
