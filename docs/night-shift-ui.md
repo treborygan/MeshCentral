@@ -1,5 +1,7 @@
 # Night Shift — MeshCentral interface modernization
 
+> **New structural implementation (2026-11-04):** [`feature/night-shift-structural`](night-shift-structural.md) adds a live-data contextual appbar, dashboard, permission-filtered More menu, native device quick actions and remote-session chrome. It is committed and smoke-tested in a synthetic DOM, **not installed or verified on PCRN**. The earlier deployment status below refers only to the previous CSS/JS overlay. This is substantial progress, not yet a fully screenshot-matched replacement or end-to-end acceptance.
+
 Status: **Night Shift web override deployed to PCRN; awaiting live browser and phone acceptance**. Design direction **B / Night Shift** is approved. The branch contains responsive CSS, progressive JavaScript, a reversible installer, syntax/contract checks, and a mobile interaction harness. No server/agent changes. The source baseline is the `treborygan/MeshCentral` fork at upstream MeshCentral **1.3.1** (2026-11-04).
 
 ## Goal
