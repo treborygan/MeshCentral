@@ -317,7 +317,7 @@
     ['p3', 'Events'], ['p4', 'Users'], ['p5', 'Server files'],
     ['p6', 'Server'], ['p1', 'Devices']
   ];
-  var appbar, title, section, status, dashboard, deviceCount, dashboardNote, shortcuts, deviceTools, remoteState;
+  var appbar, title, section, status, dashboard, deviceCount, onlineCount, offlineCount, dashboardNote, shortcuts, deviceTools, remoteState;
   var queued = false;
   function visible(node) {
     return !!(node && node.getClientRects && node.getClientRects().length &&
@@ -420,17 +420,19 @@
     hero.append(create('p', '', 'Choose a device in the live inventory to open its desktop, terminal or files.'));
     var openDevices = entries[0];
     hero.append(link(openDevices, 'ns-hero-link'));
-    var devices = metric('Rendered device rows', '—', 'From the currently loaded device list');
+    var devices = metric('Devices', '—', 'Accessible managed devices loaded');
     deviceCount = devices.output;
-    var provenance = metric('Data source', 'Live', 'Your authenticated MeshCentral session');
-    var compatibility = metric('Core controls', 'Native', 'Original permissions and transports');
-    grid.append(hero, devices.el, provenance.el, compatibility.el);
+    var online = metric('Reachable', '—', 'Agent, AMT or relay connected');
+    onlineCount = online.output;
+    var offline = metric('Offline', '—', 'No current connection reported');
+    offlineCount = offline.output;
+    grid.append(hero, devices.el, online.el, offline.el);
     var quick = create('div', 'ns-quicklinks');
     quick.append(create('h3', '', 'Workspace shortcuts'));
     shortcuts = create('div', 'ns-shortcut-grid');
     quick.append(shortcuts);
     dashboardNote = create('p', 'ns-dashboard-note',
-      'Counts reflect the rendered list, not a server-wide total. No simulated devices or sessions.');
+      'Counts come from the authenticated MeshCentral device collection and may be paginated. No simulated devices or sessions.');
     dashboard.append(lead, grid, quick, dashboardNote);
     host.insertBefore(dashboard, host.firstChild);
   }
@@ -475,8 +477,18 @@
     document.body.classList.toggle('ns-session-active', remote);
     if (status) status.textContent = remote ? 'Remote controls / live' : 'Native MeshCentral';
     if (deviceCount) {
-      var count = countRenderedDevices();
-      deviceCount.textContent = count === null ? '—' : String(count);
+      var nodes = Array.isArray(window.nodes) ? window.nodes.filter(function (n) { return !!n; }) : null;
+      if (nodes) {
+        deviceCount.textContent = String(nodes.length);
+        var active = nodes.filter(function (n) { return ((Number(n.conn) || 0) & 7) !== 0; }).length;
+        if (onlineCount) onlineCount.textContent = String(active);
+        if (offlineCount) offlineCount.textContent = String(nodes.length - active);
+      } else {
+        var count = countRenderedDevices();
+        deviceCount.textContent = count === null ? '—' : String(count);
+        if (onlineCount) onlineCount.textContent = '—';
+        if (offlineCount) offlineCount.textContent = '—';
+      }
     }
     if (dashboard && dashboard.querySelector) {
       dashboard.hidden = !visible($('p1'));
