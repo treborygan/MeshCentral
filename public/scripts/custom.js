@@ -192,7 +192,7 @@
       act(()=>nativeFunction('sendSpecialKeys'),'Special keys unavailable');
     },'ns-keys');
     add(secondary,'Settings','',()=>act(()=>nativeFunction('showDesktopSettings'),'Desktop settings unavailable'));
-    add(secondary,'Fullscreen','',()=>act(()=>nativeFunction('deskToggleFull'),'Fullscreen unavailable'));
+    add(secondary,'Fullscreen','',()=>act(()=>nativeFunctionWithArg('deskToggleFull',{shiftKey:false}),'Fullscreen unavailable'));
     add(secondary,'Monitors','',()=>act(()=>nativeClick('DeskScreens'),'Monitor selection unavailable'),'ns-monitors');
     add(secondary,'More actions','',()=>act(()=>nativeFunction('deskToggleMobileActions'),'Use the original desktop toolbar'));
     dock.append(primary,secondary);document.body.append(dock);
