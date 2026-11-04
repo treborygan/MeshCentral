@@ -65,8 +65,10 @@ if ($RollbackFrom) {
       }
     }
   }
-  Write-Host "Night Shift overrides rolled back from: $path"
-  Write-Host 'Refresh browser cache to see the restored design.'
+  if (-not $WhatIfPreference) {
+    Write-Host "Night Shift overrides rolled back from: $path"
+    Write-Host 'Refresh browser cache to see the restored design.'
+  }
   return
 }
 
@@ -111,11 +113,11 @@ if ($PSCmdlet.ShouldProcess($targetBase, 'Back up and install Night Shift CSS/JS
       $staged = $entry.Target + '.nightshift-stage'
       Copy-Item -LiteralPath $entry.Source -Destination $staged -Force
       try {
+        $changed += $entry
         Copy-Item -LiteralPath $staged -Destination $entry.Target -Force
       } finally {
         Remove-Item -LiteralPath $staged -Force -ErrorAction SilentlyContinue
       }
-      $changed += $entry
     }
   } catch {
     Write-Warning "Installation failed; restoring previous overrides from $backup"
