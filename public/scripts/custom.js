@@ -380,7 +380,7 @@
     }
     var menu = create('nav', 'ns-appbar-menu'); menu.hidden = true;
     menu.setAttribute('aria-label', 'Additional MeshCentral sections');
-    entries.forEach(function (entry) { menu.append(link(entry, 'ns-shell-action')); });
+    entries.forEach(function (entry) { if (allowed($(entry.id))) menu.append(link(entry, 'ns-shell-action')); });
     var nativeMenu = button('More', 'ns-shell-more', function () {
       menu.hidden = !menu.hidden;
       nativeMenu.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
