@@ -225,9 +225,14 @@
     refreshScheduled=true;requestAnimationFrame(()=>{refreshScheduled=false;updateNow();});
   }
   function boot(){
-    if(!$('container'))return;
+    const hasAppContainer=!!$('container');
+    const isLoginPage=!!(document.body&&(document.body.classList.contains('login')||$('centralTable')));
+    if(!hasAppContainer&&!isLoginPage)return;
     document.documentElement.classList.add('ns-theme');
     document.body.classList.add('ns-theme');
+    // MeshCentral's login2 template has no #container. Theme it, but leave its
+    // authentication flow and page controls entirely under the native scripts.
+    if(!hasAppContainer)return;
     if(q('link[href*="style-bootstrap"]'))document.documentElement.setAttribute('data-bs-theme','dark');
     installSearch();labelRail();installMobileNav();installDock();updateNow();
     const observer=new MutationObserver(scheduleUpdate);

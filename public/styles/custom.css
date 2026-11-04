@@ -37,6 +37,59 @@ body.night,
   -webkit-font-smoothing: antialiased;
 }
 
+/* MeshCentral 1.3.1's login2 template has no #container and sets a blue
+   background inline on #body, so explicitly style that supported entry page. */
+#body.ns-theme.login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: radial-gradient(ellipse at 50% 0%, #1b2b38 0, var(--ns-canvas) 68%) !important;
+  color: var(--ns-foreground);
+}
+#body.ns-theme.login #centralTable {
+  width: min(520px, calc(100vw - 28px));
+  max-width: 520px;
+  height: auto !important;
+  margin: auto;
+}
+#body.ns-theme.login #logincell {
+  width: 100%;
+  padding: clamp(20px, 5vw, 34px);
+  border: 1px solid var(--ns-border);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--ns-surface) 96%, transparent);
+  box-shadow: 0 24px 70px #0007;
+  color: var(--ns-foreground);
+}
+#body.ns-theme.login #logincell > div[style*="font-size:46px"] {
+  color: var(--ns-foreground) !important;
+  font-size: clamp(27px, 7vw, 38px) !important;
+  letter-spacing: -.035em;
+  text-shadow: none !important;
+}
+#body.ns-theme.login #logincell :is(#loginpanel,#createpanel,#resetpanel,#tokenpanel,#resettokenpanel,#resetpasswordpanel,#checkemailpanel,#waitpushpanel) {
+  padding: 18px;
+  box-shadow: none !important;
+}
+#body.ns-theme.login :is(#username,#password,#loginButton,#createButton,#resetButton,#tokenInput,#tokenInput2) {
+  width: 100% !important;
+  min-height: 46px;
+  border: 1px solid #465662 !important;
+  border-radius: 10px !important;
+  background: var(--ns-surface-raised) !important;
+  color: var(--ns-foreground) !important;
+}
+#body.ns-theme.login :is(#loginButton,#createButton,#resetButton) {
+  border-color: var(--ns-accent) !important;
+  background: var(--ns-accent) !important;
+  color: var(--ns-accent-text) !important;
+  font-weight: 700;
+}
+#body.ns-theme.login #flink,
+#body.ns-theme.login #flink a { color: var(--ns-muted) !important; }
+
 #container, .night #container,
 #column_l, .night #column_l {
   color: var(--ns-foreground);

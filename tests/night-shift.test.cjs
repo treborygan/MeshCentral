@@ -110,6 +110,33 @@ test('custom JavaScript parses and registers without requiring a live server', (
   assert.equal(typeof callbacks.DOMContentLoaded, 'function');
 });
 
+test('MeshCentral login2 receives the Night Shift theme despite lacking the app container', () => {
+  const login2 = read('views/login2.handlebars');
+  assert.match(login2, /class="arg_hide login"/);
+  assert.match(login2, /id="centralTable"/);
+  assert.doesNotMatch(login2, /id\s*=\s*["']?container\b/);
+  const bodyClasses = new Set(['login']);
+  const htmlClasses = new Set();
+  const classList = values => ({
+    add: name => values.add(name),
+    contains: name => values.has(name)
+  });
+  const ctx = {
+    window: {},
+    document: {
+      readyState: 'complete',
+      body: { classList: classList(bodyClasses) },
+      documentElement: { classList: classList(htmlClasses) },
+      getElementById: id => id === 'centralTable' ? {} : null
+    },
+    console
+  };
+  vm.runInNewContext(js, ctx, { timeout: 1000 });
+  assert.ok(bodyClasses.has('ns-theme'), 'login2 body gets the theme class');
+  assert.ok(htmlClasses.has('ns-theme'), 'login2 document gets the theme class');
+  assert.ok(css.includes('#body.ns-theme.login'), 'login2 inline background is explicitly overridden');
+});
+
 test('UI customization is presentation-only, with native MeshCentral action delegation', () => {
   for (const handler of [
     'connectbutton1','connectbutton1r','disconnectbutton1',

@@ -30,7 +30,7 @@ The aesthetic follows the independently prototyped Night Shift concept: deep nav
 - [x] PCRN web override installed and exact CSS/JS assets verified from the local MeshCentral listener
 - [ ] Comprehensive MeshCentral feature parity and role permissions validation
 
-**Acceptance boundary:** the Night Shift CSS/JS is installed in `C:\ProgramData\MeshCentral\meshcentral-web\public`. PCRN's local listener serves both files with HTTP 200 and matching SHA-256 content; the public unauthenticated route redirects to Cloudflare Access. Native trackpad, touch, zoom, keyboard and RDP behavior is delegated to MeshCentral 1.3.1 itself. Authenticated browser rendering, real mobile touch input, live RDP, iOS Safari, role permissions and feature parity are **not yet verified**. Classic mobile templates remain as fallback. No RDP/WebSocket/protocol code is modified.
+**Acceptance boundary:** the Night Shift CSS/JS is installed in `C:\ProgramData\MeshCentral\meshcentral-web\public`. PCRN's local listener serves both files with HTTP 200 and matching SHA-256 content; the public unauthenticated route redirects to Cloudflare Access. The login2 entry page is explicitly themed even though it lacks the application `#container`. Native trackpad, touch, zoom, keyboard and RDP behavior is delegated to MeshCentral 1.3.1 itself. Authenticated browser rendering, real mobile touch input, live RDP, iOS Safari, role permissions and feature parity are **not yet verified**. Classic mobile templates remain as fallback. No RDP/WebSocket/protocol code is modified.
 
 ## Suggested delivery slices
 
