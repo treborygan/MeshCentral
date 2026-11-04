@@ -38,10 +38,17 @@ The installer reports the exact backup directory. Use that path:
 
 Hard-refresh after rollback. Restore both override files independently; if a target file did not exist before, the installer deletes it. No service, agent or database rollback is necessary.
 
-## Structural UI branch (source only)
+## Structural UI branch rollout — 2026-11-04
 
-`feature/night-shift-structural` builds on `fix/night-shift-mobile-layout` and includes a genuine device-card adapter alongside the contextual dashboard and native session chrome. This branch has **not** been installed on PCRN. The deployment record below describes only the earlier Night Shift override. Before a subsequent deployment, verify the exact branch/revision, run `node --test tests/night-shift.test.cjs`, stage the two assets using the existing backup/rollback installer, and verify all authenticated screens and a genuine remote session. Do not confuse a GitHub commit or source smoke test with production acceptance.
+The structural Night Shift revision was installed on PCRN from PR #3 source commit `989ae01333c0fc66fa19bc5de77152228345736`. The PR remains a draft; its latest source revision at the time of installation is recorded here so deployment evidence is not mistaken for release acceptance.
 
+- Installed only `public/styles/custom.css` and `public/scripts/custom.js` into `C:\ProgramData\MeshCentral\meshcentral-web\public`, using `scripts/Install-NightShift.ps1 -ReplaceExisting`.
+- Incremental rollback backup: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261104-193015-a778de`. The manifest records and preserves both prior overrides.
+- Both installed assets match the source commit SHA-256 byte-for-byte. PCRN returned HTTP 200 for local `/styles/custom.css` and `/scripts/custom.js`; the root page returned HTTP 200 and referenced the customized assets. An unauthenticated public request returned HTTP 302 to Cloudflare Access.
+- `node --check public/scripts/custom.js` passed. `node --test tests/night-shift.test.cjs` passed 11/11 checks.
+- MeshCentral, MeshCentralCloudflared and Mesh Agent remained running. No service restart, configuration, database, agent, tunnel, or network route was changed.
+
+Authenticated visual review and end-to-end acceptance for remote desktop, terminal, files, roles, plugins, and mobile touch remain open. The deployment proves the installed UI assets and current access gate; it does not certify those workflows.
 ## PCRN rollout record — 2026-11-04
 
 - MeshCentral 1.3.1 at `C:\ProgramData\MeshCentral`; only `custom.css` and `custom.js` were added under its persistent `meshcentral-web\public` override.
