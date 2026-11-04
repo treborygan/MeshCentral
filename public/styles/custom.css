@@ -740,3 +740,191 @@ input:disabled { opacity: .6; cursor: not-allowed; }
   body.ns-theme .ns-mobile-nav-item {min-height:44px;gap:1px}
   body.ns-theme #column_l {padding-bottom:72px!important}
 }
+
+
+/* Night Shift 2.0 — real-data structural layout over upstream MeshCentral 1.3.1.
+ * The original pages, role-controlled links, plugin tabs and live remote canvases
+ * remain in the DOM; these selectors change presentation only. */
+body.ns-shell-ready #column_l {
+  background:var(--ns-canvas);
+  color:var(--ns-foreground);
+  min-width:0;
+}
+body.ns-shell-ready #ns-appbar {
+  position:sticky;
+  top:0;
+  z-index:70;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  min-height:73px;
+  margin:0 0 22px;
+  padding:13px clamp(14px,2.3vw,30px);
+  background:#101821;
+  border-bottom:1px solid var(--ns-border);
+  color:var(--ns-foreground);
+}
+.ns-appbar-heading {min-width:0;display:flex;flex-direction:column;gap:5px}
+.ns-appbar-trail {font-size:10px;letter-spacing:.12em;font-weight:750;color:#91a5b0}
+.ns-appbar-title {font-size:23px!important;line-height:1.2;letter-spacing:-.035em;font-weight:760!important;margin:0!important;color:#f1f5f4!important}
+.ns-appbar-actions {display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.ns-appbar-state {font-size:11px;color:#94acb3;white-space:nowrap}
+.ns-shell-search,.ns-shell-more {
+  border-radius:9px;
+  border:1px solid #3c4d59;
+  background:#1a2833;
+  color:#e3edeb;
+  min-height:37px;
+  padding:8px 13px;
+  font-size:12px;
+  font-weight:650;
+  white-space:nowrap;
+}
+.ns-shell-search:hover,.ns-shell-more:hover {background:#30443b;border-color:#63865a;color:#d8ffb4}
+.ns-shell-more {color:#c5d3d8}
+body.ns-shell-ready #p1 {min-width:0}
+.ns-overview {margin:0 0 22px;padding:0 clamp(5px,1vw,12px);color:#f1f5f4}
+.ns-overview[hidden],.ns-shell-action[hidden],.ns-device-actions [hidden] {display:none!important}
+.ns-overview-heading {display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:18px}
+.ns-overview-heading h2 {font-weight:760;font-size:clamp(19px,2.3vw,27px);letter-spacing:-.045em;line-height:1.15;margin:5px 0 7px}
+.ns-overview-heading p {color:#a8b7c0;font-size:12px;line-height:1.55;margin:0}
+.ns-eyebrow {font-size:10px;letter-spacing:.14em;color:#acda86;font-weight:800}
+.ns-overview-grid {display:grid;grid-template-columns:minmax(230px,1.25fr) repeat(3,minmax(125px,.64fr));gap:13px}
+.ns-hero,.ns-kpi {
+  min-height:142px;
+  border:1px solid #293a46;
+  border-radius:14px;
+  padding:19px;
+  box-shadow:0 15px 30px #0206092b;
+}
+.ns-hero {
+  background:#213427;
+  border-color:#2e5237;
+  position:relative;
+  isolation:isolate;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  overflow:hidden;
+}
+.ns-hero::after {
+  content:"";
+  position:absolute;right:-110px;top:-115px;width:240px;height:240px;
+  border-radius:50%;border:30px solid #b6f0782a;z-index:-1;pointer-events:none
+}
+.ns-hero h3 {font-size:20px!important;line-height:1.13;max-width:280px;letter-spacing:-.035em;margin:0;color:#f1ffe9}
+.ns-hero p {font-size:11px;color:#b1ccb6;margin:0;max-width:300px;line-height:1.5}
+.ns-hero-link {
+  background:#b6f078;color:#17221a;
+  border:1px solid #b6f078;border-radius:9px;
+  padding:8px 12px;font-size:11px;font-weight:750;min-height:34px
+}
+.ns-hero-link:hover {background:#d0ffa5}
+.ns-kpi {background:#151e28;display:flex;flex-direction:column;gap:12px}
+.ns-kpi-name {font-size:11px;color:#a3b2be;font-weight:700}
+.ns-kpi-value {font-size:clamp(23px,2.5vw,32px);line-height:1;font-weight:770;letter-spacing:-.04em;color:#f1f5f4}
+.ns-kpi-note {font-size:11px;line-height:1.55;color:#90a4af;margin-top:auto}
+.ns-quicklinks {margin:24px 0 10px}
+.ns-quicklinks h3 {font-size:13px;font-weight:760;color:#e4edeb;margin:0 0 12px}
+.ns-shortcut-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px}
+.ns-shell-action {
+  min-height:43px;
+  padding:11px 15px;
+  background:#151e28;
+  color:#e8f1ee;
+  border:1px solid #33444d;
+  border-radius:11px;
+  font-size:12px;
+  font-weight:680;
+  text-align:left;
+  transition:background .15s,border-color .15s,transform .15s;
+}
+.ns-shell-action:hover {background:#283d32;color:#d9ffa9;border-color:#74945b;transform:translateY(-1px)}
+.ns-dashboard-note {font-size:10px;color:#8397a6;margin:8px 0 0;line-height:1.55}
+.ns-device-actions {
+  background:#151e28;
+  border:1px solid #2d3943;
+  border-radius:13px;
+  padding:15px 18px;
+  margin:12px 0 20px;
+}
+.ns-device-actions h3 {font-size:12px;font-weight:760;color:#eaf4ed;margin:0 0 11px}
+.ns-device-actions-row {display:flex;gap:9px;flex-wrap:wrap}
+.ns-device-actions-row .ns-shell-action {min-width:122px}
+.ns-session-strip {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:9px;
+  min-height:45px;
+  margin:12px 0 0;
+  padding:10px 15px;
+  background:#111b25;
+  border:1px solid #2e414c;
+  border-radius:11px 11px 0 0;
+  color:#e5f2ea;
+}
+.ns-session-dot {width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#91dbb0}
+.ns-session-label {font-size:11px;font-weight:750}
+.ns-session-protocol {font-size:10px;color:#97aab6}
+body.ns-shell-ready #deskarea0 {border-radius:0 0 12px 12px}
+body.ns-shell-ready #devListToolbarSpan {box-shadow:0 8px 20px #01080c22}
+body.ns-shell-ready #xdevices [name="xxdevice1"] {accent-color:#b6f078}
+body.ns-shell-ready :is(#p2AccountSecurity,#p2AccountActions) {
+  background:#151e28;
+  border:1px solid #31404d;
+  border-radius:13px;
+  margin-bottom:15px;
+  padding:15px;
+}
+body.ns-shell-ready :is(#p10,#p11,#p12,#p13) {min-width:0}
+body.ns-shell-ready .areaHead {font-weight:700}
+body.ns-shell-ready :is(#p11,#p12,#p13) :is(button,input[type="button"]) {max-width:100%}
+body.ns-shell-ready .ns-native-expanded #MainMenuSpan,
+body.ns-shell-ready.ns-native-expanded #MainMenuSpan {display:block}
+@media(max-width:1150px) {
+  .ns-overview-grid {grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ns-hero {grid-column:1/-1;min-height:158px}
+}
+@media(max-width:900px) {
+  body.ns-shell-ready #ns-appbar {
+    min-height:57px;padding:10px 14px;margin:0 0 12px;position:relative
+  }
+  .ns-appbar-title {font-size:18px!important}
+  .ns-appbar-trail {font-size:9px}
+  .ns-appbar-actions {gap:6px}
+  .ns-appbar-state {display:none}
+  .ns-shell-search,.ns-shell-more {min-height:38px;padding:7px 10px}
+  .ns-overview {padding:0 3px}
+  .ns-overview-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .ns-hero {grid-column:1/-1;min-height:150px;padding:16px}
+  .ns-kpi {min-height:118px;padding:14px;gap:8px}
+  .ns-kpi-value {font-size:26px}
+  .ns-shortcut-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ns-overview-heading {margin-bottom:14px}
+  .ns-device-actions {padding:12px;margin-bottom:10px}
+  .ns-device-actions-row {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+  .ns-device-actions-row .ns-shell-action {min-width:0;text-align:center;padding:10px 4px;font-size:11px}
+  .ns-session-protocol {display:none}
+  body.ns-shell-ready.ns-session-active #ns-appbar {display:none}
+  body.ns-shell-ready.ns-session-active #masthead {min-height:0}
+}
+@media(max-width:430px) {
+  .ns-appbar-title {font-size:16px!important}
+  .ns-appbar-trail {font-size:8px;letter-spacing:.08em}
+  .ns-shell-search {font-size:0;width:41px;padding:8px}
+  .ns-shell-search::first-letter {font-size:19px}
+  .ns-shell-more {font-size:11px}
+  .ns-overview-grid {gap:8px}
+  .ns-hero h3 {font-size:19px!important}
+  .ns-kpi {min-height:115px}
+  .ns-kpi-name,.ns-kpi-note {font-size:10px}
+  .ns-session-strip {margin:3px 0 0;padding:8px 12px;min-height:34px}
+}
+@media (prefers-reduced-motion:reduce) {
+  .ns-shell-action {transition:none}
+  .ns-shell-action:hover {transform:none}
+}
