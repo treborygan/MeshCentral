@@ -566,7 +566,9 @@
     var ready = inventory() !== null && supportsView();
     var enabled = !!on && ready;
     document.body.classList.toggle('ns-cards-enabled', enabled);
-    if (list) list.hidden = !enabled;
+    if (list) list.hidden = !ready;
+    if (grid) grid.hidden = !enabled;
+    if (filter && filter.parentNode) filter.parentNode.hidden = !enabled;
     if (toggle) {
       toggle.textContent = enabled ? 'Original list' : 'Night Shift cards';
       toggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
