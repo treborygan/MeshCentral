@@ -397,3 +397,18 @@ input:disabled { opacity: .6; cursor: not-allowed; }
   body.ns-mobile-remote #deskarea0{margin-bottom:86px}
 }
 @media(prefers-reduced-motion:reduce){.ns-theme *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* Modern MeshCentral's original body has inline min-width:495px; release it on phones. */
+@media(max-width:900px){
+  body.ns-theme{min-width:0!important;width:100%!important;overflow-x:hidden}
+  body.ns-theme.fullscreen:not(.fulldesk) #container{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-areas:"header" "nav" "content" "footer"!important;
+    min-width:0!important;
+  }
+  body.ns-theme.fullscreen:not(.fulldesk) #masthead{grid-area:header!important;min-width:0}
+  body.ns-theme.fullscreen:not(.fulldesk) #topbar{grid-area:nav!important;min-width:0;grid-column:1!important}
+  body.ns-theme.fullscreen:not(.fulldesk) #column_l{grid-area:content!important;grid-column:1!important;min-width:0}
+  body.ns-theme.fullscreen:not(.fulldesk) #footer{grid-area:footer!important}
+}
