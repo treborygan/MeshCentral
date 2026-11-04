@@ -1,6 +1,6 @@
 # Night Shift — MeshCentral interface modernization
 
-Status: **in progress**. Design direction **B / Night Shift** is approved. This branch introduces the first **presentation-only** stylesheet, not a replacement remote-control implementation. The source baseline is the `treborygan/MeshCentral` fork at upstream MeshCentral **1.3.1** (2026-11-04).
+Status: **web-override implementation committed; awaiting real-device acceptance**. Design direction **B / Night Shift** is approved. The branch contains responsive CSS, progressive JavaScript, a reversible installer and contract tests. No server/agent changes. The source baseline is the `treborygan/MeshCentral` fork at upstream MeshCentral **1.3.1** (2026-11-04).
 
 ## Goal
 
@@ -12,8 +12,8 @@ The aesthetic follows the independently prototyped Night Shift concept: deep nav
 
 **Keep the MeshCentral backend, protocols, accounts, database, agents, remote desktop renderers, session state, permission decisions and Cloudflare/network ingress unchanged.**
 
-1. The first slice lives in `public/styles/custom.css` in this fork, the built-in, last-loaded style override. It affects presentation only.
-2. For an **existing npm-installed instance**, deploy only this CSS as a file in its persistent customization directory: `<meshcentral-root>/meshcentral-web/public/styles/custom.css`. This avoids replacing the installed package or binaries.
+1. Night Shift uses `public/styles/custom.css` (last-loaded style override) and `public/scripts/custom.js` (built-in custom script hook). Both are additive; no original templates or input handlers are replaced.
+2. For an **existing installed instance**, deploy only the CSS and JS into `<meshcentral-root>/meshcentral-web/public/styles/custom.css` and `meshcentral-web/public/scripts/custom.js`. Use `scripts/Install-NightShift.ps1` for backup, installation and rollback. No package/binary replacement.
 3. Later, when CSS cannot represent a workflow change, copy **only specific** upstream `views/*.handlebars` files to `meshcentral-web/views` for a reviewed override. Template copies must be diffed/rebased on upstream upgrades. Do not use wholesale template overrides while in the initial CSS stage.
 4. Functional mobile remote-control upgrades must call existing MeshCentral desktop/RDP/AMT input interfaces. Never create a parallel relay or evade agent permissions.
 5. Design changes must not require reinstalling agents or re-enrolling devices.
@@ -24,25 +24,25 @@ The aesthetic follows the independently prototyped Night Shift concept: deep nav
 - [x] Main desktop and mobile page coloring, navigation, device toolbar, dialogs, forms
 - [x] Coarse-pointer target sizing and reduced-motion support
 - [ ] Real-browser visual and functional acceptance on live MeshCentral pages
-- [ ] New structure and interactive navigation matching the standalone concept
-- [ ] Device-detail and remote-session workspace restructure
-- [ ] Mobile session controls wired to real remote desktop input
+- [x] Command search, labeled sidebar, streamlined navigation and mobile dock integrated with upstream markup (additive overlay, not a pixel-identical template replacement)
+- [x] Dark device detail, remote desktop, terminal, files and settings presentation without displacing original MeshCentral controls
+- [x] Mobile actions wired to existing MeshCentral Connect, RDP, Disconnect, trackpad, right-click, keyboard, zoom, fullscreen, monitor and settings handlers (requires real-session acceptance)
 - [ ] Comprehensive MeshCentral feature parity and role permissions validation
 - [ ] PCRN deployment
 
-**Important:** This branch is **not installed** on PCRN by these changes. The prototype is not proof of live RDP functionality. A visual-only stylesheet cannot add trackpad gestures, key combinations, pinch zoom, virtual keyboard, or reconnection logic; those require later implementation and device testing.
+**Important:** This branch is **not installed** on PCRN. Native trackpad, touch, zoom, keyboard and RDP behavior is delegated to MeshCentral 1.3.1 itself. Whether the interactions function correctly from the actual PCRN instance or phones is **not yet verified**. Classic mobile templates remain as fallback. No RDP/WebSocket/protocol code is modified.
 
 ## Suggested delivery slices
 
-### Slice A — Styling (this branch)
+### Slice A — Styling (implemented)
 
-Apply CSS via the built-in late-loaded override. Preserve all IDs, event handlers, form names, network endpoints, and existing surfaces. Verify login, device list, tabs, settings, file/terminal/desktop panels, dark/light semantics, dialogs and permissions.
+Apply CSS and JS via built-in custom overrides. Preserve all IDs, event handlers, form names, network endpoints, and existing surfaces. Verify login, device list, tabs, settings, file/terminal/desktop panels, dark/light semantics, dialogs and permissions.
 
-### Slice B — Structural composition (separate PR)
+### Slice B — Structural composition (additive controls implemented; more intrusive template restructuring deferred)
 
 For the primary desktop view, create a modern hierarchy: collapsible navigation rail, searchable device inventory, device details, contextual actions and remote-session workspace. Prefer additive components, feature detection and retained upstream DOM IDs/handlers; if a template override is required, make it narrow, keep source diffs reviewable, and retain an immediate classic-UI fallback.
 
-### Slice C — Mobile session UX (separate PR)
+### Slice C — Mobile session UX (native-action dock implemented; device acceptance pending)
 
 Use a mobile-first connection flow: device list → remote session, maximized remote canvas, compact lower control tray and landscape view. Implement/tether to actual MeshCentral browser interfaces:
 - Direct touch vs trackpad mode, right-click, scroll wheel, drag and drag lock.
@@ -87,3 +87,11 @@ References:
 - https://docs.meshcentral.com/meshcentral/customization/
 - https://docs.meshcentral.com/design/
 - https://github.com/Ylianst/MeshCentral
+
+## Build and test
+
+- `node --check public/scripts/custom.js`
+- `node --test tests/night-shift.test.cjs`
+- Windows PowerShell parser validation is configured in `.github/workflows/night-shift-ui.yml`.
+- The tests check source syntax, native-action delegation, CSS structure, and installer safety. They do **not** prove live browser or mobile RDP functionality.
+- Install/rollback: `scripts/Install-NightShift.ps1`; see [deployment](night-shift-deployment.md).
