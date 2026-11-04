@@ -1,0 +1,47 @@
+name: Night Shift UI checks
+
+on:
+  pull_request:
+    paths:
+      - "public/styles/custom.css"
+      - "public/scripts/custom.js"
+      - "scripts/Install-NightShift.ps1"
+      - "tests/night-shift.test.cjs"
+      - ".github/workflows/night-shift-ui.yml"
+  push:
+    branches: ["feature/night-shift-ui"]
+    paths:
+      - "public/styles/custom.css"
+      - "public/scripts/custom.js"
+      - "scripts/Install-NightShift.ps1"
+      - "tests/night-shift.test.cjs"
+      - ".github/workflows/night-shift-ui.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ui-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse theme JavaScript
+        run: node --check public/scripts/custom.js
+      - name: Run theme contract tests
+        run: node --test tests/night-shift.test.cjs
+
+  windows-installer-parse:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse PowerShell installer without executing it
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile('scripts/Install-NightShift.ps1', [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) { $errors | Format-List | Out-String | Write-Error; exit 1 }
+          Write-Host 'PowerShell syntax parsed successfully.'
