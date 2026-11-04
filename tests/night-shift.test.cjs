@@ -237,3 +237,105 @@ test('Android viewport width matches the CSS mobile breakpoint without disabling
   assert.match(css, /#xdevices \[name="xxdevice1"\]/, 'Device cards get genuine mobile sizing');
   assert.match(css, /#p2AccountSecurity,#p2AccountActions/, 'Account actions remain visible and usable');
 });
+
+
+test('Night Shift structural shell uses live DOM data and native navigation', () => {
+  const ids = new Map();
+  class MockElement {
+    constructor(tag) {
+      this.tagName=tag.toUpperCase(); this.children=[]; this.style={};
+      this.dataset={}; this.attributes={}; this.events={}; this.hidden=false; this.disabled=false;
+      const classes=new Set();
+      this.classList={
+        add:(...names)=>names.forEach(name=>classes.add(name)),
+        remove:(...names)=>names.forEach(name=>classes.delete(name)),
+        contains:name=>classes.has(name),
+        toggle:(name,force)=>{
+          const enabled=force===undefined?!classes.has(name):force;
+          enabled?classes.add(name):classes.delete(name); return enabled;
+        }
+      };
+    }
+    set id(value){this._id=value;ids.set(value,this);}
+    get id(){return this._id||'';}
+    set className(value){this._class=value;value.split(/\s+/).filter(Boolean).forEach(name=>this.classList.add(name));}
+    get className(){return this._class||'';}
+    set textContent(value){this._text=String(value);}
+    get textContent(){return this._text||'';}
+    get firstChild(){return this.children[0]||null;}
+    append(...children){children.forEach(child=>{child.parentNode=this;this.children.push(child);});}
+    prepend(child){child.parentNode=this;this.children.unshift(child);}
+    insertBefore(child,anchor){child.parentNode=this;const index=this.children.indexOf(anchor);this.children.splice(index<0?this.children.length:index,0,child);}
+    setAttribute(name,value){this.attributes[name]=String(value);}
+    getAttribute(name){return this.attributes[name]??null;}
+    addEventListener(name,handler){(this.events[name]||=[]).push(handler);}
+    click(){this.clickCount=(this.clickCount||0)+1;(this.events.click||[]).forEach(handler=>handler({type:'click'}));}
+    dispatchEvent(event){(this.events[event.type]||[]).forEach(handler=>handler(event));return true;}
+    getClientRects(){return this.hidden?[]:[{}];}
+    querySelector(selector){
+      if(selector.startsWith('[data-native'))return this.children.find(child=>child.dataset.native===selector.match(/"([^"]+)"/)?.[1])||null;
+      return null;
+    }
+    querySelectorAll(selector){
+      if(selector==='[name="xxdevice1"]')return this.deviceCheckboxes||[];
+      if(selector==='[data-detail]')return this.children.flatMap(child=>child.children).filter(child=>child.dataset.detail);
+      return [];
+    }
+    focus(){}
+  }
+  const body=new MockElement('body');
+  const document={
+    body,documentElement:new MockElement('html'),readyState:'complete',visibilityState:'visible',
+    createElement:tag=>new MockElement(tag),
+    getElementById:id=>ids.get(id)||null,
+    querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){}
+  };
+  const add=(id,parent=body)=>{
+    const node=new MockElement('div');node.id=id;parent.append(node);return node;
+  };
+  add('container');const column=add('column_l');add('masthead');
+  const devices=add('LeftMenuMyDevices');const page=add('p1',column);
+  add('p10',column);
+  const list=add('xdevices',page);
+  list.deviceCheckboxes=[new MockElement('input'),new MockElement('input')];
+  add('MainDevDesktop');add('MainDevTerminal');add('MainDevFiles');
+  const window={addEventListener(){}};
+  vm.runInNewContext(js,{
+    window,document,console,
+    matchMedia:()=>({matches:false}),
+    getComputedStyle:()=>({display:'block',visibility:'visible'}),
+    requestAnimationFrame:callback=>callback(),
+    addEventListener(){},setInterval(){},setTimeout(){},clearTimeout(){},
+    MutationObserver:class{observe(){}},
+    MouseEvent:class{constructor(type,props){this.type=type;Object.assign(this,props);}}
+  },{timeout:1000});
+  assert.ok(ids.has('ns-appbar'),'Contextual appbar is generated');
+  assert.ok(ids.has('ns-overview'),'Native data dashboard is generated');
+  assert.ok(ids.has('ns-device-actions'),'Device quick actions are generated');
+  assert.equal(window.__nightShiftShell.version,'2.0.0');
+  const overview=ids.get('ns-overview');
+  const count=overview.children[1].children[1].children[1];
+  assert.equal(count.textContent,'2','The dashboard counts rendered native device rows');
+  const bar=ids.get('ns-appbar'),more=bar.children[1].children.find(node=>node.textContent==='More');
+  const menu=bar.children[2];
+  assert.equal(menu.hidden,true,'Additional navigation starts closed');
+  more.click();
+  assert.equal(menu.hidden,false,'More opens actionable navigation');
+  const deviceLink=menu.children.find(node=>node.dataset.native==='LeftMenuMyDevices');
+  assert.ok(deviceLink,'The available native Devices action is linked');
+  deviceLink.click();
+  assert.equal(devices.clickCount,1,'The new navigation calls original MeshCentral action');
+});
+
+test('structural layer remains progressive with native sessions and no synthetic fleet',()=>{
+  for(const token of ['ns-appbar','ns-overview','ns-session-strip','ns-device-actions','ns-appbar-menu']){
+    assert.ok(js.includes(token), 'Missing live UI component '+token);
+    assert.ok(css.includes(token), 'Missing matching visual component '+token);
+  }
+  assert.match(js,/countRenderedDevices/);
+  assert.match(js,/\[name="xxdevice1"\]/);
+  assert.match(js,/Remote session connected/);
+  assert.match(js,/native\.dispatchEvent\(new MouseEvent\('mouseup'/);
+  assert.doesNotMatch(js,/Studio Workstation|Travel Laptop|Build Server|Demo session|fake-desktop/);
+  assert.doesNotMatch(js,/new\s+WebSocket\s*\(|new\s+RTCPeerConnection\s*\(/);
+});
