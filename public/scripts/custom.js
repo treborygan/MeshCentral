@@ -331,7 +331,10 @@
     var native = $(entry.id);
     if (!allowed(native)) return false;
     // The original element retains MeshCentral's access control and event handlers.
-    if (native && typeof native.click === 'function') { native.click(); return true; }
+    if (native && typeof native.dispatchEvent === 'function') {
+      native.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      return true;
+    }
     return false;
   }
   function deviceAction(entry) {
