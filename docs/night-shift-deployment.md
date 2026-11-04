@@ -38,6 +38,10 @@ The installer reports the exact backup directory. Use that path:
 
 Hard-refresh after rollback. Restore both override files independently; if a target file did not exist before, the installer deletes it. No service, agent or database rollback is necessary.
 
+## Structural UI branch (source only)
+
+`feature/night-shift-structural` builds on `fix/night-shift-mobile-layout` and includes a genuine device-card adapter alongside the contextual dashboard and native session chrome. This branch has **not** been installed on PCRN. The deployment record below describes only the earlier Night Shift override. Before a subsequent deployment, verify the exact branch/revision, run `node --test tests/night-shift.test.cjs`, stage the two assets using the existing backup/rollback installer, and verify all authenticated screens and a genuine remote session. Do not confuse a GitHub commit or source smoke test with production acceptance.
+
 ## PCRN rollout record — 2026-11-04
 
 - MeshCentral 1.3.1 at `C:\ProgramData\MeshCentral`; only `custom.css` and `custom.js` were added under its persistent `meshcentral-web\public` override.
