@@ -8,7 +8,7 @@ This slice extends the existing `custom.js` and `custom.css` overrides without r
 
 Included:
 - Contextual workspace appbar with live page title, native navigation search, and a functional More menu exposing only original account-accessible sections.
-- Responsive overview in the real Devices page: status-free live summary, actionable links to existing pages, clear provenance, and no fake events/devices/connection counts.
+- Responsive overview in the real Devices page: genuine live online/offline counts, actionable links to existing pages, clear provenance, and no fake events/devices/connection counts.
 - A responsive real-device card inventory built from the authenticated MeshCentral `window.nodes`/`window.meshes` collection, with local search and reachable/offline filters. Clicking a card delegates to the existing `gotoDevice()` permission/2FA/verification checks. **Original list** toggles back to the full native inventory, bulk actions, sorting, groups, map and advanced views. Only device list views 1 and 2 are replaced by cards; other views remain native.
 - Quick device actions using native Desktop, Terminal and Files handlers. Advanced device tabs, plugins, permissions and original controls remain available.
 - Contextual remote-session strip with connection text derived from MeshCentral's existing Disconnect control. Original canvas, RDP, AMT, terminal, keyboard and other session implementations remain untouched.
@@ -21,7 +21,7 @@ The actual browser must supply MeshCentral's expected IDs. Components are create
 
 - A full screenshot-matched replacement of the native list/group/user/server templates is **not yet proven**. These screens are restyled upstream views with additive components, not a complete independent application.
 - Core MeshCentral behavior is preserved by delegation, but end-to-end Agent desktop, browser RDP, terminal, file transfer, Android gestures, Intel AMT, guest sessions, recordings, plugins and restricted-role workflows still require real authenticated browser acceptance.
-- The count labeled *Rendered device rows* is only the number of loaded checkbox rows currently in the page, **not** the authoritative number of all managed devices. If unavailable, a dash is shown rather than a guessed value.
+- The dashboard counts authenticated device objects currently loaded into `window.nodes` and derives reachable/offline from `node.conn` (Agent, AMT, or relay flags). If node data are not yet available, the device count falls back to rendered native rows and status counts remain unavailable. Counts can be paginated and are **not guaranteed to represent the server-wide total**.
 - A synthetic DOM contract test verifies the UI shell, native navigation and populated device-row count; it does not validate a live browser or remote-control session.
 - **No PCRN deployment has been made from this branch.** The previously installed Night Shift CSS/JS may still be live; do not infer that the new structural layer is present.
 
