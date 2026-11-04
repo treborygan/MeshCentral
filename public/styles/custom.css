@@ -1049,3 +1049,10 @@ body.ns-shell-ready.ns-cards-enabled #xdevices {display:none!important}
   .ns-live-device{transition:none}
   .ns-live-device:hover{transform:none}
 }
+
+
+/* Remove duplicate upstream inventory chrome only when real Night Shift cards
+   are active; the Original list toggle restores all original controls instantly. */
+body.ns-shell-ready.ns-cards-enabled #p1title,
+body.ns-shell-ready.ns-cards-enabled #devListToolbarSpan {display:none!important}
+body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
