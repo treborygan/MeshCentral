@@ -378,13 +378,22 @@
         window.__nightShiftUI.search();
       }, 'Search MeshCentral pages and actions'));
     }
+    var menu = create('nav', 'ns-appbar-menu'); menu.hidden = true;
+    menu.setAttribute('aria-label', 'Additional MeshCentral sections');
+    entries.forEach(function (entry) { menu.append(link(entry, 'ns-shell-action')); });
     var nativeMenu = button('More', 'ns-shell-more', function () {
-      document.body.classList.toggle('ns-native-expanded');
-      nativeMenu.setAttribute('aria-expanded', document.body.classList.contains('ns-native-expanded') ? 'true' : 'false');
-    }, 'Show or hide native navigation and advanced options');
+      menu.hidden = !menu.hidden;
+      nativeMenu.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
+    }, 'Open additional MeshCentral sections');
     nativeMenu.setAttribute('aria-expanded', 'false');
     right.append(nativeMenu);
-    appbar.append(left, right);
+    appbar.append(left, right, menu);
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !menu.hidden) {
+        menu.hidden = true; nativeMenu.setAttribute('aria-expanded', 'false');
+        nativeMenu.focus();
+      }
+    });
     host.insertBefore(appbar, host.firstChild);
   }
   function metric(name, value, note) {
