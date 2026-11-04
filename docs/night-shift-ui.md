@@ -1,6 +1,6 @@
 # Night Shift — MeshCentral interface modernization
 
-Status: **web-override implementation committed; awaiting live browser and phone acceptance**. Design direction **B / Night Shift** is approved. The branch contains responsive CSS, progressive JavaScript, a reversible installer, syntax/contract checks, and a mobile interaction harness. No server/agent changes. The source baseline is the `treborygan/MeshCentral` fork at upstream MeshCentral **1.3.1** (2026-11-04).
+Status: **Night Shift web override deployed to PCRN; awaiting live browser and phone acceptance**. Design direction **B / Night Shift** is approved. The branch contains responsive CSS, progressive JavaScript, a reversible installer, syntax/contract checks, and a mobile interaction harness. No server/agent changes. The source baseline is the `treborygan/MeshCentral` fork at upstream MeshCentral **1.3.1** (2026-11-04).
 
 ## Goal
 
@@ -27,10 +27,10 @@ The aesthetic follows the independently prototyped Night Shift concept: deep nav
 - [x] Command search, labeled sidebar, streamlined navigation and mobile dock integrated with upstream markup (additive overlay, not a pixel-identical template replacement)
 - [x] Dark device detail, remote desktop, terminal, files and settings presentation without displacing original MeshCentral controls
 - [x] Mobile actions wired to existing MeshCentral Connect, RDP, Disconnect, trackpad, right-click, keyboard, zoom, fullscreen, monitor and settings handlers (source-level interaction harness passes; real-session acceptance remains open)
+- [x] PCRN web override installed and exact CSS/JS assets verified from the local MeshCentral listener
 - [ ] Comprehensive MeshCentral feature parity and role permissions validation
-- [ ] PCRN deployment
 
-**Important:** This branch is **not installed** on PCRN. Native trackpad, touch, zoom, keyboard and RDP behavior is delegated to MeshCentral 1.3.1 itself. Whether the interactions function correctly from the actual PCRN instance or phones is **not yet verified**. Classic mobile templates remain as fallback. No RDP/WebSocket/protocol code is modified.
+**Acceptance boundary:** the Night Shift CSS/JS is installed in `C:\ProgramData\MeshCentral\meshcentral-web\public`. PCRN's local listener serves both files with HTTP 200 and matching SHA-256 content; the public unauthenticated route redirects to Cloudflare Access. Native trackpad, touch, zoom, keyboard and RDP behavior is delegated to MeshCentral 1.3.1 itself. Authenticated browser rendering, real mobile touch input, live RDP, iOS Safari, role permissions and feature parity are **not yet verified**. Classic mobile templates remain as fallback. No RDP/WebSocket/protocol code is modified.
 
 ## Suggested delivery slices
 
@@ -77,7 +77,7 @@ Test with one account with admin rights and one restricted account; preserve den
 
 ## PCRN deployment and rollback
 
-See [the deploy runbook](night-shift-deployment.md). **Never overwrite production config.json, certificates, database, agent binaries, installed service, npm package, or Cloudflare Tunnel in a UI-only rollout.** Preserve a known-good independent remote access route.
+The 2026-11-04 rollout backed up both previously absent customization files under `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261104-172151-f30fb4`. MeshCentral was restarted once to load the newly created override directory; afterward MeshCentral, Cloudflare Tunnel and Mesh Agent services were all running. The rollback command and full procedure are in [the deploy runbook](night-shift-deployment.md). **Never overwrite production config.json, certificates, database, agent binaries, installed service, npm package, or Cloudflare Tunnel in a UI-only rollout.** Preserve a known-good independent remote access route.
 
 ## Upstream maintenance
 
