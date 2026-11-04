@@ -39,10 +39,10 @@
     const viewport = document.querySelector('meta[name="viewport"]');
     if (!viewport) return;
     let content = viewport.getAttribute('content') || '';
-    if (!/(?:^|,)\\s*width\\s*=\\s*device-width(?:\\s*,|\\s*$)/i.test(content)) {
+    if (!/(?:^|,)\s*width\s*=\s*device-width(?:\s*,|\s*$)/i.test(content)) {
       content = 'width=device-width,' + content;
     }
-    if (!/(?:^|,)\\s*viewport-fit\\s*=/i.test(content)) {
+    if (!/(?:^|,)\s*viewport-fit\s*=/i.test(content)) {
       content += ',viewport-fit=cover';
     }
     viewport.setAttribute('content', content);
