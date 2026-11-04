@@ -1056,3 +1056,11 @@ body.ns-shell-ready.ns-cards-enabled #xdevices {display:none!important}
 body.ns-shell-ready.ns-cards-enabled #p1title,
 body.ns-shell-ready.ns-cards-enabled #devListToolbarSpan {display:none!important}
 body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
+
+/* Session-first phone composition, matching Concept B while keeping Back in native dock. */
+@media(max-width:900px) {
+  body.ns-shell-ready.ns-session-active #masthead {display:none!important}
+  body.ns-shell-ready.ns-session-active #p11 {padding-top:0!important}
+  body.ns-shell-ready.ns-session-active #deskarea0 {margin-top:0}
+  body.ns-shell-ready.ns-session-active #ns-session-strip {margin-top:0}
+}
