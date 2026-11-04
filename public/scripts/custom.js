@@ -533,3 +533,153 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
   else boot();
 })();
+
+
+/*
+ * Night Shift native device inventory adapter. Source of truth is the server-
+ * populated window.nodes/window.meshes in default3.handlebars, not demo data.
+ * Device opening delegates to gotoDevice(), which retains all upstream checks.
+ */
+(function () {
+  'use strict';
+  if (window.__nightShiftDevices) return;
+  var $ = function (id) { return document.getElementById(id); };
+  var create = function (tag, cls, text) {
+    var el = document.createElement(tag);
+    if (cls) el.className = cls;
+    if (text !== undefined) el.textContent = text;
+    return el;
+  };
+  var mode = 'cards', state = 'all', term = '', list, grid, toggle, filter, stats, tabs, lastSignature = '';
+  var maxRendered = 150;
+  function reachable(node) { return ((Number(node.conn) || 0) & 7) !== 0; }
+  function inventory() {
+    if (!Array.isArray(window.nodes)) return null;
+    // node.v is MeshCentral's currently visible/filter-matched flag.
+    return window.nodes.filter(function (node) { return node && node.v !== false; });
+  }
+  function supportsView() {
+    var select = $('viewselect'), view = select && String(select.value);
+    return !view || view === '1' || view === '2';
+  }
+  function useCards(on) {
+    var ready = inventory() !== null && supportsView();
+    var enabled = !!on && ready;
+    document.body.classList.toggle('ns-cards-enabled', enabled);
+    if (list) list.hidden = !enabled;
+    if (toggle) {
+      toggle.textContent = enabled ? 'Original list' : 'Night Shift cards';
+      toggle.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+      toggle.disabled = !ready;
+    }
+  }
+  function open(node, event) {
+    // No new navigation or access controls. The upstream handler is authoritative.
+    if (typeof window.gotoDevice === 'function') window.gotoDevice(node._id, 10, false, event);
+  }
+  function makeCard(node) {
+    var name = String(node.name || node.rname || 'Device');
+    var group = window.meshes && window.meshes[node.meshid];
+    var groupName = group && group.name ? String(group.name) : 'Device group unavailable';
+    var online = reachable(node);
+    var os = node.osdesc || node.osd || '';
+    var card = create('button', 'ns-live-device');
+    card.type = 'button';
+    card.setAttribute('aria-label', 'Open ' + name + ' in MeshCentral');
+    card.addEventListener('click', function (event) { open(node, event); });
+    var top = create('div', 'ns-live-device-top');
+    var icon = create('span', 'ns-live-device-icon', node.agent && node.agent.id ? '▣' : '◇');
+    icon.setAttribute('aria-hidden', 'true');
+    var badge = create('span', 'ns-live-status ' + (online ? 'online' : 'offline'),
+      online ? 'Reachable' : 'Offline');
+    top.append(icon, badge);
+    var identity = create('div', 'ns-live-device-name', name);
+    var description = create('div', 'ns-live-device-subtitle', groupName);
+    var bottom = create('div', 'ns-live-device-foot');
+    bottom.append(create('span', '', os ? String(os) : 'Device details'));
+    bottom.append(create('span', 'ns-live-device-open', 'Open ↗'));
+    card.append(top, identity, description, bottom);
+    return card;
+  }
+  function update() {
+    if (!list) return;
+    var native = inventory();
+    if (native === null) { useCards(false); return; }
+    var all = native.slice().sort(function (a,b) {
+      var s = Number(reachable(b)) - Number(reachable(a));
+      return s || String(a.name || '').localeCompare(String(b.name || ''));
+    });
+    var onlineCount = all.filter(reachable).length;
+    var view = all.filter(function (node) {
+      if (state === 'online' && !reachable(node)) return false;
+      if (state === 'offline' && reachable(node)) return false;
+      if (!term) return true;
+      var group = window.meshes && window.meshes[node.meshid];
+      var haystack = [node.name,node.rname,node.osdesc,group && group.name]
+        .filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(term);
+    });
+    var signature = [mode,state,term,all.length,onlineCount,supportsView(),
+      view.slice(0,maxRendered).map(function (n) { return [n._id,n.name,n.conn,n.meshid,n.osdesc].join(':'); }).join('|')].join('::');
+    if (signature !== lastSignature) {
+      lastSignature = signature;
+      grid.replaceChildren();
+      view.slice(0,maxRendered).forEach(function (node) { grid.append(makeCard(node)); });
+      if (!view.length) grid.append(create('div','ns-live-empty','No devices match the selected filters.'));
+      stats.textContent = all.length + ' visible devices · ' + onlineCount + ' reachable · ' +
+        (all.length - onlineCount) + ' offline' +
+        (view.length > maxRendered ? ' · Showing first ' + maxRendered + ' matches' : '');
+    }
+    useCards(mode === 'cards');
+  }
+  function boot() {
+    var nativeList = $('xdevices');
+    if (!nativeList || !nativeList.parentNode || !$('p1') || !$('LeftMenuMyDevices')) return;
+    if ($('ns-live-inventory')) return;
+    list = create('section', 'ns-live-inventory'); list.id = 'ns-live-inventory';
+    list.setAttribute('aria-label','Live device inventory');
+    var header = create('div', 'ns-live-inventory-header');
+    var heading = create('div');
+    heading.append(create('span','ns-eyebrow','LIVE INVENTORY'),create('h2','','Managed devices'));
+    stats = create('p','ns-live-inventory-stats','Loading device state from MeshCentral…');
+    heading.append(stats);
+    toggle = create('button','ns-shell-more','Original list');toggle.type='button';
+    toggle.addEventListener('click',function () {
+      mode = mode === 'cards' ? 'native' : 'cards';
+      update();
+    });
+    header.append(heading,toggle);
+    var controls = create('div','ns-live-controls');
+    filter = create('input','ns-live-filter');filter.type='search';filter.placeholder='Search name, OS or device group';
+    filter.setAttribute('aria-label','Filter Night Shift device cards');
+    filter.addEventListener('input',function () { term=filter.value.trim().toLowerCase();update(); });
+    tabs = create('div','ns-live-tabs');tabs.setAttribute('role','group');
+    tabs.setAttribute('aria-label','Filter devices by connection state');
+    [['all','All'],['online','Reachable'],['offline','Offline']].forEach(function (entry) {
+      var button=create('button','ns-live-filter-tab',entry[1]);button.type='button';
+      button.dataset.filter=entry[0];
+      button.addEventListener('click',function () {
+        state=entry[0];
+        for (var i=0;i<tabs.children.length;i++) {
+          tabs.children[i].classList.toggle('active',tabs.children[i]===button);
+          tabs.children[i].setAttribute('aria-pressed',tabs.children[i]===button?'true':'false');
+        }
+        update();
+      });
+      button.classList.toggle('active',entry[0]==='all');
+      button.setAttribute('aria-pressed',entry[0]==='all'?'true':'false');
+      tabs.append(button);
+    });
+    controls.append(filter,tabs);
+    grid=create('div','ns-live-grid');
+    list.append(header,controls,grid);
+    nativeList.parentNode.insertBefore(list,nativeList);
+    update();
+    setInterval(function () {
+      if (document.visibilityState === 'visible') update();
+    },1800);
+  }
+  window.__nightShiftDevices = {version:'2.0.0',refresh:update};
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
+})();
