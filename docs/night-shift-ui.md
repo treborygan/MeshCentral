@@ -96,3 +96,33 @@ References:
 - The tests check source syntax, native-action delegation, CSS structure, installer safety, desktop/mobile navigation and dock visibility, native RDP/trackpad/keyboard/zoom/right-click/fullscreen/monitor delegation, and hidden-rail navigation fallback. The Windows installer was also exercised against a disposable fixture with SHA-256 comparison and rollback.
 - These checks do **not** prove live browser rendering, real mobile touch input, authenticated RDP, iOS Safari, or permission-role acceptance.
 - Install/rollback: `scripts/Install-NightShift.ps1`; see [deployment](night-shift-deployment.md).
+
+
+## 2026-11-04 live Android screenshot findings (blocking)
+
+Owner-provided Android Chrome screenshots of `rdp.treborygan.dev` demonstrate that the first rollout **does not match Night Shift Concept B**:
+
+- Original 60–90 px sidebar and duplicate mobile bar both visible.
+- Text, account actions, and device rows render at desktop-sized CSS viewport and become too small on the phone.
+- Device inventory is the upstream table/legacy tile with dark colors; not the approved device cards.
+- Account page uses legacy scattered links instead of structured, tappable security and settings sections.
+
+### Confirmed immediate root cause
+
+`views/default3.handlebars` contains `<meta name="viewport" content="user-scalable=yes,initial-scale=1.0,minimum-scale=1.0">` **without** `width=device-width`. Android may use a roughly 980px layout viewport. The previous custom.js enabled the mobile toolbar for coarse pointers up to 1100px, but the CSS only hid the desktop sidebar at max-width 900px. This exactly explains the duplicate navigation and compressed presentation.
+
+The follow-up branch `fix/night-shift-mobile-layout` adds a device-width viewport at runtime (without disabling zoom), makes JS and CSS use the same 900px breakpoint, updates mobile list/account styling, and adds regression checks. **It has not been deployed or tested on the actual phone.**
+
+### Remaining design gap (not solved by the viewport patch)
+
+A CSS overlay alone cannot guarantee faithful implementation of the Night Shift prototype. The next work must restructure the *actual* MeshCentral interface rather than recolor it:
+
+1. Preserve upstream MeshCentral handlers/IDs, permission gates, and plugin extension slots while creating the responsive app shell, top bar and device lists from real data.
+2. Implement the Night Shift device-detail layout with semantic, functional **General / Desktop / Terminal / Files / More** navigation. No dead mock buttons.
+3. Create a mobile session-first desktop layout: active canvas, real connection-status/header and a bottom touch palette connected to existing agent/RDP/AMT handlers; use portrait/landscape safe areas and no overlapping controls.
+4. Adapt account, groups, users, events, files and server admin into consistent, accessible mobile layouts. Every original action stays discoverable.
+5. Test a concrete screenshot matrix at 390×844, 430×932, 844×390, tablet 900–1024, desktop 1440×900. Include account, inventory, device details, connected Agent desktop, RDP, terminal, files, settings and restricted-user states.
+6. **Visual acceptance must compare the actual authenticated pages against `MeshCentral_UI_Concepts.html` / Concept B reference.** Do not call the work complete based solely on handler mocks or the stylesheet loading.
+7. Keep a one-step reversible fallback to upstream UI, independent Cloudflare/PCRN access and no changes to config/database/agents.
+
+This is a structural UI redesign task, not a completed feature of the original CSS-only PR.

@@ -15,7 +15,7 @@
   };
   const visible = (el) => !!(el && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
   const usable = (el) => !!(visible(el) && !el.disabled && el.getAttribute('aria-disabled') !== 'true');
-  const mobile = () => matchMedia('(max-width: 900px), (pointer: coarse) and (max-width: 1100px)').matches;
+  const mobile = () => matchMedia('(max-width: 900px)').matches;
   const destinations = [
     ['Devices','LeftMenuMyDevices',1], ['Account','LeftMenuMyAccount',2],
     ['Events','LeftMenuMyEvents',3], ['Files','LeftMenuMyFiles',5],
@@ -30,6 +30,23 @@
     ['Plugins','MainDevPlugins',19]
   ];
   let backdrop, input, results, dock, nav, refreshScheduled = false, toastHandle;
+  // MeshCentral 1.3.1's default3.handlebars omits width=device-width.
+  // Android otherwise retains a ~980 CSS-px layout viewport while touch-only
+  // JS navigation activates, producing both the desktop sidebar and mobile bar.
+  // Preserve pinch-zoom, user-scalable and existing zoom bounds.
+  function ensureDeviceViewport() {
+    if (typeof document.querySelector !== 'function') return;
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) return;
+    let content = viewport.getAttribute('content') || '';
+    if (!/(?:^|,)\s*width\s*=\s*device-width(?:\s*,|\s*$)/i.test(content)) {
+      content = 'width=device-width,' + content;
+    }
+    if (!/(?:^|,)\s*viewport-fit\s*=/i.test(content)) {
+      content += ',viewport-fit=cover';
+    }
+    viewport.setAttribute('content', content);
+  }
   function message(text) {
     let el = $('ns-message');
     if (!el) {
@@ -160,11 +177,15 @@
     if(!$('ns-mobile-nav')&&$('LeftMenuMyDevices')){
       nav=make('nav','ns-mobile-nav');nav.id='ns-mobile-nav';
       nav.setAttribute('aria-label','Workspace');
-      [[0,'Devices'],[2,'Events'],[3,'Files'],[1,'Account']].forEach(([index,title])=>{
+      [[0,'Devices','fa-computer'],[2,'Events','fa-calendar-days'],[3,'Files','fa-folder-open'],[1,'Account','fa-user-gear']].forEach(([index,title,glyph])=>{
         const el=button(title,'ns-mobile-nav-item',()=>act(()=>workspace(index),title+' unavailable'));
+        const icon=make('i','fa-solid '+glyph);icon.setAttribute('aria-hidden','true');
+        el.prepend(icon);
         el.dataset.page=String(destinations[index][2]);nav.append(el);
       });
-      nav.append(button('More','ns-mobile-nav-item',showSearch,'Other pages'));
+      const more=button('More','ns-mobile-nav-item',showSearch,'Other pages');
+      const moreIcon=make('i','fa-solid fa-ellipsis');moreIcon.setAttribute('aria-hidden','true');
+      more.prepend(moreIcon);nav.append(more);
       document.body.append(nav);
     }
   }
@@ -202,7 +223,18 @@
     const authenticated=!!$('LeftMenuMyDevices')&&!document.body.classList.contains('login');
     document.body.classList.toggle('ns-mobile-workspace',small&&!remote&&authenticated);
     document.body.classList.toggle('ns-mobile-remote',small&&remote);
-    if(nav)nav.hidden=!(small&&!remote&&authenticated);
+    if(nav) {
+      nav.hidden=!(small&&!remote&&authenticated);
+      if(!nav.hidden) {
+        for(const item of nav.querySelectorAll('[data-page]')) {
+          const page=$('p'+item.dataset.page);
+          const selected=visible(page);
+          item.classList.toggle('ns-active', selected);
+          if(selected) item.setAttribute('aria-current','page');
+          else item.removeAttribute('aria-current');
+        }
+      }
+    }
     if(dock)dock.hidden=!(small&&remote);
     if(dock&&!dock.hidden){
       const connected=usable($('disconnectbutton1'));
@@ -228,6 +260,7 @@
     const hasAppContainer=!!$('container');
     const isLoginPage=!!(document.body&&(document.body.classList.contains('login')||$('centralTable')));
     if(!hasAppContainer&&!isLoginPage)return;
+    ensureDeviceViewport();
     document.documentElement.classList.add('ns-theme');
     document.body.classList.add('ns-theme');
     // MeshCentral's login2 template has no #container. Theme it, but leave its

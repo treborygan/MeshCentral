@@ -213,3 +213,27 @@ test('install and rollback are confined to web overrides', () => {
   assert.doesNotMatch(installer,/Set-Content\s+.*config\.json/i);
   assert.doesNotMatch(installer,/Stop-Service|Restart-Service/i);
 });
+
+
+test('Android viewport width matches the CSS mobile breakpoint without disabling pinch zoom', () => {
+  let content = 'user-scalable=yes,initial-scale=1.0,minimum-scale=1.0';
+  const viewport = {
+    getAttribute: name => name === 'content' ? content : null,
+    setAttribute: (name,value) => { if (name === 'content') content=value; }
+  };
+  const classes = { add() {}, contains: n => n === 'login' };
+  const document = {
+    readyState: 'complete',
+    querySelector: s => s === 'meta[name="viewport"]' ? viewport : null,
+    getElementById: id => id === 'centralTable' ? {} : null,
+    body: { classList: classes }, documentElement: { classList: { add() {} } }
+  };
+  vm.runInNewContext(js, {window:{},document,console}, { timeout:1000 });
+  assert.match(content, /(?:^|,)width=device-width(?:,|$)/);
+  assert.match(content, /(?:^|,)viewport-fit=cover(?:,|$)/);
+  assert.match(content, /user-scalable=yes/, 'Native user pinch zoom must not be disabled');
+  assert.match(js, /matchMedia\('\(max-width: 900px\)'\)/, 'JavaScript breakpoint aligns with CSS');
+  assert.match(css, /body\.ns-theme #page_leftbar\s*\{\s*display:none!important/);
+  assert.match(css, /#xdevices \[name="xxdevice1"\]/, 'Device cards get genuine mobile sizing');
+  assert.match(css, /#p2AccountSecurity,#p2AccountActions/, 'Account actions remain visible and usable');
+});
