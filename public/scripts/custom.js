@@ -141,7 +141,7 @@
       if(e.key==='Escape'&&!backdrop.hidden){e.preventDefault();closeSearch();return;}
       if(!((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'))return;
       if(e.target&&(e.target.isContentEditable||/^(INPUT|TEXTAREA|SELECT|CANVAS)$/.test(e.target.tagName)))return;
-      if(remoteOpen())return; // Avoid taking shortcuts from a connected desktop.
+      if(remoteOpen()||visible($('dialog'))||visible(q('.modal.show')))return; // Never take shortcuts during desktop input or dialogs.
       e.preventDefault();backdrop.hidden?showSearch():closeSearch();
     });
     const target=q('#masthead .masthead-right')||$('masthead');
@@ -156,7 +156,7 @@
     });
   }
   function installMobileNav() {
-    if(!('ns-mobile-nav' in window)&&!$('ns-mobile-nav')&&$('LeftMenuMyDevices')){
+    if(!$('ns-mobile-nav')&&$('LeftMenuMyDevices')){
       nav=make('nav','ns-mobile-nav');nav.id='ns-mobile-nav';
       nav.setAttribute('aria-label','Workspace');
       [[0,'Devices'],[2,'Events'],[3,'Files'],[1,'Account']].forEach(([index,title])=>{
@@ -184,12 +184,15 @@
     add(primary,'Disconnect','ns-danger',()=>act(()=>nativeClick('disconnectbutton1'),'No connected session'),'ns-disconnect');
     add(primary,'Trackpad','',()=>act(()=>nativeFunction('deskToggleTrackpad'),'Trackpad unavailable'),'ns-trackpad');
     add(primary,'Keyboard','',()=>act(()=>nativeFunction('toggleMobileKeyboard'),'Keyboard unavailable'),'ns-keyboard');
+    add(primary,'Right click','',()=>act(()=>nativeFunction('deskToggleRightClickMode'),'Right-click mode unavailable'),'ns-rightclick');
     add(secondary,'Fit / 1:1','',()=>act(()=>nativeFunction('deskMobileToggleZoom'),'Zoom unavailable'),'ns-zoom');
     add(secondary,'Special keys','',()=>{
       const picker=$('deskkeys');if(picker){picker.focus();return;}
       act(()=>nativeFunction('sendSpecialKeys'),'Special keys unavailable');
     },'ns-keys');
     add(secondary,'Settings','',()=>act(()=>nativeFunction('showDesktopSettings'),'Desktop settings unavailable'));
+    add(secondary,'Fullscreen','',()=>act(()=>nativeFunction('deskToggleFull'),'Fullscreen unavailable'));
+    add(secondary,'Monitors','',()=>act(()=>nativeClick('DeskScreens'),'Monitor selection unavailable'),'ns-monitors');
     add(secondary,'More actions','',()=>act(()=>nativeFunction('deskToggleMobileActions'),'Use the original desktop toolbar'));
     dock.append(primary,secondary);document.body.append(dock);
   }
@@ -211,6 +214,8 @@
       const k=$('ns-keyboard');if(k)k.disabled=!connected||typeof window.toggleMobileKeyboard!=='function';
       const z=$('ns-zoom');if(z)z.disabled=!connected||typeof window.deskMobileToggleZoom!=='function';
       const keys=$('ns-keys');if(keys)keys.disabled=!connected;
+      const right=$('ns-rightclick');if(right){right.disabled=!connected||typeof window.deskToggleRightClickMode!=='function';right.setAttribute('aria-pressed',window.desktop&&window.desktop.m&&window.desktop.m.SwapMouse?'true':'false');}
+      const monitors=$('ns-monitors');if(monitors)monitors.hidden=!usable($('DeskScreens'));
     }
     labelRail();
   }
