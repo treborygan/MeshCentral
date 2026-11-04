@@ -295,7 +295,8 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     const node=new MockElement('div');node.id=id;parent.append(node);return node;
   };
   add('container');const column=add('column_l');add('masthead');
-  const devices=add('LeftMenuMyDevices');const page=add('p1',column);
+  const devices=add('LeftMenuMyDevices');let devicesMouseup=0;devices.addEventListener('mouseup',()=>devicesMouseup++);
+  const events=add('LeftMenuMyEvents');let eventsMouseup=0;events.addEventListener('mouseup',()=>eventsMouseup++);const page=add('p1',column);
   add('p10',column);
   const list=add('xdevices',page);
   list.deviceCheckboxes=[new MockElement('input'),new MockElement('input')];
@@ -334,7 +335,11 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const deviceLink=menu.children.find(node=>node.dataset.native==='LeftMenuMyDevices');
   assert.ok(deviceLink,'The available native Devices action is linked');
   deviceLink.click();
-  assert.equal(devices.clickCount,1,'The new navigation calls original MeshCentral action');
+  assert.equal(devicesMouseup,1,'The new navigation dispatches the original MeshCentral mouseup action');
+  const eventsLink=menu.children.find(node=>node.dataset.native==='LeftMenuMyEvents');
+  assert.ok(eventsLink,'The available native Events action is linked');
+  eventsLink.click();
+  assert.equal(eventsMouseup,1,'The Events route dispatches the native MeshCentral mouseup handler');
   const inventory=ids.get('ns-live-inventory');
   assert.ok(inventory,'The native device collection is enhanced');
   const cards=inventory.children[2].children;
