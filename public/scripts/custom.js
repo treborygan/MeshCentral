@@ -90,7 +90,8 @@
   function commands() {
     const out=[];
     destinations.forEach((item,index) => {
-      if (visible($(item[1]))) out.push({label:item[0],category:'Workspace',run:()=>workspace(index)});
+      const link=$(item[1]);
+      if (link && (visible(link) || (mobile() && link.style.display !== 'none' && link.getAttribute('aria-hidden') !== 'true'))) out.push({label:item[0],category:'Workspace',run:()=>workspace(index)});
     });
     tabs.forEach((item,index) => {
       if (visible($(item[1]))) out.push({label:item[0],category:'Current device',run:()=>tab(index)});
