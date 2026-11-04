@@ -264,6 +264,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     get textContent(){return this._text||'';}
     get firstChild(){return this.children[0]||null;}
     append(...children){children.forEach(child=>{child.parentNode=this;this.children.push(child);});}
+    replaceChildren(...children){this.children=[];this.append(...children);}
     prepend(child){child.parentNode=this;this.children.unshift(child);}
     insertBefore(child,anchor){child.parentNode=this;const index=this.children.indexOf(anchor);this.children.splice(index<0?this.children.length:index,0,child);}
     setAttribute(name,value){this.attributes[name]=String(value);}
@@ -299,7 +300,16 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const list=add('xdevices',page);
   list.deviceCheckboxes=[new MockElement('input'),new MockElement('input')];
   add('MainDevDesktop');add('MainDevTerminal');add('MainDevFiles');
-  const window={addEventListener(){}};
+  const opened=[];
+  const window={
+    addEventListener(){},
+    nodes:[
+      {_id:'node//online',name:'Workstation',meshid:'mesh//one',conn:1,osdesc:'Windows',v:true},
+      {_id:'node//offline',name:'Archive',meshid:'mesh//one',conn:0,osdesc:'Linux',v:true}
+    ],
+    meshes:{'mesh//one':{name:'Production'}},
+    gotoDevice:(id)=>opened.push(id)
+  };
   vm.runInNewContext(js,{
     window,document,console,
     matchMedia:()=>({matches:false}),
@@ -325,6 +335,18 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.ok(deviceLink,'The available native Devices action is linked');
   deviceLink.click();
   assert.equal(devices.clickCount,1,'The new navigation calls original MeshCentral action');
+  const inventory=ids.get('ns-live-inventory');
+  assert.ok(inventory,'The native device collection is enhanced');
+  const cards=inventory.children[2].children;
+  assert.equal(cards.length,2,'Two authorized live device objects produce two cards');
+  cards[0].click();
+  assert.deepEqual(opened,['node//online'],'Clicking a live card delegates to upstream gotoDevice');
+  const toggle=inventory.children[0].children[1];
+  toggle.click();
+  assert.equal(inventory.hidden,false,'The original-list toggle stays visible when cards are off');
+  assert.equal(body.classList.contains('ns-cards-enabled'),false);
+  toggle.click();
+  assert.equal(body.classList.contains('ns-cards-enabled'),true,'Cards can be re-enabled');
 });
 
 test('structural layer remains progressive with native sessions and no synthetic fleet',()=>{
