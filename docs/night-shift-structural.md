@@ -8,7 +8,8 @@ This slice extends the existing `custom.js` and `custom.css` overrides without r
 
 Included:
 - Contextual workspace appbar with live page title, native navigation search, and a functional More menu exposing only original account-accessible sections.
-- Responsive overview in the real Devices page: status-free live inventory summary, actionable links to existing pages, clear provenance, and no fake events/devices/connection counts.
+- Responsive overview in the real Devices page: status-free live summary, actionable links to existing pages, clear provenance, and no fake events/devices/connection counts.
+- A responsive real-device card inventory built from the authenticated MeshCentral `window.nodes`/`window.meshes` collection, with local search and reachable/offline filters. Clicking a card delegates to the existing `gotoDevice()` permission/2FA/verification checks. **Original list** toggles back to the full native inventory, bulk actions, sorting, groups, map and advanced views. Only device list views 1 and 2 are replaced by cards; other views remain native.
 - Quick device actions using native Desktop, Terminal and Files handlers. Advanced device tabs, plugins, permissions and original controls remain available.
 - Contextual remote-session strip with connection text derived from MeshCentral's existing Disconnect control. Original canvas, RDP, AMT, terminal, keyboard and other session implementations remain untouched.
 - Navy/green Night Shift composition for desktop/tablet/phone, accessible labels, focus, reduced-motion styling and mobile session-first chrome.
