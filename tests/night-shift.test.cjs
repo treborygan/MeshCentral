@@ -23,6 +23,7 @@ const serverAdmin = read('public/scripts/night-shift/server-admin.js');
 const devicesSource = read('public/scripts/night-shift/devices.js');
 const mobileControls = read('public/scripts/night-shift/mobile-controls.js');
 const shell = read('public/scripts/night-shift/shell.js');
+const sessionsSource = read('public/scripts/night-shift/sessions.js');
 
 test('native clipboard permission failures provide mobile feedback without replacing transport',()=>{
   const template=read('views/default3.handlebars');
@@ -1079,10 +1080,11 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     set textContent(value){this._text=String(value);}
     get textContent(){return this._text||'';}
     get firstChild(){return this.children[0]||null;}
-    append(...children){children.forEach(child=>{child.parentNode=this;this.children.push(child);});}
+    append(...children){children.forEach(child=>{if(child.parentNode){const old=child.parentNode.children.indexOf(child);if(old>=0)child.parentNode.children.splice(old,1);}child.parentNode=this;this.children.push(child);});}
     replaceChildren(...children){this.children=[];this.append(...children);}
     prepend(child){child.parentNode=this;this.children.unshift(child);}
     insertBefore(child,anchor){child.parentNode=this;const index=this.children.indexOf(anchor);this.children.splice(index<0?this.children.length:index,0,child);}
+    removeChild(child){const index=this.children.indexOf(child);if(index<0)throw new Error('Not a child');this.children.splice(index,1);child.parentNode=null;return child;}
     setAttribute(name,value){this.attributes[name]=String(value);}
     getAttribute(name){return this.attributes[name]??null;}
     addEventListener(name,handler){(this.events[name]||=[]).push(handler);}
@@ -1326,6 +1328,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const sessionAnnouncement=sessionTabs.children.find(node=>node.getAttribute('role')==='status');
   assert.ok(sessionAnnouncement,'Session changes have a dedicated status announcement');
   assert.equal(sessionAnnouncement.getAttribute('aria-live'),'polite');
+  assert.doesNotMatch(sessionsSource,/panel\.replaceChildren\(/,'Rerendering leaves the live region mounted for reliable announcements');
   assert.match(sessionAnnouncement.textContent,/2 remote sessions\./,'Newly opened sessions are announced after the initial render');
   window.multiDesktop['node//offline'].State=3;
   window.__NightShiftSessions.refresh();

@@ -1380,6 +1380,7 @@
     announcement.setAttribute('role','status');
     announcement.setAttribute('aria-live','polite');
     announcement.setAttribute('aria-atomic','true');
+    panel.append(announcement);
     var parent = area.parentNode || area.parentElement;
     var before = $('ns-session-diagnostics') || area;
     parent.insertBefore(panel,before);
@@ -1397,7 +1398,9 @@
     build();
     if (!panel) return;
     var open = sessions();
-    panel.replaceChildren();
+    Array.prototype.slice.call(panel.children || []).forEach(function (child) {
+      if (child !== announcement) panel.removeChild(child);
+    });
     panel.hidden = open.length === 0;
     var snapshot = Object.create(null);
     open.forEach(function (entry) {
@@ -1422,9 +1425,12 @@
       announcement.textContent = countText + (changes.length ? '. ' + changes.join(' ') : '.');
     }
     previousSessions = snapshot;
-    if (!open.length) { panel.append(announcement); return; }
+    if (!open.length) {
+      if (announcement.parentNode !== panel) panel.append(announcement);
+      return;
+    }
     var heading = create('span','ns-session-tabs-heading','Sessions');
-      panel.append(heading);
+      panel.insertBefore(heading,announcement);
     open.forEach(function (entry) {
       var name = entry.node.name || entry.node.host || 'Remote device';
       var state = sessionState(entry.session);
@@ -1438,7 +1444,7 @@
       var status = create('span','ns-session-tab-status',stateNames[state] || 'Unknown');
       tab.append(deviceName,status);
       tab.addEventListener('click',function () { switchTo(entry.id); });
-      panel.append(tab);
+      panel.insertBefore(tab,announcement);
       if (!entry.current) {
         var close = create('button','ns-session-tab-close','×');
         close.type = 'button';
@@ -1449,10 +1455,10 @@
           event.stopPropagation();
           closeSession(entry.id);
         });
-        panel.append(close);
+        panel.insertBefore(close,announcement);
       }
     });
-    panel.append(announcement);
+    if (announcement.parentNode !== panel) panel.append(announcement);
   }
   function schedule() {
     if (queued) return;

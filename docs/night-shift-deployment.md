@@ -218,3 +218,7 @@ Added `scripts/Test-MeshCentralSecurityProvenance.ps1` as a read-only audit of t
 ## Accessible session state announcements — 2026-11-05
 
 The existing native-session strip now includes a visually hidden polite status region. After its initial render it announces changes to the open session set, active device, or native connection state; initial sessions remain quiet on load. Switching and disconnecting continue to delegate to MeshCentral's native permission-aware controls. The session integration regression and full Night Shift suite passed 55/55; generated-bundle consistency, JavaScript syntax and whitespace checks passed. Source only: PRN deployment remains gated on the missing reviewed package security fixes.
+
+## Persistent session announcement region — 2026-11-05
+
+The session strip now keeps its `role=status` live region attached while replacing session controls. This avoids tearing down the live-region node during native state refreshes, which can suppress or duplicate screen-reader announcements. The focused structural-shell regression and all 55 Night Shift tests passed; generated-bundle consistency, JavaScript syntax and whitespace checks passed. Source only; PRN install remains gated by the package security audit.
