@@ -7,8 +7,9 @@
         "rule": "overused-font",
         "value": "inter",
         "createdAt": "2026-11-05T14:21:16.707Z",
-        "reason": "The approved Concept B reference explicitly sets Inter as its global interface font; preserve the user-approved visual system."
+        "reason": "user confirmed: approved Concept B specifies Inter for Night Shift"
       }
     ]
   }
 }
+
