@@ -138,6 +138,8 @@ The workflow trigger now includes every pull request update and every push to th
 
 Commit `1b11bcf6` adds a feature-detected CSS/JS overlay adapter for PRN's older native `default3.handlebars`: IME text is committed once through MeshCentral's native handler; sticky modifiers are guarded against unsupported key actions and clear safely; clipboard rejections display the existing in-page feedback. Already-enhanced native templates are not wrapped. The dock refreshes after compatibility detection so its initial modifier controls reflect validated transport support. All 63 focused Node tests and the installer fixture passed. PRN source, installed and served JS hashes match (`9536AE0B…5287C81C`); the root and both override URLs return HTTP 200, and MeshCentral, Mesh Agent, Cloudflared and MeshCentralCloudflared remain running. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-191939-d5ead2`. The signed-in browser bridge remained unavailable, so authenticated and physical-device acceptance remain open.
 
+Follow-up commit `1d556c52` refreshes the dock after legacy capability detection, limited to the authenticated app container. All 63 Node tests and installer rollback fixtures passed. The latest deployed JavaScript hash is `50C19FD5…433B3565` and is verified identical in source, installed and served assets. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-192742-e9af5f`. Authenticated browser and real-session/device acceptance remain open.
+
 
 ## Continuation recheck — 2026-11-05
 

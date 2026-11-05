@@ -385,3 +385,13 @@ Post-install source, installed and loopback-served hashes match: CSS `5028397514
 All 63 Node contract tests, bundle freshness and syntax checks passed, as did the Windows installer fixture including install/rollback. GitHub has no hosted run for commit `1b11bcf6`. The signed-in browser still cannot be inspected because the browser-control host and native pipe are unavailable, so authenticated UI and live RDP acceptance remain open.
 
 Rollback command: `pwsh -NoProfile -File scripts/Install-NightShift.ps1 -MeshRoot C:\ProgramData\MeshCentral -RollbackFrom C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-191939-d5ead2`.
+
+## Capability-refresh follow-up deployment — 2026-11-05
+
+Commit `1d556c52` refreshes the Night Shift dock after the compatibility adapter installs its stricter transport capability check. The refresh only runs when the native app container is present, so login pages and native Classic pages do not invoke app-only scheduling. All 63 Node tests passed, including login2 and Android viewport regression checks; the installer fixture passed all rollback cases.
+
+Installed through `scripts/Install-NightShift.ps1 -MeshRoot C:\ProgramData\MeshCentral -ReplaceExisting`. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-192742-e9af5f`; its manifest contains only the two web overrides and records previous JavaScript SHA-256 `9536AE0BE81DFF2A17B7EC93144BF5576E7A80B55E0E9D8722F5143A5287C81C`. Current source, installed and served CSS hash is `502839751482AC0E0773782B25F8A7CF7B6DFFA5BDC11EA2301FD8461FCBF6D7`; current JavaScript hash is `50C19FD55CD5497AECEDFCBF840DA05731C1F8F8A491FD61E6F7E0A2433B3565`. Root and both override routes return HTTP 200. MeshCentral, Mesh Agent, Cloudflared and MeshCentralCloudflared remained running; no server data, configuration or Cloudflare resource changed.
+
+PR #3 remains open/draft, with no hosted workflow run for the current head. The authenticated Chrome bridge remains unavailable, so this deployment is delivery-verified but authenticated UI and live remote-session acceptance remain open.
+
+Rollback command: `pwsh -NoProfile -File scripts/Install-NightShift.ps1 -MeshRoot C:\ProgramData\MeshCentral -RollbackFrom C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-192742-e9af5f`.
