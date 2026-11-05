@@ -2095,3 +2095,79 @@ body.ns-theme #p10info :is(input,select,textarea) {max-width:100%}
   body.ns-theme #p10info #MainComputerImage {width:72px;height:72px;margin:0}
   body.ns-theme #p10info #MainComputerState {margin:0;text-align:left}
 }
+
+/* Server statistics and tracing: responsive controls around native data views. */
+body.ns-theme :is(#p40title,#p41title) {
+  min-height:49px;
+  margin-bottom:12px;
+  padding:5px 0 12px;
+  border-bottom:1px solid var(--ns-border);
+  color:var(--ns-foreground);
+}
+body.ns-theme :is(#p40title,#p41title) h1 {margin:0;font-size:1.2rem;font-weight:720;letter-spacing:-.02em}
+body.ns-theme :is(#p40,#p41) > .areaHead {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  box-sizing:border-box;
+  width:100%;
+  margin:0 0 12px;
+  padding:10px 12px;
+  border:1px solid var(--ns-border);
+  border-radius:12px;
+  background:var(--ns-surface);
+  color:var(--ns-foreground);
+}
+body.ns-theme :is(#p40,#p41) > .areaHead > div {display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0}
+body.ns-theme :is(#p40,#p41) > .areaHead .toright2 {float:none!important;margin:0}
+body.ns-theme :is(#p40,#p41) > .areaHead :is(select,input[type="button"]) {min-height:40px;max-width:100%}
+body.ns-theme #p40type,
+body.ns-theme #p40time,
+body.ns-theme #p40server {min-width:0}
+body.ns-theme #p40log {min-height:0;vertical-align:middle}
+body.ns-theme #serverMainStats {
+  display:block;
+  box-sizing:border-box;
+  width:100%!important;
+  max-width:100%;
+  border:1px solid var(--ns-border);
+  border-radius:12px;
+  background:#111a23;
+}
+body.ns-theme #p41traceStatus {display:inline-block;max-width:100%;padding:6px 10px;border:1px solid #344550;border-radius:999px;background:#111a23;color:#c9f4a9;overflow-wrap:anywhere}
+body.ns-theme #p41events {
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  padding:8px;
+  border:1px solid var(--ns-border);
+  border-radius:12px;
+  background:#101923;
+  color:var(--ns-foreground);
+  overflow:auto;
+  scrollbar-color:#405563 var(--ns-canvas);
+}
+body.ns-theme #p41events .traceEvent {
+  min-width:0;
+  margin:0 0 5px;
+  padding:9px 11px;
+  border:1px solid #2d3b46;
+  border-radius:9px;
+  background:#151f29;
+  color:#e8f0ee;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+}
+body.ns-theme #p41events .traceEvent:hover {border-color:#526a59;background:#1b2a30}
+body.ns-theme #p41events .traceEvent:focus-visible {outline:2px solid var(--ns-focus);outline-offset:1px}
+body.ns-theme #p41events .traceEvent b {color:#b6f078;letter-spacing:.035em}
+@media(max-width:600px) {
+  body.ns-theme :is(#p40,#p41) > .areaHead {align-items:stretch;padding:9px}
+  body.ns-theme :is(#p40,#p41) > .areaHead > div {width:100%}
+  body.ns-theme :is(#p40,#p41) > .areaHead select {flex:1 1 42%;min-width:0}
+  body.ns-theme :is(#p40,#p41) > .areaHead input[type="button"] {flex:1 1 42%}
+  body.ns-theme #p40log {flex:0 0 auto}
+}

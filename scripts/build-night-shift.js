@@ -18,7 +18,8 @@ const components = [
   'public/scripts/night-shift/alerts.js',
   'public/scripts/night-shift/pwa.js',
   'public/scripts/night-shift/capabilities.js',
-  'public/scripts/night-shift/viewer.js'
+  'public/scripts/night-shift/viewer.js',
+  'public/scripts/night-shift/server-admin.js'
 ];
 const outputPath = path.join(root, 'public/scripts/custom.js');
 const output = components.map(file => fs.readFileSync(path.join(root, file), 'utf8')).join('');
@@ -33,5 +34,5 @@ if (process.argv.includes('--check')) {
   }
 } else {
   fs.writeFileSync(outputPath, output, 'utf8');
-  console.log('Built public/scripts/custom.js from fourteen Night Shift components.');
+  console.log('Built public/scripts/custom.js from fifteen Night Shift components.');
 }

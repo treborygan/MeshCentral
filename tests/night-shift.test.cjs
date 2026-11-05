@@ -19,6 +19,7 @@ const alerts = read('public/scripts/night-shift/alerts.js');
 const pwa = read('public/scripts/night-shift/pwa.js');
 const capabilities = read('public/scripts/night-shift/capabilities.js');
 const viewer = read('public/scripts/night-shift/viewer.js');
+const serverAdmin = read('public/scripts/night-shift/server-admin.js');
 const devicesSource = read('public/scripts/night-shift/devices.js');
 const mobileControls = read('public/scripts/night-shift/mobile-controls.js');
 const shell = read('public/scripts/night-shift/shell.js');
@@ -1493,4 +1494,32 @@ test('device detail pages adapt their native fields, notes and status card to mo
   assert.match(template,/id=notesPanel/);
   assert.match(template,/id="p10deviceMsg"/);
   assert.match(template,/id="p10deviceNotify"/);
+});
+
+test('server statistics and trace views stay responsive and trace rows use native click actions',()=>{
+  assert.match(css,/body\.ns-theme :is\(#p40,#p41\) > \.areaHead \{[\s\S]*?flex-wrap:wrap/);
+  assert.match(css,/body\.ns-theme #serverMainStats \{[\s\S]*?width:100%!important/);
+  assert.match(css,/body\.ns-theme #p41events \.traceEvent:focus-visible/);
+  assert.match(css,/@media\(max-width:600px\)[\s\S]*?body\.ns-theme :is\(#p40,#p41\) > \.areaHead select/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/updateServerTimelineStats\(\)/);
+  assert.match(template,/p41downloadServerTrace\(\)/);
+  assert.match(template,/class=traceEvent onclick=showTraceEvent/);
+  const row={dataset:{},textContent:'11:04 - WEB: request',attributes:{},listeners:{},clicks:0,
+    setAttribute(name,value){this.attributes[name]=String(value);},
+    addEventListener(name,callback){(this.listeners[name]||=[]).push(callback);},
+    click(){this.clicks++;}};
+  const traceRoot={querySelectorAll(selector){return selector==='.traceEvent[onclick]'?[row]:[];}};
+  const document={readyState:'complete',getElementById(id){return id==='p41events'?traceRoot:null;}};
+  const window={};
+  vm.runInNewContext(serverAdmin,{window,document,MutationObserver:class{observe(){};}},{timeout:1000});
+  assert.equal(row.tabIndex,0);
+  assert.equal(row.attributes.role,'button');
+  assert.match(row.attributes['aria-label'],/Open server trace details/);
+  let prevented=false;
+  row.listeners.keydown[0]({target:row,key:' ',preventDefault(){prevented=true;}});
+  assert.equal(prevented,true);
+  assert.equal(row.clicks,1,'Space delegates to the existing trace detail click handler');
+  window.__NightShiftServerAdmin.refresh();
+  assert.equal(row.listeners.keydown.length,1,'refresh does not duplicate event handlers');
 });
