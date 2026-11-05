@@ -54,6 +54,17 @@
       (hours ? hours + 'h ' : '') + (minutes ? minutes + 'm' : (hours ? '' : 'under 1m'));
     return duration + ' · booted ' + date.toLocaleString();
   }
+  function parseDmtfDate(value) {
+    if (typeof value !== 'string') return null;
+    var match = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\.\d{6}([+-])(\d{3})$/.exec(value);
+    if (!match) return null;
+    var parts = match.slice(1,7).map(Number), offset = Number(match[8]);
+    var utc = Date.UTC(parts[0],parts[1]-1,parts[2],parts[3],parts[4],parts[5]);
+    var local = new Date(utc);
+    if (local.getUTCFullYear() !== parts[0] || local.getUTCMonth() !== parts[1]-1 || local.getUTCDate() !== parts[2] ||
+        local.getUTCHours() !== parts[3] || local.getUTCMinutes() !== parts[4] || local.getUTCSeconds() !== parts[5] || offset > 999) return null;
+    return new Date(utc - (match[7] === '+' ? offset : -offset) * 60000);
+  }
   function update() {
     build(); if (!panel) return;
     var node = window.currentNode;
@@ -68,8 +79,8 @@
     var boot = node.lastbootuptime instanceof Date ? node.lastbootuptime : null;
     if (!boot && hardware) {
       var win = hardware.windows && hardware.windows.osinfo && hardware.windows.osinfo.LastBootUpTime;
-      if (typeof win === 'string' && /^\d{14}(?:\.\d+)?[+-]\d+$/.test(win)) {
-        boot = new Date(+win.slice(0,4), +win.slice(4,6)-1, +win.slice(6,8), +win.slice(8,10), +win.slice(10,12), +win.slice(12,14));
+      if (typeof win === 'string') {
+        boot = parseDmtfDate(win);
       } else if (hardware.linux && hardware.linux.LastBootUpTime) boot = new Date(hardware.linux.LastBootUpTime);
       else if (hardware.darwin && hardware.darwin.LastBootUpTime) boot = new Date(hardware.darwin.LastBootUpTime * 1000);
     }
@@ -143,6 +154,6 @@
     document.addEventListener('visibilitychange', update);
     window.addEventListener('resize', update, {passive:true});
   }
-  window.__NightShiftHealth = { refresh:update, formatUptime:uptime };
+  window.__NightShiftHealth = { refresh:update, formatUptime:uptime, parseDmtfDate:parseDmtfDate };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
 })();

@@ -223,6 +223,9 @@ test('elapsed uptime formatting is deterministic and rejects future boot dates',
   const boot=new Date(now-(2*24*60+3*60+4)*60000);
   assert.match(window.__NightShiftHealth.formatUptime(boot,now),/^2 days 3h · booted /);
   assert.equal(window.__NightShiftHealth.formatUptime(new Date(now+60000),now),null);
+  assert.equal(window.__NightShiftHealth.parseDmtfDate('20261105140000.000000+120').getTime(),Date.UTC(2026,10,5,12,0,0),'Windows DMTF positive UTC offset converts local boot time to UTC');
+  assert.equal(window.__NightShiftHealth.parseDmtfDate('20261105100000.000000-120').getTime(),Date.UTC(2026,10,5,12,0,0),'Windows DMTF negative UTC offset converts local boot time to UTC');
+  assert.equal(window.__NightShiftHealth.parseDmtfDate('20260230120000.000000+000'),null,'invalid calendar dates are not displayed as uptime');
 });
 
 test('history search filters only native rendered events and recordings',()=>{
