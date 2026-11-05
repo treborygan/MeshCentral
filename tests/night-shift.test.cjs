@@ -15,6 +15,7 @@ const health = read('public/scripts/night-shift/health.js');
 const history = read('public/scripts/night-shift/history.js');
 const files = read('public/scripts/night-shift/files.js');
 const actions = read('public/scripts/night-shift/actions.js');
+const alerts = read('public/scripts/night-shift/alerts.js');
 
 test('custom script bundle matches its modular source components',()=>{
   const result=spawnSync(process.execPath,['scripts/build-night-shift.js','--check'],{cwd:root,encoding:'utf8'});
@@ -52,6 +53,14 @@ test('quick power and command actions mirror MeshCentral rights and open its nat
   assert.match(actions,/131072/);
   assert.match(actions,/262144/);
   assert.doesNotMatch(actions,/meshserver\.send|poweraction|runcommands/);
+});
+
+test('connection alerts are opt-in, device-scoped, deduplicated and quiet-hours aware',()=>{
+  assert.match(alerts,/putstore\(key\(activeNode\)/);
+  assert.match(alerts,/Notification\.requestPermission/);
+  assert.match(alerts,/300000/);
+  assert.match(alerts,/quietNow/);
+  assert.doesNotMatch(alerts,/setInterval|meshserver\.send|poweraction|runcommands/);
 });
 
 function createMobileHarness(isMobile = true) {
