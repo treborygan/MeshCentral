@@ -4,7 +4,7 @@ Branch: `feature/night-shift-structural` (built on `fix/night-shift-mobile-layou
 
 ## Scope and implementation boundary
 
-This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell and device-inventory components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
+This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell, device-inventory and session-diagnostics components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
 
 Included:
 - Contextual workspace appbar with live page title, native navigation search, and a functional More menu exposing only original account-accessible sections.
@@ -26,7 +26,7 @@ The actual browser must supply MeshCentral's expected IDs. Components are create
 - Core MeshCentral behavior is preserved by delegation, but end-to-end Agent desktop, browser RDP, terminal, file transfer, Android gestures, Intel AMT, guest sessions, recordings, plugins and restricted-role workflows still require real authenticated browser acceptance.
 - The dashboard counts authenticated device objects currently loaded into `window.nodes` and derives reachable/offline from `node.conn` (Agent, AMT, or relay flags). If node data are not yet available, the device count falls back to rendered native rows and status counts remain unavailable. Counts can be paginated and are **not guaranteed to represent the server-wide total**.
 - Synthetic DOM contract tests verify the UI shell, native navigation, populated device-row count and diagnostic mapping; they do not validate a live browser or remote-control session.
-- PRN has received the structural layer from this branch (source commit `989ae01333c0fc66fa19bc5de77152228345736`) and the authenticated-navigation fix (`132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f`). The production mobile-overflow patch was synchronized to source and deployed with safe-area refinements on 2026-11-05; installed/served hashes and rollback evidence are in `night-shift-deployment.md`. Native favorites, recent-device features and the Cards/Table/Compact inventory improvements are source-tested but not deployed. Latest authenticated visual recheck remains open.
+- PRN has received the structural layer from this branch (source commit `989ae01333c0fc66fa19bc5de77152228345736`) and the authenticated-navigation fix (`132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f`). The production mobile-overflow patch was synchronized to source and deployed with safe-area refinements on 2026-11-05; installed/served hashes and rollback evidence are in `night-shift-deployment.md`. Native favorites, recent-device features, Cards/Table/Compact inventory improvements and diagnostics are source-tested but not deployed. Latest authenticated visual recheck remains open.
 
 ## Deploying safely to PCRN
 

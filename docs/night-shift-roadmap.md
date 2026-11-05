@@ -50,7 +50,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 
 - [x] Keep authentication, permissions, consent, guest sharing, recording, 2FA, native transports and Cloudflare boundaries in MeshCentral.
 - [x] Use the persistent `custom.css`/`custom.js` extension points and backup-manifest installer; rollback path is documented.
-- [x] Split JavaScript into mobile-controls, shell and device-inventory source components; regenerate the single deployable `custom.js` bundle and verify it in CI.
+- [x] Split JavaScript into mobile-controls, shell, device-inventory and session-diagnostics source components; regenerate the single deployable `custom.js` bundle and verify it in CI.
 - [x] Current automated source checks: `node scripts/build-night-shift.js --check`, `node --check public/scripts/custom.js` and `node --test tests/night-shift.test.cjs` (13 tests).
 - [x] Review current upstream security-fix ancestry and compatibility: the PR branch includes the reviewed 1.3.1 fixes; source changes remain limited to web overrides.
 - [ ] Verify the exact installed PRN source revision and confirm those upstream fixes are present before release.
@@ -62,7 +62,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 ## Current evidence and blockers
 
 - Source branch: `feature/night-shift-structural`, based on the MeshCentral 1.3.1 fork. PR #3 is open and draft.
-- The modular script build and Cards/Table/Compact inventory are source-only and have not been deployed.
+- The modular script build, Cards/Table/Compact inventory and diagnostics are source-only and have not been deployed.
 - Event-driven diagnostics are source-only. They do not poll, inspect tunnel health after authentication, or replace MeshCentral connection controls; authenticated visual acceptance is pending.
 - Upstream compatibility snapshot reviewed on 2026-11-05: `origin/master` is package version 1.3.1 at `c897d5e5`. Newer upstream commits add file-sharing download permission enforcement (`396e423b`), user-management domain-boundary enforcement (`74b24b77`), device/delegated-permission limits (`5ee4afeb`), and server-side 2FA/session-token/routing hardening (`75ebec8a`). PR #1 is based on `c897d5e5`; PRs #2 and #3 build on that branch chain, so these upstream fixes are included in the source ancestry. Night Shift changes only web override assets and tests, with no template/backend replacement. PRN package metadata confirms 1.3.1 but does not expose its exact source commit; installed-fix presence still requires source/behavior verification before release.
 - PRN deployment notes record structural source commit `989ae01333c0fc66fa19bc5de77152228345736`, followed by authenticated navigation fix `132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f`. On 2026-11-05 the synchronized mobile rules and safe-area refinement were deployed from this worktree. Local HTTP served CSS/JS exactly matching source SHA-256, and the root returned HTTP 200 with both override names present. The native favorites and recent-device source slices are not deployed; authenticated visual confirmation of the masthead update remains open.
