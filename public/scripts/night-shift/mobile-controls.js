@@ -331,18 +331,19 @@
       const inputAllowed=connected&&usable($('DeskWD'))&&!!control&&!control.disabled&&control.checked===true;
       const k=$('ns-keyboard');if(k){const keyboardOn=window._mobileKbdEnabled===true;k.disabled=!inputAllowed||typeof window.toggleMobileKeyboard!=='function';k.textContent=keyboardOn?'Keyboard on':'Keyboard off';k.setAttribute('aria-pressed',keyboardOn?'true':'false');k.setAttribute('aria-label',keyboardOn?'Hide on-screen keyboard':'Show on-screen keyboard');}
       const z=$('ns-zoom');if(z)z.disabled=!connected||typeof window.deskMobileToggleZoom!=='function';
+      const modifiersSupported=typeof window.mobileModifiersSupported==='function'?!!window.mobileModifiersSupported():!!(window.desktop&&window.desktop.m&&typeof window.desktop.m.SendKeyMsgKC==='function');
       if(!connected)modifiersOpen=false;
-      modifierToggle.hidden=typeof window.toggleMobileModifier!=='function';
+      modifierToggle.hidden=!modifiersSupported;
       modifierToggle.disabled=!connected||!control||control.disabled||control.checked!==true;
       modifierToggle.setAttribute('aria-expanded',modifiersOpen?'true':'false');
-      modifierPanel.hidden=!connected||!modifiersOpen||typeof window.toggleMobileModifier!=='function';
+      modifierPanel.hidden=!connected||!modifiersOpen||!modifiersSupported;
       const activeModifiers=Object.keys(modifierButtons).filter(mod=>nativeModifiers[mod]===true).length;
       modifierToggle.textContent=activeModifiers?'Modifiers ('+activeModifiers+')':'Modifiers';
       modifierToggle.setAttribute('aria-label',activeModifiers?'Show keyboard modifiers, '+activeModifiers+' active':'Show keyboard modifiers');
       modifierRelease.disabled=!connected||activeModifiers===0||typeof window._releaseMobileModifiers!=='function';
       Object.keys(modifierButtons).forEach(function (mod) {
         const active=nativeModifiers[mod]===true,button=modifierButtons[mod];
-        button.disabled=!connected||!control||control.disabled||control.checked!==true;
+        button.disabled=!connected||!modifiersSupported||!control||control.disabled||control.checked!==true;
         button.setAttribute('aria-pressed',active?'true':'false');
         button.setAttribute('aria-label',(active?'Release ':'Hold ')+mod.toUpperCase());
       });
@@ -366,6 +367,11 @@
   function scheduleUpdate(){
     if(refreshScheduled)return;
     refreshScheduled=true;requestAnimationFrame(()=>{refreshScheduled=false;updateNow();});
+  }
+  function releaseModifiersOnFocusLoss(){
+    const held=Object.keys(modifierButtons).some(mod=>window._mobileModifiers&&window._mobileModifiers[mod]===true);
+    if(held)nativeFunction('_releaseMobileModifiers');
+    scheduleUpdate();
   }
   function boot(){
     if(window.__NightShiftClassicMode){disableNightShiftStylesheet();installClassicRestore();return;}
@@ -399,7 +405,8 @@
     document.addEventListener('input',event=>{if(event.target&&event.target.id==='softKeyboard')scheduleUpdate();});
     addEventListener('resize',scheduleUpdate,{passive:true});
     addEventListener('orientationchange',scheduleUpdate,{passive:true});
-    document.addEventListener('visibilitychange',scheduleUpdate);
+    addEventListener('blur',releaseModifiersOnFocusLoss);
+    document.addEventListener('visibilitychange',function(){if(document.hidden)releaseModifiersOnFocusLoss();else scheduleUpdate();});
   }
   window.__nightShiftUI={version:'1.0.0',refresh:scheduleUpdate,search:showSearch,enableClassic:function(){return changeClassicMode(true);},notifyClipboardError:function(){message('Clipboard access was blocked. Allow clipboard access for this site, then try again.');}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});

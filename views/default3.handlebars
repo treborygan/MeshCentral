@@ -12729,11 +12729,17 @@
             for (var mod in ids) { var b = Q(ids[mod]); if (b) b.classList.toggle('armed', !!_mobileModifiers[mod]); }
         }
 
+        function mobileModifiersSupported() {
+            var actions = desktop && desktop.m && desktop.m.KeyAction;
+            return !!(desktop && desktop.m && typeof desktop.m.SendKeyMsgKC === 'function' && actions &&
+                typeof actions.DOWN === 'number' && typeof actions.UP === 'number' && typeof actions.EXDOWN === 'number' && typeof actions.EXUP === 'number');
+        }
+
         function _releaseMobileModifiers() {
             var dm = desktop && desktop.m;
             for (var mod in _mobileModifiers) {
                 if (_mobileModifiers[mod]) {
-                    if (dm) dm.SendKeyMsgKC((mod === 'ctrl' || mod === 'alt') ? dm.KeyAction.EXUP : dm.KeyAction.UP, _modKeyCodes[mod]);
+                    if (mobileModifiersSupported()) dm.SendKeyMsgKC((mod === 'ctrl' || mod === 'alt') ? dm.KeyAction.EXUP : dm.KeyAction.UP, _modKeyCodes[mod]);
                     _mobileModifiers[mod] = false;
                 }
             }
@@ -12741,11 +12747,12 @@
         }
 
         function toggleMobileModifier(mod) {
-            if (!desktop || !desktop.m || !Q('DeskControl').checked) return;
+            if (!mobileModifiersSupported() || !Q('DeskControl').checked || !_modKeyCodes.hasOwnProperty(mod)) return false;
             _mobileModifiers[mod] = !_mobileModifiers[mod];
             var dm = desktop.m, ext = (mod === 'ctrl' || mod === 'alt');
             dm.SendKeyMsgKC(_mobileModifiers[mod] ? (ext ? dm.KeyAction.EXDOWN : dm.KeyAction.DOWN) : (ext ? dm.KeyAction.EXUP : dm.KeyAction.UP), _modKeyCodes[mod]);
             _updateMobileModifierUI();
+            return true;
         }
 
         // Mobile soft-keyboard: focusing #softKeyboard shows the OS keyboard.

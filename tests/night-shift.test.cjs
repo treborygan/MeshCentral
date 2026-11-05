@@ -577,7 +577,7 @@ function createMobileHarness(isMobile = true, classicMode = false) {
     querySelectorAll() { return []; }
   }
   const document = {
-    readyState: 'complete', visibilityState: 'visible',
+    readyState: 'complete', visibilityState: 'visible', hidden:false,
     documentElement: new Element('html'), body: new Element('body'),
     get activeElement() { return activeElement; },
     createElement: tag => new Element(tag),
@@ -600,7 +600,10 @@ function createMobileHarness(isMobile = true, classicMode = false) {
   addExisting('DeskClipboardOutButton');
   addExisting('DeskClipboardInButton');
   const calls = [];
+  const windowEvents={};
+  const addWindowEvent=(name,fn)=>(windowEvents[name]||=[]).push(fn);
   const window = {
+    addEventListener:addWindowEvent,
     localStorage:{getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)},
     location:{reload(){reloadCount++;}},
     trackpadMode: false,
@@ -611,6 +614,7 @@ function createMobileHarness(isMobile = true, classicMode = false) {
     deskMobileToggleZoom: () => calls.push(['zoom']),
     deskToggleRightClickMode: () => calls.push(['right-click']),
     toggleMobileModifier: mod => { window._mobileModifiers[mod]=!window._mobileModifiers[mod];calls.push(['modifier',mod]); },
+    mobileModifiersSupported:()=>true,
     _releaseMobileModifiers: () => { Object.keys(window._mobileModifiers).forEach(mod=>window._mobileModifiers[mod]=false);calls.push(['release-all']); },
     deskToggleFull: event => calls.push(['fullscreen', event]),
     deskToggleMobileActions: () => calls.push(['more-actions']),
@@ -628,12 +632,12 @@ function createMobileHarness(isMobile = true, classicMode = false) {
     matchMedia: () => ({ matches: isMobile }),
     getComputedStyle: () => ({ visibility: 'visible' }),
     requestAnimationFrame: callback => callback(),
-    addEventListener() {}, setInterval() { return 1; }, clearTimeout() {}, setTimeout() { return 1; },
+    addEventListener:addWindowEvent, setInterval() { return 1; }, clearTimeout() {}, setTimeout() { return 1; },
     MutationObserver: class { observe() {} },
     MouseEvent: class { constructor(type, init = {}) { this.type = type; Object.assign(this, init); } }
   };
   vm.runInNewContext(js, context, { timeout: 1000 });
-  return { document, documentEvents, byId, calls, window, storage, styleSheet, get reloadCount(){return reloadCount;}, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement };
+  return { document, documentEvents, windowEvents, byId, calls, window, storage, styleSheet, get reloadCount(){return reloadCount;}, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement };
 }
 
 test('custom JavaScript parses and registers without requiring a live server', () => {
@@ -765,8 +769,20 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   h.byId.get('ns-mod-release').click();
   assert.deepEqual(h.calls.at(-1),['release-all'],'Release all delegates to MeshCentral native modifier cleanup');
   assert.equal(h.byId.get('ns-mod-ctrl').getAttribute('aria-pressed'),'false');
+  h.window.mobileModifiersSupported=()=>false;
+  h.window.__nightShiftUI.refresh();
+  assert.equal(h.byId.get('ns-modifier-toggle').hidden,true,'sticky modifiers are hidden when the active transport lacks native key-code support');
+  h.window.mobileModifiersSupported=()=>true;
+  h.window.__nightShiftUI.refresh();
   h.window._mobileModifiers.ctrl=true;
-  h.window._releaseMobileModifiers();
+  h.windowEvents.blur.forEach(fn=>fn());
+  assert.equal(h.window._mobileModifiers.ctrl,false,'browser focus loss releases the sticky modifier in the native session');
+  assert.deepEqual(h.calls.at(-1),['release-all'],'focus loss delegates cleanup through MeshCentral native input');
+  h.document.hidden=true;
+  h.window._mobileModifiers.alt=true;
+  h.documentEvents.visibilitychange.forEach(fn=>fn());
+  assert.equal(h.window._mobileModifiers.alt,false,'a hidden tab also releases held sticky modifiers');
+  h.document.hidden=false;
   h.documentEvents.input.forEach(fn=>fn({target:{id:'softKeyboard'}}));
   assert.equal(h.byId.get('ns-mod-ctrl').getAttribute('aria-pressed'),'false','Native soft-keyboard input releases and refreshes the modifier state');
   const deskControl=h.byId.get('DeskControl');deskControl.checked=false;
