@@ -981,7 +981,7 @@
       if (tag && (!Array.isArray(node.tags) || node.tags.indexOf(tag) < 0)) return false;
       if (!term) return true;
       var group = window.meshes && window.meshes[node.meshid];
-      var haystack = [node.name,node.rname,node.osdesc,group && group.name]
+      var haystack = [node.name,node.rname,node.osdesc,group && group.name,Array.isArray(node.tags) ? node.tags.join(' ') : '']
         .filter(Boolean).join(' ').toLowerCase();
       return haystack.includes(term);
     });
@@ -1076,7 +1076,7 @@
     });
     header.append(heading,toggle);
     var controls = create('div','ns-live-controls');
-    filter = create('input','ns-live-filter');filter.type='search';filter.placeholder='Search name, OS or device group';
+    filter = create('input','ns-live-filter');filter.type='search';filter.placeholder='Search name, OS, group or tag';
     filter.setAttribute('aria-label','Filter Night Shift device cards');
     filter.addEventListener('input',function () { term=filter.value.trim().toLowerCase();update(); });
     tabs = create('div','ns-live-tabs');tabs.setAttribute('role','group');

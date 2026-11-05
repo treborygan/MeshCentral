@@ -1126,6 +1126,12 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.ok(layoutSelect,'Inventory offers cards, table and compact layouts');
   assert.ok(sortSelect,'Inventory offers explicit sorting');
   assert.ok(tagSelect,'Inventory offers native device-tag filtering');
+  const deviceSearch=controls.children.find(node=>node.className==='ns-live-filter');
+  deviceSearch.value='critical';
+  deviceSearch.dispatchEvent({type:'input'});
+  assert.equal(inventory.children[2].children.length,1,'Free-text inventory search also matches native device tags');
+  deviceSearch.value='';
+  deviceSearch.dispatchEvent({type:'input'});
   const cards=inventory.children[2].children;
   assert.equal(cards.length,2,'Two authorized live device objects produce two cards');
   const onlineCard=cards[0].children.find(node=>node.classList.contains('ns-live-device'));
