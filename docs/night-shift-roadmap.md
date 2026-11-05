@@ -46,7 +46,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 
 - [ ] Configurable health/connection alerts with deduplication and quiet hours. (Opt-in current-device connection, CPU/memory and Windows volume free-space thresholds, per-device quiet hours, and per-key five-minute deduplication are implemented; background multi-device monitoring remains pending.)
 - [ ] Scheduled administration using existing MeshCentral mechanisms. (No native scheduled device-action mechanism was found in the current UI/API command paths reviewed. Do not emulate durable scheduling with browser timers; use the existing manual native actions until a supported server scheduler is identified.)
-- [ ] Secure installable mobile PWA behavior. (Accessible install prompt added when the browser offers `beforeinstallprompt`; manifest and worker remain MeshCentral-native. No offline shell is claimed because the native worker only handles push notifications.)
+- [ ] Secure installable mobile PWA behavior. (Accessible prompt mounts in the Night Shift appbar on browsers that offer `beforeinstallprompt`; iPhone/iPad receive manual Add to Home Screen guidance. MeshCentral’s native manifest and worker remain in place. No offline shell is claimed because the native worker only handles push notifications. Browser/platform install acceptance remains pending.)
 - [ ] Optional modular integrations and monitoring extensions.
 
 ## Security, architecture and release gates

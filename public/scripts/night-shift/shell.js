@@ -91,6 +91,7 @@
     title = create('h1', 'ns-appbar-title', 'Devices');
     left.append(breadcrumb, title);
     var right = create('div', 'ns-appbar-actions');
+    right.id = 'ns-appbar-actions';
     status = create('span', 'ns-appbar-state', 'Native MeshCentral');
     right.append(status);
     if (window.__nightShiftUI && typeof window.__nightShiftUI.search === 'function') {

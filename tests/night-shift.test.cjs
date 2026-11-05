@@ -146,8 +146,48 @@ test('PWA install shortcut uses native browser installability and user gesture',
   assert.match(pwa,/beforeinstallprompt/);
   assert.match(pwa,/deferred\.prompt\(\)/);
   assert.match(pwa,/appinstalled/);
+  assert.match(pwa,/manualInstallAvailable/);
+  assert.match(pwa,/Add to Home Screen/);
+  assert.match(read('public/scripts/night-shift/shell.js'),/right\.id = 'ns-appbar-actions'/);
   assert.doesNotMatch(pwa,/serviceWorker\.register|caches\.open|fetch\s*\(/);
   assert.match(read('views/default3.handlebars'),/rel="manifest" href="\{\{\{domainurl\}\}\}manifest\.json"/);
+});
+
+test('iOS manual installation guidance is limited to non-standalone Apple mobile browsers',()=>{
+  const window={navigator:{userAgent:'Mozilla/5.0 (iPhone)',platform:'iPhone',standalone:false},addEventListener(){},matchMedia:()=>({matches:false})};
+  const document={readyState:'loading',addEventListener(){}};
+  vm.runInNewContext(pwa,{window,document,Promise},{timeout:1000});
+  assert.equal(window.__NightShiftPwa.manualInstallAvailable(),true);
+  window.navigator.standalone=true;
+  assert.equal(window.__NightShiftPwa.manualInstallAvailable(),false);
+  window.navigator.standalone=false;window.matchMedia=()=>({matches:true});
+  assert.equal(window.__NightShiftPwa.manualInstallAvailable(),false);
+});
+
+test('PWA installs are mounted in the appbar and manual guidance is keyboard reachable',()=>{
+  class Element {
+    constructor(tag){this.tagName=tag;this.children=[];this.events={};this.attributes={};this.hidden=false;}
+    append(...children){children.forEach(child=>{child.parentNode=this;this.children.push(child);});}
+    setAttribute(key,value){this.attributes[key]=String(value);}
+    addEventListener(type,handler){(this.events[type]||=[]).push(handler);}
+    click(){(this.events.click||[]).forEach(handler=>handler({type:'click'}));}
+    focus(){this.focused=true;}
+  }
+  const host=new Element('div');host.id='ns-appbar-actions';
+  const appbar=new Element('header');appbar.id='ns-appbar';
+  const ids=new Map([[host.id,host],[appbar.id,appbar]]);
+  const window={navigator:{userAgent:'iPhone',platform:'iPhone',standalone:false},addEventListener(){},matchMedia:()=>({matches:false})};
+  const document={readyState:'loading',getElementById:id=>ids.get(id)||null,createElement:tag=>new Element(tag),addEventListener(){}};
+  vm.runInNewContext(pwa,{window,document,Promise},{timeout:1000});
+  window.__NightShiftPwa.refresh();
+  const install=host.children.find(node=>node.className==='ns-install-app');
+  const help=appbar.children.find(node=>node.className==='ns-install-help');
+  assert.equal(install.textContent,'Add to Home Screen');
+  assert.equal(install.hidden,false);
+  install.click();
+  assert.equal(help.hidden,false);
+  assert.equal(install.attributes['aria-expanded'],'true');
+  assert.equal(help.children[1].focused,true,'Opening install guidance moves focus to its close control');
 });
 
 test('device capability summary reads native tab availability without replacing navigation',()=>{

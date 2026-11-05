@@ -1368,6 +1368,11 @@ body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
 .ns-alert-status{margin:.65rem 0 0;color:var(--ns-muted,#a9bac3);font-size:.82rem}
 .ns-install-app{padding:.45rem .7rem;border:1px solid var(--ns-accent,#66d6ac);border-radius:9px;background:transparent;color:inherit;font-size:.85rem}
 .ns-install-app:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
+.ns-install-help{position:absolute;top:calc(100% + 8px);right:10px;z-index:500;display:grid;gap:.6rem;width:min(22rem,calc(100vw - 24px));padding:.9rem;border:1px solid var(--ns-line,#344652);border-radius:12px;background:var(--ns-surface,#17242e);color:var(--ns-text,#eef5f5);box-shadow:0 16px 36px #0008}
+.ns-install-help[hidden]{display:none!important}
+.ns-install-help p{margin:0;font-size:.82rem;line-height:1.5}
+.ns-install-help-close{justify-self:end;padding:.4rem .7rem;border:1px solid var(--ns-line,#344652);border-radius:8px;background:transparent;color:inherit}
+.ns-install-help-close:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
 .ns-capabilities{margin:0 0 1rem;padding:1rem;border:1px solid var(--ns-line,#344652);border-radius:14px;background:var(--ns-surface,#17242e);color:var(--ns-text,#eef5f5)}
 .ns-capabilities h3{margin:0 0 .7rem;font-size:1rem}
 .ns-capabilities-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:.5rem}
