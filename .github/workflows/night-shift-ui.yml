@@ -5,15 +5,19 @@ on:
     paths:
       - "public/styles/custom.css"
       - "public/scripts/custom.js"
+      - "public/scripts/night-shift/**"
       - "scripts/Install-NightShift.ps1"
+      - "scripts/build-night-shift.js"
       - "tests/night-shift.test.cjs"
       - ".github/workflows/night-shift-ui.yml"
   push:
-    branches: ["feature/night-shift-ui"]
+    branches: ["feature/night-shift-ui", "feature/night-shift-structural"]
     paths:
       - "public/styles/custom.css"
       - "public/scripts/custom.js"
+      - "public/scripts/night-shift/**"
       - "scripts/Install-NightShift.ps1"
+      - "scripts/build-night-shift.js"
       - "tests/night-shift.test.cjs"
       - ".github/workflows/night-shift-ui.yml"
 
@@ -30,6 +34,8 @@ jobs:
           node-version: '22'
       - name: Parse theme JavaScript
         run: node --check public/scripts/custom.js
+      - name: Verify generated script is current
+        run: node scripts/build-night-shift.js --check
       - name: Run theme contract tests
         run: node --test tests/night-shift.test.cjs
 

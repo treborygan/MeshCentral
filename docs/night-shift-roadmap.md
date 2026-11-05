@@ -50,7 +50,8 @@ Status labels: **Done** means source and the stated verification exist; it does 
 
 - [x] Keep authentication, permissions, consent, guest sharing, recording, 2FA, native transports and Cloudflare boundaries in MeshCentral.
 - [x] Use the persistent `custom.css`/`custom.js` extension points and backup-manifest installer; rollback path is documented.
-- [x] Current automated source checks: `node --check public/scripts/custom.js` and `node --test tests/night-shift.test.cjs` (12 tests).
+- [x] Split JavaScript into mobile-controls, shell and device-inventory source components; regenerate the single deployable `custom.js` bundle and verify it in CI.
+- [x] Current automated source checks: `node scripts/build-night-shift.js --check`, `node --check public/scripts/custom.js` and `node --test tests/night-shift.test.cjs` (13 tests).
 - [ ] Review current upstream security fixes and compatibility before production release.
 - [ ] Complete authenticated workflows for admin and restricted roles, Agent desktop, browser RDP, terminal, files, reconnect, guest, recordings, AMT and plugins.
 - [ ] Complete screenshot comparison and live physical-device checks; keep the PR draft until these pass.

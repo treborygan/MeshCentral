@@ -4,7 +4,7 @@ Branch: `feature/night-shift-structural` (built on `fix/night-shift-mobile-layou
 
 ## Scope and implementation boundary
 
-This slice extends the existing `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. It adds a structural layer around **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
+This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell and device-inventory components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
 
 Included:
 - Contextual workspace appbar with live page title, native navigation search, and a functional More menu exposing only original account-accessible sections.

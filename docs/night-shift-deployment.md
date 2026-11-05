@@ -6,6 +6,7 @@
 
 - Source: public/styles/custom.css → MeshCentralRoot/meshcentral-web/public/styles/custom.css
 - Source: public/scripts/custom.js → MeshCentralRoot/meshcentral-web/public/scripts/custom.js
+- Maintain `custom.js` in `public/scripts/night-shift/mobile-controls.js`, `shell.js` and `devices.js`; regenerate and verify the deployment bundle with `node scripts/build-night-shift.js` and `node scripts/build-night-shift.js --check` before installing.
 - MeshCentral supports these persistent web override locations. No server binaries or Handlebars templates are replaced.
 
 ## Install on PCRN (Windows PowerShell)

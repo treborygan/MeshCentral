@@ -14,7 +14,7 @@ The aesthetic follows the independently prototyped Night Shift concept: deep nav
 
 **Keep the MeshCentral backend, protocols, accounts, database, agents, remote desktop renderers, session state, permission decisions and Cloudflare/network ingress unchanged.**
 
-1. Night Shift uses `public/styles/custom.css` (last-loaded style override) and `public/scripts/custom.js` (built-in custom script hook). Both are additive; no original templates or input handlers are replaced.
+1. Night Shift deploys `public/styles/custom.css` and the generated `public/scripts/custom.js` through MeshCentral's persistent override hooks. Maintain JavaScript in the focused `public/scripts/night-shift/{mobile-controls,shell,devices}.js` components and run `node scripts/build-night-shift.js`; CI checks that the deployable bundle is current. The bundle remains additive; no original templates or input handlers are replaced.
 2. For an **existing installed instance**, deploy only the CSS and JS into `<meshcentral-root>/meshcentral-web/public/styles/custom.css` and `meshcentral-web/public/scripts/custom.js`. Use `scripts/Install-NightShift.ps1` for backup, installation and rollback. No package/binary replacement.
 3. Later, when CSS cannot represent a workflow change, copy **only specific** upstream `views/*.handlebars` files to `meshcentral-web/views` for a reviewed override. Template copies must be diffed/rebased on upstream upgrades. Do not use wholesale template overrides while in the initial CSS stage.
 4. Functional mobile remote-control upgrades must call existing MeshCentral desktop/RDP/AMT input interfaces. Never create a parallel relay or evade agent permissions.
