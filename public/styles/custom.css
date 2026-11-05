@@ -1547,3 +1547,79 @@ body.ns-theme #p50groups .UserGroupCheckbox {width:18px;height:18px;vertical-ali
   body.ns-theme #p50userGroupOps input {flex:1 1 42%;white-space:normal}
   body.ns-theme #p50groups .p3usersTable {min-width:500px}
 }
+
+/* Native user administration list shares the group table's visual language. */
+body.ns-theme #p4title {
+  min-height:49px;
+  margin-bottom:12px;
+  padding:5px 0 12px;
+  border-bottom:1px solid var(--ns-border);
+  color:var(--ns-foreground);
+}
+body.ns-theme #p4title h1 {margin:0;font-size:1.2rem;font-weight:720;letter-spacing:-.02em}
+body.ns-theme #p4 > .pTable {
+  width:100%;
+  margin:0 0 12px;
+  border:1px solid var(--ns-border);
+  border-radius:12px;
+  background:var(--ns-surface);
+}
+body.ns-theme #p4 > .pTable .style14 {padding:8px 10px}
+body.ns-theme #p4 > .pTable .style14 > div {display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+body.ns-theme #p4 > .pTable input[type="button"] {min-height:40px;padding:8px 12px}
+body.ns-theme #UserNewAccountButton {
+  border-color:#b6f078;
+  background:#b6f078;
+  color:#17221a;
+  font-weight:700;
+}
+body.ns-theme #UserSearchInput {flex:1 1 150px;width:auto!important;min-height:40px;margin:0!important}
+body.ns-theme #p3users {
+  max-width:100%;
+  max-height:calc(100dvh - 190px)!important;
+  overflow:auto;
+  scrollbar-color:#405563 var(--ns-canvas);
+}
+body.ns-theme #p3users .p3usersTable {
+  width:100%;
+  min-width:560px;
+  border-collapse:separate;
+  border-spacing:0 7px;
+}
+body.ns-theme #p3users .p3usersTable > tbody > tr:first-child th {
+  padding:8px 12px;
+  color:var(--ns-muted);
+  font-size:11px;
+  font-weight:650;
+  letter-spacing:.045em;
+  text-align:left;
+  text-transform:uppercase;
+}
+body.ns-theme #p3users .p3usersTable .userTableHeader {
+  padding:12px 10px 5px;
+  color:var(--ns-accent);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+body.ns-theme #p3users .p3usersTable > tbody > tr:not(:first-child) > td:not(.userTableHeader) {
+  padding:10px 12px;
+  border-block:1px solid #2d3b46;
+  background:#151f29;
+  color:var(--ns-foreground);
+}
+body.ns-theme #p3users .p3usersTable > tbody > tr:not(:first-child) > td:first-child:not(.userTableHeader) {
+  border-left:1px solid #2d3b46;
+  border-radius:10px 0 0 10px;
+}
+body.ns-theme #p3users .p3usersTable > tbody > tr:not(:first-child) > td:last-child:not(.userTableHeader) {
+  border-right:1px solid #2d3b46;
+  border-radius:0 10px 10px 0;
+}
+body.ns-theme #p3users .p3usersTable > tbody > tr:focus-visible {outline:2px solid var(--ns-focus);outline-offset:1px}
+@media(max-width:600px) {
+  body.ns-theme #p4 > .pTable .style14 > div {justify-content:stretch}
+  body.ns-theme #p4 > .pTable input[type="button"] {flex:1 1 42%;white-space:normal}
+  body.ns-theme #p3users .p3usersTable {min-width:560px}
+}

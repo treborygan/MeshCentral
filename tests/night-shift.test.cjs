@@ -1383,3 +1383,17 @@ test('native user-group management receives responsive styling without replacing
   assert.match(read('views/default.handlebars'),/function addUserGroupHtml\(group\)/);
   assert.match(read('views/default.handlebars'),/gotoUserGroup/);
 });
+
+test('native user administration keeps its permission-aware search and bulk controls responsive',()=>{
+  assert.match(css,/body\.ns-theme #p4 > \.pTable/);
+  assert.match(css,/body\.ns-theme #p3users \.p3usersTable/);
+  assert.match(css,/body\.ns-theme #UserSearchInput/);
+  assert.match(css,/body\.ns-theme #p3users \.p3usersTable > tbody > tr:focus-visible/);
+  assert.match(css,/@media\(max-width:600px\)[\s\S]*?#p3users \.p3usersTable \{min-width:560px\}/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/id=UsersSelectAllButton/);
+  assert.match(template,/id=UsersGroupActionButton/);
+  assert.match(template,/id=UserSearchInput/);
+  assert.match(template,/function addUserHtml\(user, sessions\)/);
+  assert.match(template,/gotoUser/);
+});
