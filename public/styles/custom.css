@@ -874,6 +874,25 @@ body.ns-shell-ready #p1 {min-width:0}
   border-radius:12px;
   color:#e5f2ea;
 }
+.ns-connection-profile {
+  margin:12px 0 0;
+  padding:14px 16px;
+  background:#111b25;
+  border:1px solid #2e414c;
+  border-radius:12px;
+  color:#e5f2ea;
+}
+.ns-profile-title {margin:0 0 11px;font-size:12px;font-weight:760;color:#eaf4ed}
+.ns-profile-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.ns-profile-field {display:grid;gap:5px;min-width:0}
+.ns-profile-label {font-size:10px;color:#9bafbb}
+.ns-profile-select {width:100%;min-height:37px;padding:7px 9px;background:#17232d;border:1px solid #374853;border-radius:8px;color:#e5f2ea;font:inherit;font-size:11px}
+.ns-profile-select:focus-visible,.ns-profile-button:focus-visible {outline:2px solid #b6f078;outline-offset:2px}
+.ns-profile-actions {display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.ns-profile-button {min-height:37px;padding:8px 11px;background:#1a2932;border:1px solid #465762;border-radius:9px;color:#e3eee7;font:inherit;font-size:10px;font-weight:700;cursor:pointer}
+.ns-profile-button:hover {background:#243a30;border-color:#78935e}
+.ns-profile-primary {background:#263d31;border-color:#88ae65;color:#e8ffd2}
+.ns-profile-status {margin:9px 0 0;color:#9bafbb;font-size:10px;line-height:1.45}
 .ns-session-tabs {
   display:flex;
   align-items:center;
@@ -964,6 +983,7 @@ body.ns-shell-ready.ns-native-expanded #MainMenuSpan {display:block}
   .ns-device-actions-row .ns-shell-action {min-width:0;text-align:center;padding:10px 4px;font-size:11px}
   .ns-session-protocol {display:none}
   .ns-diagnostics-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ns-profile-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
   .ns-session-tabs {margin-top:7px;padding:7px}
   .ns-session-tab {max-width:70vw;min-height:36px}
   body.ns-shell-ready.ns-session-active #ns-appbar {display:none}
@@ -981,6 +1001,8 @@ body.ns-shell-ready.ns-native-expanded #MainMenuSpan {display:block}
   .ns-kpi-name,.ns-kpi-note {font-size:10px}
   .ns-session-strip {margin:3px 0 0;padding:8px 12px;min-height:34px}
   .ns-session-diagnostics {padding:11px}
+  .ns-connection-profile {padding:11px}
+  .ns-profile-grid {gap:7px}
   .ns-diagnostics-grid {gap:6px}
   .ns-diagnostic-row {padding:8px}
 }

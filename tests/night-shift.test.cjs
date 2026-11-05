@@ -328,6 +328,9 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   add('MainDevDesktop');add('MainDevTerminal');add('MainDevFiles');
   const opened=[];
   const disconnectedSessions=[];
+  const compressionUpdates=[];
+  const monitorSelections=[];
+  let fullscreenToggles=0;
   const favoriteWrites=[];
   const updatedNativeDevices=[];
   const recentStorage=new Map();
@@ -337,6 +340,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     putstore:(key,value)=>favoriteWrites.push({key,value}),
     updateDeviceViewDevice:id=>updatedNativeDevices.push(id),
     userinfo:{_id:'user/domain/qa'},
+    desktopsettings:{agentencoding:4,framerate:50},
     navigator:{onLine:true},
     meshserver:{State:2},
     currentNode:null,
@@ -358,7 +362,8 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     },
     p1updateInfo(){},
     gotoDevice:(id)=>opened.push(id),
-    toggleKvmDevice:node=>disconnectedSessions.push(node._id)
+    toggleKvmDevice:node=>disconnectedSessions.push(node._id),
+    deskToggleFull:()=>fullscreenToggles++
   };
   vm.runInNewContext(js,{
     window,document,console,
@@ -478,6 +483,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   recentTab.click();
   assert.equal(inventory.children[2].children[0].textContent,'No recent devices yet. Open a device to add it here.','A second account cannot see the first account\'s recents');
   assert.equal(recentStorage.has('nightShiftRecentDevices:user/domain/other'),false,'Reading another account does not copy history');
+  window.userinfo={_id:'user/domain/qa'};
   page.hidden=true;remotePage.hidden=false;
   window.currentNode=window.nodes[0];
   window.multiDesktop={'node//offline':{State:1,contype:1},'node//online':{State:3,contype:1}};
@@ -494,6 +500,35 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.ok(closeArchive,'Background session tabs expose an explicit disconnect action');
   closeArchive.click();
   assert.deepEqual(disconnectedSessions,['node//offline'],'Disconnect delegates to MeshCentral native rights checks');
+  window.desktop={State:3,contype:1,m:{displays:{'0':'Display 1','1':'Display 2'},SetDisplay:index=>monitorSelections.push(index),SendCompressionLevel:(encoding,quality,scaling,framerate)=>compressionUpdates.push({encoding,quality,scaling,framerate})}};
+  window.__NightShiftProfiles.refresh();
+  const profilePanel=ids.get('ns-connection-profile');
+  assert.ok(profilePanel,'Device desktop offers a connection profile editor');
+  const profileControl=key=>profilePanel.children[1].children.find(row=>row.children[1].dataset.profileField===key).children[1];
+  profileControl('method').value='agent';
+  profileControl('monitor').value='1';
+  profileControl('scaling').value='768';
+  profileControl('quality').value='70';
+  profileControl('keyboardMap').value='remote';
+  profileControl('fullscreen').value='true';
+  profilePanel.children[2].children.find(button=>button.textContent==='Save profile').click();
+  const profileKey='nightShiftConnectionProfile:user%2Fdomain%2Fqa:node%2F%2Fonline';
+  const savedProfile=JSON.parse(recentStorage.get(profileKey));
+  assert.deepEqual(Object.keys(savedProfile).sort(),['fullscreen','keyboardMap','method','monitor','quality','scaling','version'],'Profiles persist only allow-listed display preferences');
+  assert.equal(savedProfile.quality,'70');
+  assert.deepEqual(monitorSelections,[1],'Saved monitor preference uses MeshCentral native display selection');
+  assert.deepEqual(compressionUpdates,[{encoding:4,quality:70,scaling:768,framerate:50}],'Quality and scaling apply through native MeshCentral compression settings');
+  assert.equal(window.desktop.m.remoteKeyMap,true,'Keyboard map applies through the native Agent desktop object');
+  profilePanel.children[2].children.find(button=>button.textContent==='Apply fullscreen').click();
+  assert.equal(fullscreenToggles,1,'Fullscreen preference invokes MeshCentral native viewer control on direct user action');
+  window.currentNode=window.nodes[1];window.desktop=null;window.__NightShiftProfiles.refresh();
+  profilePanel.children[1].children.find(row=>row.children[1].dataset.profileField==='method').children[1].value='agent';
+  profilePanel.children[1].children.find(row=>row.children[1].dataset.profileField==='fullscreen').children[1].value='true';
+  profilePanel.children[2].children.find(button=>button.textContent==='Connect using profile').click();
+  assert.equal(nativeConnect.clickCount,1,'Connect using a profile delegates to the enabled native Connect control');
+  assert.equal(fullscreenToggles,2,'Fullscreen preference is applied during the user-initiated profile connection flow');
+  window.currentNode=window.nodes[0];window.desktop={State:3,contype:1,m:{displays:{'0':'Display 1','1':'Display 2'},SetDisplay:index=>monitorSelections.push(index),SendCompressionLevel:(encoding,quality,scaling,framerate)=>compressionUpdates.push({encoding,quality,scaling,framerate})}};
+  window.__NightShiftProfiles.refresh();
   const diagnostics=ids.get('ns-session-diagnostics');
   assert.ok(diagnostics,'Remote workspace exposes connection diagnostics');
   const diagnostic=(kind)=>diagnostics.children.flatMap(node=>node.children).find(node=>node.dataset.kind===kind);
