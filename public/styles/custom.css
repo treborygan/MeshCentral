@@ -493,11 +493,10 @@ input:disabled { opacity: .6; cursor: not-allowed; }
     z-index:400;
     width:100%;
     min-width:0;
-    height:62px;
-    min-height:62px;
-    padding:0 16px;
-    padding-top:env(safe-area-inset-top);
-    box-sizing:content-box;
+    height:calc(62px + env(safe-area-inset-top));
+    min-height:calc(62px + env(safe-area-inset-top));
+    padding:env(safe-area-inset-top) max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left));
+    box-sizing:border-box;
     border-bottom:1px solid #31424d;
     background:#121d27!important;
     background-image:none!important;
@@ -1063,4 +1062,114 @@ body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
   body.ns-shell-ready.ns-session-active #p11 {padding-top:0!important}
   body.ns-shell-ready.ns-session-active #deskarea0 {margin-top:0}
   body.ns-shell-ready.ns-session-active #ns-session-strip {margin-top:0}
+}
+
+/* Mobile usability repairs verified on the installed MeshCentral template. */
+@media (max-width:900px) {
+  body.ns-theme #masthead {
+    box-sizing:border-box;
+    min-height:calc(62px + env(safe-area-inset-top));
+    height:auto;
+    padding:env(safe-area-inset-top) max(12px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));
+    gap:8px;
+  }
+  body.ns-theme #masthead .masthead-left {
+    flex:1 1 auto;
+    min-width:0;
+    overflow:hidden;
+  }
+  body.ns-theme #masthead .masthead-titles-container {min-width:0}
+  body.ns-theme #masthead :is(.title,.masthead-title) {
+    max-width:100%;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    text-overflow:clip;
+  }
+  body.ns-theme #masthead .masthead-right {
+    flex:0 0 auto;
+    min-width:0;
+    max-width:48%;
+    gap:6px;
+  }
+  body.ns-theme #masthead #userDropdownButton {
+    min-height:44px;
+    min-width:44px;
+    justify-content:center;
+    padding:4px;
+  }
+  body.ns-theme #masthead #userDropdownName {display:none}
+  body.ns-theme #masthead #userDropdownMenu {
+    position:fixed;
+    top:calc(62px + env(safe-area-inset-top));
+    right:max(8px,env(safe-area-inset-right));
+    left:auto;
+    width:min(280px,calc(100vw - 16px));
+    max-width:calc(100vw - 16px);
+    max-height:calc(100dvh - 82px - env(safe-area-inset-top));
+    overflow:auto;
+    z-index:1200;
+  }
+  body.ns-theme #topbar #logoutControlSpan2 {display:none!important}
+  body.ns-theme #container,
+  body.ns-theme #column_l,
+  body.ns-theme #p1,
+  body.ns-theme #p2,
+  body.ns-theme #p3,
+  body.ns-theme #p4,
+  body.ns-theme #p5,
+  body.ns-theme #p6 {box-sizing:border-box;min-width:0;max-width:100%}
+  body.ns-shell-ready #ns-appbar {
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    flex-wrap:wrap;
+    gap:8px 10px;
+    padding:10px 12px;
+  }
+  body.ns-shell-ready .ns-appbar-heading {flex:1 1 130px;min-width:0}
+  body.ns-shell-ready .ns-appbar-title {overflow-wrap:anywhere;white-space:normal}
+  body.ns-shell-ready .ns-appbar-actions {flex:0 1 auto;min-width:0;max-width:100%}
+  body.ns-shell-ready .ns-shell-search,
+  body.ns-shell-ready .ns-shell-more,
+  body.ns-shell-ready .ns-live-inventory-header .ns-shell-more {
+    min-height:44px;
+    max-width:100%;
+  }
+  body.ns-shell-ready .ns-overview-heading,
+  body.ns-shell-ready .ns-live-inventory-header {min-width:0;flex-wrap:wrap}
+  body.ns-shell-ready .ns-overview-heading h2,
+  body.ns-shell-ready .ns-hero h3,
+  body.ns-shell-ready .ns-live-inventory-header h2 {overflow-wrap:anywhere}
+  body.ns-shell-ready .ns-overview-grid {grid-template-columns:minmax(0,1fr)}
+  body.ns-shell-ready .ns-hero {grid-column:auto;min-height:0}
+  body.ns-shell-ready .ns-kpi {min-height:94px}
+  body.ns-shell-ready .ns-device-actions-row {grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.ns-shell-ready .ns-device-actions-row .ns-shell-action {
+    min-height:44px;
+    overflow-wrap:anywhere;
+  }
+  body.ns-shell-ready .ns-live-grid {grid-template-columns:minmax(0,1fr)}
+  body.ns-shell-ready .ns-live-device {min-height:132px}
+  body.ns-shell-ready .ns-live-filter-tab {min-height:44px}
+  body.ns-theme .ns-mobile-nav {
+    box-sizing:border-box;
+    height:calc(76px + env(safe-area-inset-bottom));
+    padding:5px 7px max(5px,env(safe-area-inset-bottom));
+  }
+  body.ns-theme .ns-mobile-nav-item {min-height:54px;overflow-wrap:anywhere}
+  body.ns-theme .ns-dock-action {min-height:44px}
+  body.ns-theme :is(button,input[type="button"],input[type="submit"],select,[role="button"]) {min-height:44px}
+}
+@media (max-width:430px) {
+  body.ns-theme #masthead .title2 {display:none}
+  body.ns-theme #masthead #userDropdownMenu {
+    right:max(8px,env(safe-area-inset-right));
+    max-width:calc(100vw - 16px);
+  }
+  body.ns-shell-ready #ns-appbar {align-items:flex-start}
+  body.ns-shell-ready .ns-appbar-heading {flex-basis:120px}
+  body.ns-shell-ready .ns-appbar-actions {gap:5px}
+  body.ns-shell-ready .ns-appbar-menu {right:8px;max-width:calc(100vw - 16px)}
+  body.ns-shell-ready .ns-device-actions-row {grid-template-columns:minmax(0,1fr)}
+  body.ns-theme .ns-mobile-nav-item {font-size:10px}
 }

@@ -238,6 +238,16 @@ test('Android viewport width matches the CSS mobile breakpoint without disabling
   assert.match(css, /#p2AccountSecurity,#p2AccountActions/, 'Account actions remain visible and usable');
 });
 
+test('mobile masthead stays inside the viewport and respects device safe areas', () => {
+  const masthead = css.match(/body\.ns-theme #masthead\s*\{([^}]+)\}/);
+  assert.ok(masthead, 'Mobile masthead rule exists');
+  assert.match(masthead[1], /box-sizing\s*:\s*border-box/, 'Horizontal padding must not extend the masthead beyond the viewport');
+  assert.match(masthead[1], /env\(safe-area-inset-(?:left|right)\)/, 'Masthead content respects horizontal device safe areas');
+  assert.match(css, /body\.ns-theme #masthead \.masthead-right\s*\{[^}]*max-width:48%/, 'Account controls stay within the narrow-screen masthead');
+  assert.match(css, /body\.ns-theme #masthead #userDropdownMenu\s*\{[^}]*width:min\(280px,calc\(100vw - 16px\)\)/, 'Account menu stays inside the viewport');
+  assert.match(css, /body\.ns-theme #topbar #logoutControlSpan2\s*\{display:none!important\}/, 'Legacy logout text cannot overflow the mobile masthead');
+});
+
 
 test('Night Shift structural shell uses live DOM data and native navigation', () => {
   const ids = new Map();

@@ -23,16 +23,16 @@ The actual browser must supply MeshCentral's expected IDs. Components are create
 - Core MeshCentral behavior is preserved by delegation, but end-to-end Agent desktop, browser RDP, terminal, file transfer, Android gestures, Intel AMT, guest sessions, recordings, plugins and restricted-role workflows still require real authenticated browser acceptance.
 - The dashboard counts authenticated device objects currently loaded into `window.nodes` and derives reachable/offline from `node.conn` (Agent, AMT, or relay flags). If node data are not yet available, the device count falls back to rendered native rows and status counts remain unavailable. Counts can be paginated and are **not guaranteed to represent the server-wide total**.
 - A synthetic DOM contract test verifies the UI shell, native navigation and populated device-row count; it does not validate a live browser or remote-control session.
-- **No PCRN deployment has been made from this branch.** The previously installed Night Shift CSS/JS may still be live; do not infer that the new structural layer is present.
+- PRN has received the structural layer from this branch (source commit `989ae01333c0fc66fa19bc5de77152228345736`) and the authenticated-navigation fix (`132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f`). The later production mobile-overflow patch has been synchronized to source and deployed with safe-area refinements on 2026-11-05; installed/served hashes and rollback evidence are in `night-shift-deployment.md`. Latest authenticated visual recheck remains open.
 
 ## Deploying safely to PCRN
 
 Use the existing `scripts/Install-NightShift.ps1` deployment/rollback workflow and the same **verified** MeshCentral root (`C:ProgramDataMeshCentral`). Preserve `meshcentral-data`, certificates, service, Cloudflare Tunnel and Access, database and installed agents.
 
-1. Inspect working-tree changes and confirm the checked-out branch is `feature/night-shift-structural`.
-2. Preserve the existing rollback archive (the original pre-Night-Shift backup is documented in `night-shift-deployment.md`).
-3. Run the installer with the actual root and confirm the new backup path and both override asset hashes.
-4. Test live login, permissions, desktop/device list, Android viewport, genuine MeshAgent and browser RDP sessions, terminal, file transfer, account/admin and session toolbar.
+1. Confirm branch and source checks; use the verified root `C:\ProgramData\MeshCentral`.
+2. Keep the installer-generated backup of both currently installed overrides and confirm its manifest hashes.
+3. Confirm the local HTTP listener serves the new CSS and JS byte-for-byte after install; do not restart MeshCentral unless it stops serving the overrides.
+4. Recheck authenticated login, permissions, desktop/device list, Android viewport, genuine MeshAgent and browser RDP sessions, terminal, file transfer, account/admin and session toolbar.
 5. If there is any regression, use the exact backup path printed by the installer to restore both assets. Hard-refresh to avoid cached files.
 
 ## Verification
