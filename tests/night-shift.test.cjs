@@ -39,6 +39,15 @@ test('contextual breadcrumbs route through native MeshCentral navigation',()=>{
   assert.match(shell,/window\.currentNode/);
 });
 
+test('contextual shell refreshes from native mutations and lifecycle events without polling',()=>{
+  assert.match(shell,/new MutationObserver\(schedule\)/);
+  assert.match(shell,/watchIds\.push\('p' \+ pageIndex\)/);
+  assert.match(shell,/watchIds = \['xdevices','deskstatus','connectbutton1'/);
+  assert.match(shell,/window\.addEventListener\('pageshow', schedule\)/);
+  assert.match(shell,/document\.addEventListener\('visibilitychange', schedule\)/);
+  assert.doesNotMatch(shell,/setInterval|setTimeout/);
+});
+
 test('device inventory refreshes from native changes without polling and explains empty results',()=>{
   assert.match(devicesSource,/new MutationObserver\(scheduleUpdate\)/);
   assert.match(devicesSource,/viewSelect\.addEventListener\('change',scheduleUpdate\)/);

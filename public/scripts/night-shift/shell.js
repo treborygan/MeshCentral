@@ -262,22 +262,19 @@
     if (!appbar) return;
     document.body.classList.add('ns-shell-ready');
     sync();
-    var watcher = new MutationObserver(schedule);
-    ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p10', 'p11', 'p12', 'p13',
-      'connectbutton1', 'disconnectbutton1', 'MainSubMenuSpan'].forEach(function (id) {
+    var watcher = new MutationObserver(schedule), watchIds = ['xdevices','deskstatus','connectbutton1','connectbutton1r',
+      'disconnectbutton1','MainSubMenuSpan','MainDevDesktop','MainDevTerminal','MainDevFiles','MainDevAmt'];
+    for (var pageIndex = 1; pageIndex <= 19; pageIndex++) watchIds.push('p' + pageIndex);
+    watchIds.forEach(function (id) {
       var target = $(id);
       if (target) watcher.observe(target,
-        { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'hidden'] });
+        { attributes: true, attributeFilter: ['class', 'style', 'disabled', 'hidden', 'aria-hidden'],
+          childList: id === 'xdevices' || id === 'deskstatus', characterData: id === 'deskstatus',
+          subtree: id === 'xdevices' || id === 'deskstatus' });
     });
-    var list = $('xdevices');
-    if (list) watcher.observe(list, { childList: true, subtree: true });
     window.addEventListener('resize', schedule, { passive: true });
+    window.addEventListener('pageshow', schedule);
     document.addEventListener('visibilitychange', schedule);
-    setInterval(function () {
-      if (document.visibilityState === 'visible') {
-        makeRemoteState(); makeDeviceTools(); sync();
-      }
-    }, 2500);
   }
   window.__nightShiftShell = { version: '2.0.0', refresh: schedule };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });

@@ -8,6 +8,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 
 - [x] Navy/green tokens, responsive shell and current Night Shift styling layers.
 - [x] Contextual appbar, native navigation search, permission-filtered More menu, and live-data dashboard.
+- [x] Refresh the contextual shell from native page, tab, session-control and device-list mutations plus page lifecycle events; no recurring shell poll.
 - [x] Expandable desktop navigation rail and contextual Workspace / device / route breadcrumbs; actions dispatch through native MeshCentral controls.
 - [x] Responsive live inventory with card/table/compact layouts, native device-tag chips and filtering, search, sorting, favorites, connection filters, native bulk-selection/group actions, and native-list fallback.
 - [x] Refresh live inventory from native list mutations and view changes rather than a recurring poll; provide account-scoped, filter-aware empty states and a clear-filters action.
