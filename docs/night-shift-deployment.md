@@ -88,6 +88,14 @@ Hard-refresh after rollback. Restore both override files independently; if a tar
 - After installation, source, installed and served CSS SHA-256 all match `2BEA4C158383378CC211FDD45C48CC3C8590127E26CA6D1B0B2285C55FC1B9CE`; JS hashes all match `BBDABBD8DD94A53287A58711F845D0857AC8174D78742BE2D666D699371810D7`. Root returned HTTP 200.
 - Authenticated user-role visual and workflow acceptance remain outstanding.
 
+## Device Details layout — 2026-11-05
+
+- Installed source commit: `d73e9d63` (`feat(ui): make device details responsive`).
+- Verified PRN root and asset endpoints returned HTTP 200 before the standard installer ran. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-120920-ea39af`.
+- Snapshot manifest records previous CSS SHA-256 `2BEA4C158383378CC211FDD45C48CC3C8590127E26CA6D1B0B2285C55FC1B9CE` and JS SHA-256 `BBDABBD8DD94A53287A58711F845D0857AC8174D78742BE2D666D699371810D7`.
+- Post-install source, installed and served CSS SHA-256 all match `FE86DF1084427D5989DF0F8D6177874413FBFE444920E18D2D81DA3CB92B47B7`; JS hashes all match `BBDABBD8DD94A53287A58711F845D0857AC8174D78742BE2D666D699371810D7`. Root returned HTTP 200.
+- Authenticated device/role and visual acceptance remain outstanding.
+
 ## Structural UI branch rollout — 2026-11-04
 
 The structural Night Shift revision was installed on PCRN from PR #3 source commit `989ae01333c0fc66fa19bc5de77152228345736`. The PR remains a draft; its latest source revision at the time of installation is recorded here so deployment evidence is not mistaken for release acceptance.
