@@ -327,6 +327,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   list.deviceCheckboxes=[new MockElement('input'),new MockElement('input')];
   add('MainDevDesktop');add('MainDevTerminal');add('MainDevFiles');
   const opened=[];
+  const disconnectedSessions=[];
   const favoriteWrites=[];
   const updatedNativeDevices=[];
   const recentStorage=new Map();
@@ -356,7 +357,8 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
       nativeGroupAction.disabled=Object.keys(window.checkedNodeids).length===0;
     },
     p1updateInfo(){},
-    gotoDevice:(id)=>opened.push(id)
+    gotoDevice:(id)=>opened.push(id),
+    toggleKvmDevice:node=>disconnectedSessions.push(node._id)
   };
   vm.runInNewContext(js,{
     window,document,console,
@@ -478,7 +480,20 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(recentStorage.has('nightShiftRecentDevices:user/domain/other'),false,'Reading another account does not copy history');
   page.hidden=true;remotePage.hidden=false;
   window.currentNode=window.nodes[0];
+  window.multiDesktop={'node//offline':{State:1,contype:1},'node//online':{State:3,contype:1}};
   window.__NightShiftDiagnostics.refresh();
+  window.__NightShiftSessions.refresh();
+  const sessionTabs=ids.get('ns-session-tabs');
+  assert.ok(sessionTabs,'Remote workspace exposes tabs for native live sessions');
+  assert.equal(sessionTabs.children.filter(node=>node.classList.contains('ns-session-tab')).length,2,'Tabs enumerate existing and connecting native sessions');
+  const archiveTab=sessionTabs.children.find(node=>node.dataset.sessionId==='node//offline');
+  assert.ok(archiveTab,'Session tabs identify sessions by native device ID');
+  archiveTab.click();
+  assert.equal(opened.at(-1),'node//offline','Switching a tab delegates to native gotoDevice permissions and routing');
+  const closeArchive=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close'));
+  assert.ok(closeArchive,'Background session tabs expose an explicit disconnect action');
+  closeArchive.click();
+  assert.deepEqual(disconnectedSessions,['node//offline'],'Disconnect delegates to MeshCentral native rights checks');
   const diagnostics=ids.get('ns-session-diagnostics');
   assert.ok(diagnostics,'Remote workspace exposes connection diagnostics');
   const diagnostic=(kind)=>diagnostics.children.flatMap(node=>node.children).find(node=>node.dataset.kind===kind);

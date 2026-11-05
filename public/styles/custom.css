@@ -874,6 +874,44 @@ body.ns-shell-ready #p1 {min-width:0}
   border-radius:12px;
   color:#e5f2ea;
 }
+.ns-session-tabs {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  margin:10px 0 0;
+  padding:8px 10px;
+  overflow-x:auto;
+  overscroll-behavior-x:contain;
+  background:#111b25;
+  border:1px solid #2e414c;
+  border-radius:11px 11px 0 0;
+  scrollbar-width:thin;
+}
+.ns-session-tabs[hidden] {display:none!important}
+.ns-session-tabs-heading {flex:0 0 auto;padding:0 4px;color:#91a7b5;font-size:10px;font-weight:760;text-transform:uppercase;letter-spacing:.08em}
+.ns-session-tab {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:0 0 auto;
+  max-width:min(250px,65vw);
+  min-height:38px;
+  padding:7px 10px;
+  background:#17232d;
+  border:1px solid #33434e;
+  border-radius:9px;
+  color:#dce9e2;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+.ns-session-tab[aria-selected="true"] {background:#263d31;border-color:#88ae65;color:#e8ffd2}
+.ns-session-tab:focus-visible,.ns-session-tab-close:focus-visible {outline:2px solid #b6f078;outline-offset:2px}
+.ns-session-tab-name {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:700}
+.ns-session-tab-status {flex:0 0 auto;color:#9bb09f;font-size:9px}
+.ns-session-tab-close {flex:0 0 30px;width:30px;height:30px;margin-left:-5px;background:transparent;border:1px solid transparent;border-radius:8px;color:#aebdb5;font-size:17px;cursor:pointer}
+.ns-session-tab-close:hover {background:#3b292c;border-color:#72464b;color:#ffd7d7}
 .ns-diagnostics-title {margin:0 0 10px;font-size:12px;font-weight:760;color:#eaf4ed}
 .ns-diagnostics-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .ns-diagnostic-row {display:grid;gap:4px;min-width:0;padding:9px 11px;background:#17232d;border:1px solid #2b3a45;border-radius:9px}
@@ -926,6 +964,8 @@ body.ns-shell-ready.ns-native-expanded #MainMenuSpan {display:block}
   .ns-device-actions-row .ns-shell-action {min-width:0;text-align:center;padding:10px 4px;font-size:11px}
   .ns-session-protocol {display:none}
   .ns-diagnostics-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ns-session-tabs {margin-top:7px;padding:7px}
+  .ns-session-tab {max-width:70vw;min-height:36px}
   body.ns-shell-ready.ns-session-active #ns-appbar {display:none}
   body.ns-shell-ready.ns-session-active #masthead {min-height:0}
 }

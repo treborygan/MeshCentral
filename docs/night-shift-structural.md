@@ -4,7 +4,7 @@ Branch: `feature/night-shift-structural` (built on `fix/night-shift-mobile-layou
 
 ## Scope and implementation boundary
 
-This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell, device-inventory and session-diagnostics components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
+This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell, device-inventory, session-diagnostics and multi-session-tabs components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
 
 Included:
 - Contextual workspace appbar with live page title, native navigation search, and a functional More menu exposing only original account-accessible sections.
@@ -15,6 +15,7 @@ Included:
 - Quick device actions using native Desktop, Terminal and Files handlers. Advanced device tabs, plugins, permissions and original controls remain available.
 - Contextual remote-session strip with connection text derived from MeshCentral's existing Disconnect control. Original canvas, RDP, AMT, terminal, keyboard and other session implementations remain untouched.
 - Event-driven remote-session diagnostics report browser online state, MeshCentral socket state, native Agent/AMT route flags, session transport/state, and whether the native display canvas is mounted. A shortcut focuses the existing native Connect control. Updates use browser events and a scoped DOM observer rather than polling. Cloudflare Access/tunnel health is labeled as not observable after page load; this UI does not infer it from an authenticated session.
+- A remote-session tab bar enumerates the active viewer and existing MeshCentral `multiDesktop` sessions. Switching calls the native `gotoDevice()` route and closing a background session calls `toggleKvmDevice()`, retaining upstream navigation, permission and session behavior. No new connection is started by the tab bar and no session data is saved to browser storage.
 - Navy/green Night Shift composition for desktop/tablet/phone, accessible labels, focus, reduced-motion styling and mobile session-first chrome.
 - Existing mobile touch controls, command search, login2 theming and viewport corrections inherited from previous PRs.
 
@@ -26,7 +27,7 @@ The actual browser must supply MeshCentral's expected IDs. Components are create
 - Core MeshCentral behavior is preserved by delegation, but end-to-end Agent desktop, browser RDP, terminal, file transfer, Android gestures, Intel AMT, guest sessions, recordings, plugins and restricted-role workflows still require real authenticated browser acceptance.
 - The dashboard counts authenticated device objects currently loaded into `window.nodes` and derives reachable/offline from `node.conn` (Agent, AMT, or relay flags). If node data are not yet available, the device count falls back to rendered native rows and status counts remain unavailable. Counts can be paginated and are **not guaranteed to represent the server-wide total**.
 - Synthetic DOM contract tests verify the UI shell, native navigation, populated device-row count and diagnostic mapping; they do not validate a live browser or remote-control session.
-- PRN has received the structural layer from this branch (source commit `989ae01333c0fc66fa19bc5de77152228345736`) and the authenticated-navigation fix (`132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f`). The production mobile-overflow patch was synchronized to source and deployed with safe-area refinements on 2026-11-05; installed/served hashes and rollback evidence are in `night-shift-deployment.md`. Native favorites, recent-device features, Cards/Table/Compact inventory improvements and diagnostics are source-tested but not deployed. Latest authenticated visual recheck remains open.
+- PRN has received the structural layer from this branch (source commit `989ae01333c0fc66fa19bc5de77152228345736`) and the authenticated-navigation fix (`132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f`). The production mobile-overflow patch was synchronized to source and deployed with safe-area refinements on 2026-11-05; installed/served hashes and rollback evidence are in `night-shift-deployment.md`. Native favorites, recent-device features, Cards/Table/Compact inventory improvements, diagnostics and session tabs are source-tested but not deployed. Latest authenticated visual recheck remains open.
 
 ## Deploying safely to PCRN
 
