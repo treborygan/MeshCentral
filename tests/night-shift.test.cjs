@@ -1321,6 +1321,9 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(sessionTabs.parentNode,column,'Open sessions remain available from the shared workspace, outside the hidden remote desktop page');
   assert.ok(column.children.indexOf(sessionTabs)<column.children.indexOf(page),'Session navigation appears before native workspace pages');
   assert.equal(sessionTabs.children.filter(node=>node.classList.contains('ns-session-tab')).length,2,'Tabs enumerate existing and connecting native sessions');
+  remotePage.hidden=true;page.hidden=false;window.__NightShiftSessions.refresh();
+  assert.equal(sessionTabs.hidden,false,'Open session navigation remains visible after leaving the Remote Desktop page');
+  remotePage.hidden=false;page.hidden=true;window.__NightShiftSessions.refresh();
   assert.equal(sessionTabs.getAttribute('role'),null,'Session navigation does not claim tablist semantics without tab keyboard behavior');
   const archiveTab=sessionTabs.children.find(node=>node.dataset.sessionId==='node//offline');
   assert.ok(archiveTab,'Session tabs identify sessions by native device ID');
