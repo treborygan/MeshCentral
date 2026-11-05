@@ -1343,7 +1343,11 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   window.__NightShiftProfiles.refresh();
   const profilePanel=ids.get('ns-connection-profile');
   assert.ok(profilePanel,'Device desktop offers a connection profile editor');
-  const profileControl=key=>profilePanel.children[1].children.find(row=>row.children[1].dataset.profileField===key).children[1];
+  const keyboardMapControl=profilePanel.children[1].children.find(node=>node.id==='ns-profile-keyboard-map-help');
+  assert.ok(keyboardMapControl,'Keyboard mapping help is included beside the profile controls');
+  assert.match(keyboardMapControl.textContent,/MeshAgent desktop.*Browser RDP and Intel AMT/i,'The UI explains which transports support this keyboard-map setting');
+  assert.equal(profilePanel.children[1].children.find(row=>row.children[1]&&row.children[1].dataset.profileField==='keyboardMap').children[1].getAttribute('aria-describedby'),'ns-profile-keyboard-map-help','Keyboard-map guidance is associated with its control for assistive technology');
+  const profileControl=key=>profilePanel.children[1].children.find(row=>row.children[1]&&row.children[1].dataset.profileField===key).children[1];
   profileControl('method').value='agent';
   profileControl('monitor').value='1';
   profileControl('scaling').value='768';
@@ -1364,8 +1368,8 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   profilePanel.children[2].children.find(button=>button.textContent==='Apply fullscreen').click();
   assert.equal(fullscreenToggles,1,'Fullscreen preference invokes MeshCentral native viewer control on direct user action');
   window.currentNode=window.nodes[1];window.desktop=null;window.__NightShiftProfiles.refresh();
-  profilePanel.children[1].children.find(row=>row.children[1].dataset.profileField==='method').children[1].value='agent';
-  profilePanel.children[1].children.find(row=>row.children[1].dataset.profileField==='fullscreen').children[1].value='true';
+  profilePanel.children[1].children.find(row=>row.children[1]&&row.children[1].dataset.profileField==='method').children[1].value='agent';
+  profilePanel.children[1].children.find(row=>row.children[1]&&row.children[1].dataset.profileField==='fullscreen').children[1].value='true';
   profilePanel.children[2].children.find(button=>button.textContent==='Connect using profile').click();
   assert.equal(nativeConnect.clickCount,1,'Connect using a profile delegates to the enabled native Connect control');
   assert.equal(fullscreenToggles,2,'Fullscreen preference is applied during the user-initiated profile connection flow');

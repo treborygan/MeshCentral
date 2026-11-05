@@ -92,6 +92,10 @@
     addOption(controls.keyboardMap,'native','Native keyboard map');
     addOption(controls.keyboardMap,'remote','Remote keyboard map');
     field(grid,'Keyboard layout map',controls.keyboardMap);
+    controls.keyboardMap.setAttribute('aria-describedby','ns-profile-keyboard-map-help');
+    var keyboardMapHelp = create('p','ns-profile-help','This map applies to MeshAgent desktop. Browser RDP and Intel AMT use their native keyboard handling.');
+    keyboardMapHelp.id = 'ns-profile-keyboard-map-help';
+    grid.append(keyboardMapHelp);
     controls.fullscreen = create('select','ns-profile-select');
     controls.fullscreen.dataset.profileField = 'fullscreen';
     addOption(controls.fullscreen,'false','Windowed');
