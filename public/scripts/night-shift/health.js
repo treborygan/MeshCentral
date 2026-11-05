@@ -4,7 +4,7 @@
   if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftHealth) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, values = {}, lastNodeId = null;
+  var panel, values = {}, lastNodeId = null, sampleTimer = null, latestSample = null;
   function create(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -76,9 +76,15 @@
   function update() {
     build(); if (!panel) return;
     var node = window.currentNode;
-    if (!node) { lastNodeId = null; Object.keys(values).forEach(function (key) { values[key].textContent = 'Unavailable'; }); return; }
+    if (!node) {
+      lastNodeId = null; latestSample = null;
+      if (sampleTimer !== null) { clearTimeout(sampleTimer); sampleTimer = null; }
+      Object.keys(values).forEach(function (key) { values[key].textContent = 'Unavailable'; }); return;
+    }
     if (lastNodeId !== node._id) {
       lastNodeId = node._id;
+      latestSample = null;
+      if (sampleTimer !== null) { clearTimeout(sampleTimer); sampleTimer = null; }
       values.cpu.textContent = 'Unavailable'; values.memory.textContent = 'Unavailable';
     }
     values.connection.textContent = connectionRoutes(node.conn);
@@ -110,8 +116,15 @@
   }
   function acceptSample(sample) {
     if (!sample || sample.nodeid !== (window.currentNode && window.currentNode._id)) return;
+    latestSample = sample;
+    if (sampleTimer !== null) clearTimeout(sampleTimer);
     values.cpu.textContent = typeof sample.cpu === 'number' && isFinite(sample.cpu) ? sample.cpu.toFixed(1) + '%' : 'Unavailable';
     values.memory.textContent = typeof sample.memory === 'number' && isFinite(sample.memory) ? sample.memory.toFixed(1) + '%' : 'Unavailable';
+    sampleTimer = setTimeout(function () {
+      if (latestSample !== sample) return;
+      latestSample = null; sampleTimer = null;
+      values.cpu.textContent = 'Unavailable'; values.memory.textContent = 'Unavailable';
+    },6000);
   }
   function installChartHook() {
     var chart = window.deviceDetailsStatsChart;
@@ -135,6 +148,8 @@
     if (typeof nativeClear !== 'function' || nativeClear.__nightShiftHealthHook) return;
     var wrappedClear = function () {
       var result = nativeClear.apply(this,arguments);
+      latestSample = null;
+      if (sampleTimer !== null) { clearTimeout(sampleTimer); sampleTimer = null; }
       values.cpu.textContent = 'Unavailable'; values.memory.textContent = 'Unavailable';
       return result;
     };

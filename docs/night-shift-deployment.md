@@ -250,3 +250,7 @@ When notification permission is granted but the browser/OS rejects construction 
 ## Alert permission refresh on browser focus — 2026-11-05
 
 The alert permission-guidance region now refreshes on both document visibility changes and window focus, covering return from browser site-notification settings without replacing the latest alert announcement. Alert-focused tests and the full 57-test suite passed; bundle consistency, JavaScript syntax and whitespace checks passed. Source only; no PRN install was made.
+
+## Device health sample freshness — 2026-11-05
+
+The CPU/memory summary now returns to Unavailable when native graph updates stop for six seconds (three missed two-second updates). A newer native sample supersedes the prior expiry, and native graph cleanup and device switching still clear the summary immediately. This uses a one-shot timeout per sample and adds no telemetry requests or recurring polling. Focused health tests passed; broad verification is recorded with the source commit. Source only; no PRN install was made.

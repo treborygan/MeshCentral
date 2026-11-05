@@ -217,6 +217,38 @@ test('device health uses cached native details and delegates CPU graph to MeshCe
   assert.equal(memory.textContent,'Unavailable','switching devices cannot display the prior device memory sample');
 });
 
+test('device health expires CPU and memory values after native graph samples stop',()=>{
+  const ids=new Map(), timers=new Map(); let nextTimer=0, controlHandler;
+  class Element {
+    constructor(){this.children=[];this.parentNode=null;this.textContent='';}
+    set id(value){this._id=value;ids.set(value,this);} get id(){return this._id||'';}
+    append(...nodes){nodes.forEach(node=>{node.parentNode=this;this.children.push(node);});}
+    insertBefore(node,anchor){node.parentNode=this;const index=this.children.indexOf(anchor);this.children.splice(index<0?this.children.length:index,0,node);}
+    setAttribute(){}
+    addEventListener(name,fn){if(name==='click')controlHandler=fn;}
+  }
+  const parent=new Element(),host=new Element();host.id='p17info';parent.append(host);
+  const info=new Element();info.id='p17info2';host.append(info);const page=new Element();page.id='p17';
+  const graphControl={addEventListener(name,fn){if(name==='click')controlHandler=fn;}};
+  const window={currentNode:{_id:'node/a',conn:1},deviceDetailsStatsData:[[1,41.2,67.5]],deviceDetailsStatsChart:{update(){}},addEventListener(){}};
+  const document={readyState:'complete',getElementById:id=>ids.get(id)||null,querySelector:()=>graphControl,addEventListener(){},createElement:()=>new Element()};
+  const setTimeout=(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay});return id;};
+  const clearTimeout=id=>timers.delete(id);
+  vm.runInNewContext(health,{window,document,console,MutationObserver:undefined,Date,isFinite,setTimeout,clearTimeout},{timeout:1000});
+  controlHandler();
+  const install=[...timers.entries()].find(([,timer])=>timer.delay===0); install[1].fn(); timers.delete(install[0]);
+  window.deviceDetailsStatsChart.update();
+  const grid=ids.get('ns-device-health').children[1],cpu=grid.children[2].children[1],memory=grid.children[3].children[1];
+  assert.equal(cpu.textContent,'41.2%');assert.equal(memory.textContent,'67.5%');
+  let expiry=[...timers.values()].find(timer=>timer.delay===6000);assert.ok(expiry,'a single six-second expiry is scheduled');
+  window.deviceDetailsStatsData.push([2,42,68]);window.deviceDetailsStatsChart.update();
+  expiry.fn();
+  assert.equal(cpu.textContent,'42.0%','an older expiry cannot clear a newer sample');
+  expiry=[...timers.values()].find(timer=>timer.delay===6000&&timer.fn!==expiry.fn);
+  assert.ok(expiry,'the newest sample has its own expiry');expiry.fn();
+  assert.equal(cpu.textContent,'Unavailable');assert.equal(memory.textContent,'Unavailable');
+});
+
 test('elapsed uptime formatting is deterministic and rejects future boot dates',()=>{
   const window={};
   const document={readyState:'loading',addEventListener(){}};
