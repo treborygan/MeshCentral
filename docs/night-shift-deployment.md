@@ -202,3 +202,7 @@ The source change replaces the misleading `Agent status` label with native `Conn
 ## Recording keyboard access — 2026-11-05
 
 Native MeshCentral recording rows already open their detail dialog with Enter. Night Shift now maps Space on the focused row to that same native key handler, prevents page scrolling, and leaves nested links and controls untouched. The non-bubbling keyboard event does not invoke unrelated page shortcuts. The focused regression passed, the full Night Shift suite passed 55/55, and bundle consistency and JavaScript syntax checks passed. Source only; no PRN install was made while the security release gate remains open.
+
+## Socket-state diagnostics update — 2026-11-05
+
+Remote-session diagnostics now wrap MeshCentral's native `meshserver.onStateChanged` callback and schedule a status refresh after each disconnect or reconnect. The wrapper forwards the original `this` and arguments, returns its value, and uses `finally` so native exceptions propagate while the status still refreshes. A regression verifies both state transitions and native callback behavior. The full Night Shift suite passed 55/55, with bundle consistency and JavaScript syntax checks passing. This is source-only; the PRN security release gate remains open.

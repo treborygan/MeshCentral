@@ -4,7 +4,7 @@
   if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftDiagnostics) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, rows = {}, actionButton, guidance, queued = false;
+  var panel, rows = {}, actionButton, guidance, queued = false, controlStateHookServer = null;
   var stateNames = ['Disconnected','Connecting','Setting up','Connected','Connected'];
   function create(tag, cls, text) {
     var node = document.createElement(tag);
@@ -121,9 +121,21 @@
     queued = true;
     requestAnimationFrame(function () { queued = false; update(); });
   }
+  function installControlStateHook() {
+    var server = window.meshserver, native = server && server.onStateChanged;
+    if (!server || typeof native !== 'function' || server === controlStateHookServer) return;
+    var wrapped = function () {
+      try { return native.apply(this,arguments); }
+      finally { schedule(); }
+    };
+    wrapped.__nightShiftDiagnosticsHook = true;
+    server.onStateChanged = wrapped;
+    controlStateHookServer = server;
+  }
   function boot() {
     if (!$('p11') || !$('deskarea0')) return;
     build();
+    installControlStateHook();
     update();
     if (typeof MutationObserver === 'function') {
       var observer = new MutationObserver(schedule);

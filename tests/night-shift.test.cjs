@@ -1142,7 +1142,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     userinfo:{_id:'user/domain/qa'},
     desktopsettings:{agentencoding:4,framerate:50},
     navigator:{onLine:true},
-    meshserver:{State:2},
+    meshserver:{State:2,nativeStateChanges:0,onStateChanged(){this.nativeStateChanges++;return 'native state result';}},
     currentNode:null,
     desktop:null,
     localStorage:{
@@ -1367,6 +1367,12 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.ok(diagnostic('browser'),'Browser diagnostic row is present');
   assert.equal(diagnostic('browser').children[1].textContent,'Online','Browser connectivity uses navigator.onLine');
   assert.equal(diagnostic('control').children[1].textContent,'Connected','MeshCentral control-channel state uses the native socket');
+  window.meshserver.State=0;
+  assert.equal(window.meshserver.onStateChanged(window.meshserver,0,2),'native state result','Control-state observation preserves the native callback return value');
+  assert.equal(window.meshserver.nativeStateChanges,1,'Control-state observation still calls MeshCentral’s native callback');
+  assert.equal(diagnostic('control').children[1].textContent,'Disconnected','Socket disconnect updates diagnostics directly from the native state event');
+  window.meshserver.State=2;window.meshserver.onStateChanged(window.meshserver,2,0);
+  assert.equal(diagnostic('control').children[1].textContent,'Connected','Socket reconnect updates diagnostics without another DOM mutation');
   assert.equal(diagnostic('device').children[1].textContent,'Agent via relay','Device route reports native agent and relay flags');
   assert.equal(diagnostic('cloudflare').children[1].textContent,'Not observable after page load','The UI does not infer Cloudflare tunnel health from an authenticated page');
   const savedDesktop=window.desktop;window.currentNode.conn=0;window.desktop=null;window.__NightShiftDiagnostics.refresh();
