@@ -962,7 +962,7 @@
   'use strict';
   if (window.__NightShiftDiagnostics) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, rows = {}, actionButton, queued = false;
+  var panel, rows = {}, actionButton, guidance, queued = false;
   var stateNames = ['Disconnected','Connecting','Setting up','Connected','Connected'];
   function create(tag, cls, text) {
     var node = document.createElement(tag);
@@ -992,10 +992,16 @@
     appendRow(list,'display','Remote display');
     appendRow(list,'cloudflare','Cloudflare Access');
     panel.append(list);
+    guidance = create('p','ns-diagnostics-guidance','');
+    guidance.setAttribute('aria-live','polite');
+    guidance.setAttribute('aria-atomic','true');
+    panel.append(guidance);
     actionButton = create('button','ns-diagnostics-action','Show native connection controls');
     actionButton.type = 'button';
     actionButton.addEventListener('click',function () {
-      var controls = ['connectbutton1','connectbutton1r','connectbutton1h'];
+      var state = window.desktop && (Number.isInteger(window.desktop.State) ? window.desktop.State : window.desktop.state);
+      var recoveringDisplay = Number.isInteger(state) && state >= 3 && !($('Desk') && $('Desk').getClientRects && $('Desk').getClientRects().length);
+      var controls = recoveringDisplay ? ['disconnectbutton1','connectbutton1','connectbutton1r','connectbutton1h'] : ['connectbutton1','connectbutton1r','connectbutton1h'];
       for (var i = 0; i < controls.length; i++) {
         var target = $(controls[i]);
         var visible = !!target && !target.disabled && target.getAttribute('aria-disabled') !== 'true' &&
@@ -1046,9 +1052,22 @@
     var desktopState = desktop && (Number.isInteger(desktop.State) ? desktop.State : desktop.state);
     var active = Number.isInteger(desktopState) && desktopState >= 3;
     var canvas = $('Desk');
-    rows.display.textContent = active ? (canvas && canvas.getClientRects && canvas.getClientRects().length ? 'Canvas mounted' : 'Connected; canvas not mounted') : 'No active display session';
+    var canvasMounted = !!(canvas && canvas.getClientRects && canvas.getClientRects().length);
+    rows.display.textContent = active ? (canvasMounted ? 'Canvas mounted' : 'Connected; canvas not mounted') : 'No active display session';
     rows.cloudflare.textContent = 'Not observable after page load';
-    if (actionButton) actionButton.hidden = active;
+    if (actionButton) actionButton.hidden = active && canvasMounted;
+    if (guidance) {
+      var route = window.currentNode && typeof window.currentNode.conn === 'number' ? window.currentNode.conn : null;
+      var next = 'Choose a native connection control to start a remote session.';
+      if (browser === 'Offline') next = 'This browser is offline. Restore network access, then check the native connection status.';
+      else if (typeof socket === 'number' && socket !== 2) next = 'The MeshCentral control channel is disconnected. Restore the page connection before reconnecting a device.';
+      else if (route !== null && (route & 15) === 0) next = 'No Agent or AMT route is currently reported for this device. Check that it is online, then use the native Connect controls.';
+      else if (Number.isInteger(desktopState) && (desktopState === 1 || desktopState === 2)) next = 'The native remote session is still connecting. Wait for its state to change before retrying.';
+      else if (active && !canvasMounted) next = 'The session reports connected, but the display canvas is not mounted. Use the native Disconnect control before reconnecting.';
+      else if (active) next = 'The native session is connected. Connection, input, monitor and recording controls remain available in MeshCentral.';
+      else if (window.currentNode && typeof route === 'number') next = 'Device route status is shown above. Start, change or reset the session with MeshCentral’s native controls.';
+      guidance.textContent = next;
+    }
   }
   function schedule() {
     if (queued) return;

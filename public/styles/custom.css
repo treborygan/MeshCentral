@@ -954,6 +954,7 @@ body.ns-shell-ready #p1 {min-width:0}
 .ns-diagnostic-row {display:grid;gap:4px;min-width:0;padding:9px 11px;background:#17232d;border:1px solid #2b3a45;border-radius:9px}
 .ns-diagnostic-label {font-size:10px;color:#93a7b4}
 .ns-diagnostic-value {overflow-wrap:anywhere;font-size:11px;color:#e3f0e8}
+.ns-diagnostics-guidance{margin:9px 0 0;padding:9px 11px;border-left:2px solid #b6f078;border-radius:0 8px 8px 0;background:#17232d;color:#dce8e2;font-size:11px;line-height:1.5}
 .ns-diagnostics-action {margin-top:10px;min-height:38px;padding:8px 12px;border:1px solid #718b58;border-radius:9px;background:#22352c;color:#d9ffa9;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
 .ns-diagnostics-action:hover {background:#2b4438}
 .ns-diagnostics-action:focus-visible {outline:2px solid #b6f078;outline-offset:2px}

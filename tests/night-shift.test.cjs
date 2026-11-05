@@ -513,7 +513,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const nativeConnect=add('connectbutton1',remotePage);nativeConnect.disabled=false;
   const nativeRdpConnect=add('connectbutton1r',remotePage);nativeRdpConnect.disabled=false;
   const nativeDisconnect=add('disconnectbutton1',remotePage);nativeDisconnect.hidden=true;
-  add('Desk',desktopArea);
+  const deskCanvas=add('Desk',desktopArea);
   const toolbar=add('devListToolbarSpan',page);
   const nativeGroupAction=add('GroupActionButton',toolbar);nativeGroupAction.disabled=true;
   const list=add('xdevices',page);
@@ -725,6 +725,9 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const diagnostics=ids.get('ns-session-diagnostics');
   assert.ok(diagnostics,'Remote workspace exposes connection diagnostics');
   const diagnostic=(kind)=>diagnostics.children.flatMap(node=>node.children).find(node=>node.dataset.kind===kind);
+  const guidance=diagnostics.children.find(node=>node.classList.contains('ns-diagnostics-guidance'));
+  assert.ok(guidance,'Diagnostics include a live next-step message');
+  assert.match(guidance.textContent,/native controls/i,'Idle session offers the normal native connect path');
   assert.ok(diagnostic('browser'),'Browser diagnostic row is present');
   assert.equal(diagnostic('browser').children[1].textContent,'Online','Browser connectivity uses navigator.onLine');
   assert.equal(diagnostic('control').children[1].textContent,'Connected','MeshCentral control-channel state uses the native socket');
@@ -748,6 +751,14 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   window.__NightShiftDiagnostics.refresh();
   assert.equal(diagnostic('browser').children[1].textContent,'Offline','Offline browser state is distinguished from the MeshCentral channel');
   assert.equal(diagnostic('control').children[1].textContent,'Disconnected','Disconnected MeshCentral control channel is reported separately');
+  assert.match(guidance.textContent,/browser is offline/i,'Browser network loss gets a cause-specific next step');
+  window.navigator.onLine=true;window.meshserver.State=2;window.currentNode=window.nodes[0];window.desktop={State:3,contype:1};
+  deskCanvas.hidden=true;nativeDisconnect.hidden=false;
+  window.__NightShiftDiagnostics.refresh();
+  assert.match(guidance.textContent,/canvas is not mounted/i,'Connected-without-canvas state is identified');
+  assert.equal(showNativeControls.hidden,false,'Recovery action appears when connected without a canvas');
+  showNativeControls.click();
+  assert.equal(nativeDisconnect.focused,true,'Recovery action focuses native Disconnect before a deliberate reconnect');
   window.userinfo={_id:'user/domain/qa'};
   const returnToAll=inventory.children[1].children[1].children.find(node=>node.dataset.filter==='all');
   returnToAll.click();

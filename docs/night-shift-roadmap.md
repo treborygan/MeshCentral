@@ -24,13 +24,13 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [x] Current session strip reflects native MeshCentral connection controls; mobile dock delegates to native desktop/RDP handlers.
 - [x] Favorites control and inventory filter reuse MeshCentral's native `stars` preference and 200-device limit; no parallel storage or account identity key is introduced.
 - [x] Persistent tabs for existing MeshCentral multi-desktop sessions, with switching through native `gotoDevice()` and disconnect through rights-checked `toggleKvmDevice()`; tabs survive in-app navigation for the lifetime of the native sessions.
-- [x] Event-driven client diagnostics for browser connectivity, MeshCentral control channel, Agent/AMT route, native remote-session transport/state and display canvas, with a shortcut to native connection controls. Cloudflare Access/tunnel health is explicitly shown as not observable after page load.
+- [x] Event-driven client diagnostics for browser connectivity, MeshCentral control channel, Agent/AMT route, native remote-session transport/state and display canvas, with evidence-based next steps and native Connect/Disconnect recovery controls. Cloudflare Access/tunnel health is explicitly shown as not observable after page load.
 - [x] Account- and device-scoped connection profiles store method, monitor, scaling, quality, native/remote keyboard map and fullscreen preference only. Apply/Connect uses native connection and display APIs; unsupported RDP/AMT settings remain on native controls, and fullscreen is applied from the explicit user gesture.
 - [x] Account-scoped recent-device list, limited to eight IDs/timestamps; opening an entry returns through native MeshCentral navigation and permissions.
 - [x] Quick launch from Recent/Favorites and safe reconnection by routing through native `gotoDevice()` and exposing MeshCentral's existing Connect controls; tabs never auto-connect or bypass permissions.
 - [x] Touch dock exposes local/remote clipboard transfer, text entry, common shortcuts and selected special-key sending through native MeshCentral handlers. The keyboard map preference is per device and uses native/remote mapping modes.
 - [ ] Verify clipboard permissions, international input layouts, shortcuts and mobile controls against real Agent, RDP and AMT sessions.
-- [ ] Verify connection-state transitions and permission-preserving unavailable/error states.
+- [ ] Verify connection-state transitions and permission-preserving unavailable/error states in authenticated Agent, RDP and AMT sessions. Source guidance derives only from observable browser, channel, route, native session and canvas state.
 
 ## Phase 3 — device management and power tools
 
