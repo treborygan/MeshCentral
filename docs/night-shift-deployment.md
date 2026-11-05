@@ -429,3 +429,7 @@ Installed with the web-only installer. Rollback: `pwsh -NoProfile -File scripts/
 ## Temporary access recovery — 2026-11-05
 
 After the observer change the authenticated page still appeared to hang. To prioritize access, the two Night Shift web overrides were restored to their pre-install state using snapshot `20261104-172151-f30fb4`; the packaged empty customization assets now return HTTP 200. The immediately preceding frontend files are preserved in snapshot `20261105-234325-3d9698`. Root returns HTTP 200 and all four services are running. Authenticated browser confirmation remains pending; the redesign must not be reinstalled until its startup is verified.
+
+## Authenticated cache diagnosis — 2026-11-05
+
+The signed-in native Modern interface loaded and displayed device controls after browser cache was bypassed. The previously loaded public `custom.js` came from browser disk cache with `Cache-Control: public, max-age=14400`; the zone browser cache TTL is 14400 seconds. The origin now serves empty original customization files with `max-age=0`. A targeted Cloudflare purge was issued for only the custom JS and CSS URLs. Existing browser caches require a hard refresh or expiry. The redesign remains disabled pending a verified startup repair; no zone-wide cache setting was changed.
