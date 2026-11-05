@@ -57,6 +57,16 @@ test('device health uses cached native details and delegates CPU graph to MeshCe
   assert.match(health,/sizeremaining/);
 });
 
+test('elapsed uptime formatting is deterministic and rejects future boot dates',()=>{
+  const window={};
+  const document={readyState:'loading',addEventListener(){}};
+  vm.runInNewContext(health,{window,document,Date,isFinite},{timeout:1000});
+  const now=Date.UTC(2026,10,5,12,0,0);
+  const boot=new Date(now-(2*24*60+3*60+4)*60000);
+  assert.match(window.__NightShiftHealth.formatUptime(boot,now),/^2 days 3h · booted /);
+  assert.equal(window.__NightShiftHealth.formatUptime(new Date(now+60000),now),null);
+});
+
 test('history search filters only native rendered events and recordings',()=>{
   assert.match(history,/p3events/);
   assert.match(history,/p52recordings/);
