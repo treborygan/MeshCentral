@@ -1467,3 +1467,16 @@ test('native dialogs preserve their actions with responsive content and button b
   assert.match(template,/onclick="dialogclose\(1\)"/);
   assert.match(template,/onclick="dialogclose\(2\)"/);
 });
+
+test('user record details stack the native profile and account fields on mobile',()=>{
+  assert.match(css,/body\.ns-theme #p30info > table > tbody > tr \{display:grid;grid-template-columns:minmax\(0,1fr\) 12px/);
+  assert.match(css,/body\.ns-theme #p30html2,[\s\S]*?#p30html3 \{margin:0 0 14px/);
+  assert.match(css,/@media\(max-width:700px\)[\s\S]*?body\.ns-theme #p30info > table > tbody > tr > td:nth-child\(2\) \{display:none\}/);
+  assert.match(css,/body\.ns-theme #p30info :is\(#MainUserImage,#MainUserImageEx\)/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/id=p30html/);
+  assert.match(template,/id=p30html2/);
+  assert.match(template,/id=p30html3/);
+  assert.match(template,/id="p30userAuthServiceLogo"/);
+  assert.match(template,/account_manageImage\(1\)/);
+});

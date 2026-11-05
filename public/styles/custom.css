@@ -1961,3 +1961,70 @@ body.ns-theme #idx_dlgButtonBar :is(input,a):focus-visible {outline:2px solid va
   body.ns-theme #idx_dlgButtonBar {gap:6px;padding:8px 10px 10px}
   body.ns-theme #idx_dlgButtonBar > input {flex:1 1 38%;min-width:0}
 }
+
+/* User record detail: keep native account fields and permissions, adapt the profile card. */
+body.ns-theme #p30title {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  min-height:49px;
+  margin-bottom:12px;
+  padding:5px 0 12px;
+  border-bottom:1px solid var(--ns-border);
+  color:var(--ns-foreground);
+}
+body.ns-theme #p30title > div {float:none!important;flex:0 0 auto}
+body.ns-theme #p30title h1 {min-width:0;margin:0;font-size:1.2rem;font-weight:720;overflow-wrap:anywhere}
+body.ns-theme #p30info {
+  max-width:100%;
+  max-height:calc(100dvh - 190px)!important;
+  overflow:auto!important;
+  color:var(--ns-foreground);
+  scrollbar-color:#405563 var(--ns-canvas);
+}
+body.ns-theme #p30info > table {
+  width:100%;
+  margin:0 0 14px;
+  border:1px solid var(--ns-border);
+  border-radius:14px;
+  background:var(--ns-surface);
+}
+body.ns-theme #p30info > table > tbody > tr {display:grid;grid-template-columns:minmax(0,1fr) 12px minmax(170px,220px)}
+body.ns-theme #p30info > table > tbody > tr > td:first-child {min-width:0;padding:16px;vertical-align:top}
+body.ns-theme #p30info > table > tbody > tr > td:nth-child(2) {width:12px!important}
+body.ns-theme #p30info > table > tbody > tr > td:last-child {
+  min-width:0;
+  padding:16px;
+  border-left:1px solid var(--ns-border);
+  background:#111a23;
+  text-align:center;
+  vertical-align:top;
+}
+body.ns-theme #p30html,
+body.ns-theme #p30html2,
+body.ns-theme #p30html3 {
+  min-width:0;
+  color:var(--ns-foreground);
+  overflow-wrap:anywhere;
+}
+body.ns-theme #p30html2,
+body.ns-theme #p30html3 {margin:0 0 14px;padding:14px;border:1px solid var(--ns-border);border-radius:12px;background:var(--ns-surface)}
+body.ns-theme #p30html :is(table,fieldset),
+body.ns-theme #p30html2 :is(table,fieldset),
+body.ns-theme #p30html3 :is(table,fieldset) {max-width:100%;border-color:#344550}
+body.ns-theme #p30info :is(input,select,textarea) {max-width:100%}
+body.ns-theme #p30info :is(#MainUserImage,#MainUserImageEx) {float:none!important;display:block;max-width:100%;height:auto;margin:8px auto 12px;border-radius:18px;object-fit:cover}
+body.ns-theme #p30info #MainUserImage {width:150px!important;height:150px!important}
+body.ns-theme #p30info #MainUserImageEx {width:150px;height:150px}
+body.ns-theme #p30userAuthServiceLogo {max-width:64px;height:auto;margin:0 auto 10px}
+@media(max-width:700px) {
+  body.ns-theme #p30info > table,
+  body.ns-theme #p30info > table > tbody,
+  body.ns-theme #p30info > table > tbody > tr {display:block;width:100%}
+  body.ns-theme #p30info > table > tbody > tr > td:first-child {display:block;width:100%!important;padding:12px}
+  body.ns-theme #p30info > table > tbody > tr > td:nth-child(2) {display:none}
+  body.ns-theme #p30info > table > tbody > tr > td:last-child {display:flex;align-items:center;justify-content:center;gap:10px;width:100%!important;padding:12px;border-top:1px solid var(--ns-border);border-left:0}
+  body.ns-theme #p30info :is(#MainUserImage,#MainUserImageEx) {width:72px!important;height:72px!important;margin:0;border-radius:14px}
+  body.ns-theme #p30userAuthServiceLogo {width:42px;height:42px;margin:0;object-fit:contain}
+}
