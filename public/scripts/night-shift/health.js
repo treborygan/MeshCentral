@@ -23,7 +23,7 @@
     panel.setAttribute('aria-label', 'Device health summary');
     panel.append(create('h3', 'ns-health-title', 'Device health'));
     var grid = create('div', 'ns-health-grid');
-    row(grid, 'agent', 'Agent status'); row(grid, 'uptime', 'Last boot');
+    row(grid, 'agent', 'Agent status'); row(grid, 'uptime', 'Uptime / last boot');
     row(grid, 'cpu', 'CPU'); row(grid, 'memory', 'Memory');
     row(grid, 'storage', 'Windows volume storage'); row(grid, 'system', 'System information');
     panel.append(grid);
@@ -45,6 +45,14 @@
     while (value >= 1024 && index < units.length - 1) { value /= 1024; index++; }
     return value.toFixed(index === 0 ? 0 : 1) + ' ' + units[index];
   }
+  function uptime(date, now) {
+    var elapsed = Math.floor(((now === undefined ? Date.now() : now) - date.getTime()) / 60000);
+    if (!isFinite(elapsed) || elapsed < 0) return null;
+    var days = Math.floor(elapsed / 1440), hours = Math.floor((elapsed % 1440) / 60), minutes = elapsed % 60;
+    var duration = days ? days + (days === 1 ? ' day' : ' days') + (hours ? ' ' + hours + 'h' : '') :
+      (hours ? hours + 'h ' : '') + (minutes ? minutes + 'm' : (hours ? '' : 'under 1m'));
+    return duration + ' · booted ' + date.toLocaleString();
+  }
   function update() {
     build(); if (!panel) return;
     var node = window.currentNode;
@@ -60,7 +68,7 @@
       } else if (hardware.linux && hardware.linux.LastBootUpTime) boot = new Date(hardware.linux.LastBootUpTime);
       else if (hardware.darwin && hardware.darwin.LastBootUpTime) boot = new Date(hardware.darwin.LastBootUpTime * 1000);
     }
-    values.uptime.textContent = boot && isFinite(boot.getTime()) ? boot.toLocaleString() : 'Unavailable';
+    values.uptime.textContent = boot && isFinite(boot.getTime()) ? (uptime(boot) || 'Unavailable') : 'Unavailable';
     var volumes = hardware && hardware.windows && hardware.windows.volumes, safe = [];
     var storageSamples = [];
     if (volumes && typeof volumes === 'object') Object.keys(volumes).forEach(function (name) {
@@ -118,6 +126,6 @@
     document.addEventListener('visibilitychange', update);
     window.addEventListener('resize', update, {passive:true});
   }
-  window.__NightShiftHealth = { refresh:update };
+  window.__NightShiftHealth = { refresh:update, formatUptime:uptime };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
 })();

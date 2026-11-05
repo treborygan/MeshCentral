@@ -44,6 +44,9 @@ test('custom script bundle matches its modular source components',()=>{
 });
 
 test('device health uses cached native details and delegates CPU graph to MeshCentral',()=>{
+  assert.match(health,/function uptime\(date, now\)/);
+  assert.match(health,/formatUptime:uptime/);
+  assert.match(health,/Uptime \/ last boot/);
   assert.match(health,/DeviceDetailsHardware/);
   assert.match(health,/deviceDetailsStatsChart/);
   assert.match(health,/ns-native-health-sample/);
