@@ -1362,7 +1362,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.ok(profilePanel,'Device desktop offers a connection profile editor');
   const keyboardMapControl=profilePanel.children[1].children.find(node=>node.id==='ns-profile-keyboard-map-help');
   assert.ok(keyboardMapControl,'Keyboard mapping help is included beside the profile controls');
-  assert.match(keyboardMapControl.textContent,/MeshAgent desktop.*Browser RDP and Intel AMT/i,'The UI explains which transports support this keyboard-map setting');
+  assert.match(keyboardMapControl.textContent,/MeshAgent desktop.*Browser RDP derives its keyboard mapping from the browser locale; Intel AMT/i,'The UI explains Agent map support and native RDP/AMT keyboard behavior');
   assert.equal(profilePanel.children[1].children.find(row=>row.children[1]&&row.children[1].dataset.profileField==='keyboardMap').children[1].getAttribute('aria-describedby'),'ns-profile-keyboard-map-help','Keyboard-map guidance is associated with its control for assistive technology');
   const profileControl=key=>profilePanel.children[1].children.find(row=>row.children[1]&&row.children[1].dataset.profileField===key).children[1];
   profileControl('method').value='agent';

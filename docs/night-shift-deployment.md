@@ -217,7 +217,7 @@ Added `scripts/Test-MeshCentralSecurityProvenance.ps1` as a read-only audit of t
 
 ## Connection profile keyboard map guidance — 2026-11-05
 
-The per-device profile editor now explains that Native/Remote keyboard-map selection applies to MeshAgent desktop. Browser RDP and Intel AMT retain their native keyboard handling. The help text is linked to the selector with `aria-describedby` and spans the profile grid on narrow layouts. The structural-shell integration regression and full Night Shift suite passed 55/55; bundle, syntax and whitespace checks passed. Source only; no PRN install was made.
+The per-device profile editor now explains that Native/Remote keyboard-map selection applies to MeshAgent desktop. Browser RDP derives its keyboard mapping from the browser locale; Intel AMT retains its native keyboard handling. The help text is linked to the selector with `aria-describedby` and spans the profile grid on narrow layouts. The structural-shell integration regression and full Night Shift suite passed 55/55; bundle, syntax and whitespace checks passed. Source only; no PRN install was made.
 
 ## Accessible session state announcements — 2026-11-05
 
