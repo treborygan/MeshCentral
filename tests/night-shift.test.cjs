@@ -593,6 +593,8 @@ test('floating desktop viewer controls use only visible native controls and auto
   assert.match(viewer,/native\.click\(\)/);
   assert.match(viewer,/window\.deskToggleFull\(\{shiftKey:false\}\)/);
   assert.match(viewer,/controls\.hidden = !visible\(\$\('p11'\)\)/);
+  assert.match(viewer,/ArrowLeft','ArrowRight','Home','End/);
+  assert.match(viewer,/aria-orientation','horizontal'/);
   assert.match(viewer,/connectbutton1r/);
   assert.match(viewer,/disconnectbutton1/);
   assert.match(css,/\.ns-viewer-controls\.is-idle/);
@@ -610,7 +612,7 @@ test('viewer toolbar stays within the active viewer and delegates fullscreen',()
     getAttribute(key){return this.attributes[key]??null;}
     addEventListener(type,handler){(this.events[type]||=[]).push(handler);}
     click(){this.clickCount=(this.clickCount||0)+1;(this.events.click||[]).forEach(handler=>handler({type:'click'}));}
-    focus(){this.focused=true;}
+    focus(){this.focused=true;document.activeElement=this;}
     getClientRects(){return this.hidden?[]:[{}];}
     querySelector(){return ids.get('native-fullscreen')||null;}
     contains(node){return this.children.includes(node);}
@@ -633,6 +635,16 @@ test('viewer toolbar stays within the active viewer and delegates fullscreen',()
   assert.ok(controls);
   assert.equal(controls.hidden,false,'Toolbar is shown only for the active remote viewer');
   const actions=controls.children;
+  assert.equal(controls.getAttribute('aria-orientation'),'horizontal','Toolbar direction is explicit for assistive technology');
+  assert.deepEqual(actions.map(button=>button.tabIndex),[0,-1,-1,-1],'Only the first available toolbar action enters the sequential tab order');
+  const keydown=(key)=>{let prevented=false;controls.events.keydown.at(-1)({key,preventDefault(){prevented=true;}});assert.equal(prevented,true,key+' is handled inside the toolbar');return document.activeElement;};
+  actions[0].focus();
+  assert.equal(keydown('ArrowRight'),actions[1],'Right arrow moves to the next available control');
+  assert.equal(keydown('ArrowRight'),actions[3],'Arrow navigation skips unavailable native actions');
+  assert.equal(keydown('ArrowRight'),actions[0],'Arrow navigation wraps at the end of the toolbar');
+  assert.equal(keydown('Home'),actions[0],'Home moves to the first available toolbar action');
+  assert.equal(keydown('End'),actions[3],'End moves to the last available toolbar action');
+  assert.equal(keydown('ArrowLeft'),actions[1],'Left arrow returns to the previous available control');
   actions.find(button=>button.textContent==='Connect').click();
   assert.equal(connect.clickCount,1,'Connect delegates to the visible native Agent control');
   actions.find(button=>button.textContent==='Full screen').click();

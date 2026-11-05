@@ -75,6 +75,30 @@
     var title = $('p11title');
     var fullscreen = title && title.querySelector('#devListToolbarViewIcons [title^="Full Screen"]');
     controlButtons.fullscreen.hidden = !visible(fullscreen) && typeof window.deskToggleFull !== 'function';
+    syncToolbarTabStops();
+  }
+  function toolbarButtons() {
+    return ['connect','rdp','disconnect','fullscreen'].map(function (key) { return controlButtons[key]; })
+      .filter(function (button) { return button && !button.hidden && !button.disabled; });
+  }
+  function syncToolbarTabStops() {
+    var buttons = toolbarButtons(), active = document.activeElement;
+    if (buttons.indexOf(active) < 0) active = buttons[0];
+    Object.keys(controlButtons).forEach(function (key) {
+      controlButtons[key].tabIndex = controlButtons[key] === active ? 0 : -1;
+    });
+  }
+  function handleToolbarKeydown(event) {
+    var buttons = toolbarButtons();
+    if (!buttons.length || ['ArrowLeft','ArrowRight','Home','End'].indexOf(event.key) < 0) return;
+    var index = buttons.indexOf(document.activeElement), next = index < 0 ? 0 : index;
+    if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = buttons.length - 1;
+    else if (event.key === 'ArrowRight') next = (next + 1) % buttons.length;
+    else next = (next + buttons.length - 1) % buttons.length;
+    event.preventDefault();
+    buttons[next].focus();
+    showControls();
   }
   function showControls() {
     if (!controls || !visible($('p11'))) return;
@@ -94,6 +118,7 @@
     if (controls || !$('p11title')) return;
     controls = create('div','ns-viewer-controls'); controls.id = 'ns-viewer-controls';
     controls.setAttribute('role','toolbar'); controls.setAttribute('aria-label','Remote session controls');
+    controls.setAttribute('aria-orientation','horizontal');
     [['connect','Connect','connectbutton1'],['rdp','RDP','connectbutton1r'],['disconnect','Disconnect','disconnectbutton1']].forEach(function (item) {
       var button = create('button','ns-viewer-control',item[1]); button.type = 'button';
       button.addEventListener('click',function () { nativeAction(item[2]); showControls(); });
@@ -111,6 +136,7 @@
     controls.addEventListener('pointerleave',showControls);
     controls.addEventListener('focusin',function () { if (hideTimer) clearTimeout(hideTimer); controls.classList.remove('is-idle'); });
     controls.addEventListener('focusout',function () { setTimeout(showControls,0); });
+    controls.addEventListener('keydown',handleToolbarKeydown);
     document.body.append(controls);
     document.addEventListener('pointermove',showControls,{passive:true});
     document.addEventListener('keydown',function (event) {
