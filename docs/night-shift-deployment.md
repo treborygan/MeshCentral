@@ -80,6 +80,14 @@ Hard-refresh after rollback. Restore both override files independently; if a tar
 - Post-install source, installed and served CSS SHA-256 all match `4C47D0632825439D2CB2F9C6014CCB2530886F036F7869AAE8367DDFAD790436`; JS hashes all match `BBDABBD8DD94A53287A58711F845D0857AC8174D78742BE2D666D699371810D7`. Root and assets returned HTTP 200.
 - Keyboard activation is covered in the Node harness; authenticated screen-reader and browser acceptance remain open.
 
+## User record detail layout — 2026-11-05
+
+- Installed source commit: `72323daa` (`feat(ui): make user record details responsive`).
+- PRN root and both local override endpoints returned HTTP 200 before the standard installer ran. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-120638-0b8d7e`.
+- Snapshot manifest records the previous CSS SHA-256 `4C47D0632825439D2CB2F9C6014CCB2530886F036F7869AAE8367DDFAD790436` and JS SHA-256 `BBDABBD8DD94A53287A58711F845D0857AC8174D78742BE2D666D699371810D7`.
+- After installation, source, installed and served CSS SHA-256 all match `2BEA4C158383378CC211FDD45C48CC3C8590127E26CA6D1B0B2285C55FC1B9CE`; JS hashes all match `BBDABBD8DD94A53287A58711F845D0857AC8174D78742BE2D666D699371810D7`. Root returned HTTP 200.
+- Authenticated user-role visual and workflow acceptance remain outstanding.
+
 ## Structural UI branch rollout — 2026-11-04
 
 The structural Night Shift revision was installed on PCRN from PR #3 source commit `989ae01333c0fc66fa19bc5de77152228345736`. The PR remains a draft; its latest source revision at the time of installation is recorded here so deployment evidence is not mistaken for release acceptance.
