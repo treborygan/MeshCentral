@@ -14,6 +14,7 @@ const installer = read('scripts/Install-NightShift.ps1');
 const health = read('public/scripts/night-shift/health.js');
 const history = read('public/scripts/night-shift/history.js');
 const files = read('public/scripts/night-shift/files.js');
+const actions = read('public/scripts/night-shift/actions.js');
 
 test('custom script bundle matches its modular source components',()=>{
   const result=spawnSync(process.execPath,['scripts/build-night-shift.js','--check'],{cwd:root,encoding:'utf8'});
@@ -40,6 +41,15 @@ test('file workspace filters the current folder and uses native selection action
   assert.match(files,/p13filetree/);
   for (const id of ['p13DownloadButton','p13RenameFileButton','p13DeleteFileButton']) assert.ok(files.includes(id));
   assert.doesNotMatch(files,/files\.send|fetch\s*\(|XMLHttpRequest|checksum|resume/);
+});
+
+test('quick power and command actions mirror MeshCentral rights and open its native audit flow',()=>{
+  assert.match(actions,/GetNodeRights\(node\)/);
+  assert.match(actions,/window\.deviceActionFunction\(\)/);
+  assert.match(actions,/window\.runDeviceCmd\(\)/);
+  assert.match(actions,/131072/);
+  assert.match(actions,/262144/);
+  assert.doesNotMatch(actions,/meshserver\.send|poweraction|runcommands/);
 });
 
 function createMobileHarness(isMobile = true) {

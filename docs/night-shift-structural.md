@@ -4,7 +4,7 @@ Branch: `feature/night-shift-structural` (built on `fix/night-shift-mobile-layou
 
 ## Scope and implementation boundary
 
-This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell, device-inventory, session-diagnostics, multi-session-tabs and per-device-profiles components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
+This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell, devices, diagnostics, sessions, profiles, health, history, files and actions components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
 
 Included:
 - Contextual workspace appbar with live page title, native navigation search, and a functional More menu exposing only original account-accessible sections.
@@ -23,6 +23,7 @@ Included:
 - The Device Details page includes a source-only health summary from MeshCentral's cached native details: connection state, last boot, OS description, and Windows volume capacity/free space. It reads only volume name, size and free-space fields; BitLocker fields are not copied or displayed. CPU/memory remains MeshCentral's native graph, opened by an explicit button; no parallel telemetry polling is added. Authenticated live acceptance is pending.
 - Events and user recordings pages have local search fields that filter the native rendered rows. Search does not fetch more data, change access, or replace the native recording player/download controls. It covers the currently loaded page only.
 - Device Files adds a responsive split-pane inspector and current-folder filter over the native file list. It shows metadata for the selected item(s), and its Download/Rename/Delete shortcuts invoke the native controls only while those controls are enabled. It does not introduce a transfer protocol; drag/drop, bulk transfer queue/progress, checksum and retry/resume enhancements remain pending.
+- Device Details exposes native power actions and preconfigured command shortcuts only when MeshCentral rights and device connectivity allow. Power actions open the native confirmation dialog; configured scripts open the native `runDeviceCmd()` flow and retain server-side command auditing. Night Shift sends no direct power or command messages.
 
 The actual browser must supply MeshCentral's expected IDs. Components are created only after authenticated markup exists. When the corresponding native section or permission-gated control is absent, enhanced actions are withheld. Live session and rendered inventory state are derived from existing DOM and never asserted from mocks.
 
