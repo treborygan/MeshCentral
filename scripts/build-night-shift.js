@@ -6,6 +6,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const components = [
   'public/scripts/night-shift/mobile-controls.js',
+  'public/scripts/night-shift/native-compat.js',
   'public/scripts/night-shift/shell.js',
   'public/scripts/night-shift/devices.js',
   'public/scripts/night-shift/diagnostics.js',
@@ -34,5 +35,5 @@ if (process.argv.includes('--check')) {
   }
 } else {
   fs.writeFileSync(outputPath, output, 'utf8');
-  console.log('Built public/scripts/custom.js from fifteen Night Shift components.');
+  console.log(`Built public/scripts/custom.js from ${components.length} Night Shift components.`);
 }

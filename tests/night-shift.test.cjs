@@ -22,6 +22,7 @@ const viewer = read('public/scripts/night-shift/viewer.js');
 const serverAdmin = read('public/scripts/night-shift/server-admin.js');
 const devicesSource = read('public/scripts/night-shift/devices.js');
 const mobileControls = read('public/scripts/night-shift/mobile-controls.js');
+const nativeCompat = read('public/scripts/night-shift/native-compat.js');
 const shell = read('public/scripts/night-shift/shell.js');
 const sessionsSource = read('public/scripts/night-shift/sessions.js');
 
@@ -103,6 +104,73 @@ test('native sticky modifiers require supported key actions and release held key
   unsupported._releaseMobileModifiers();
   assert.equal(unsupported._mobileModifiers.alt,false,'local held state clears even when native release is unsupported');
   assert.deepEqual(sent,[[3,17],[1,16],[4,17],[2,16]],'unsupported release sends nothing to the transport');
+});
+
+test('deployed overlay safely adapts legacy MeshCentral mobile handlers',async()=>{
+  const listeners={},timers=[],calls=[],notifications=[];
+  const clipboard={
+    readText:()=>Promise.reject(new Error('denied')),
+    writeText:()=>Promise.reject(new Error('denied'))
+  };
+  const held={ctrl:false,shift:false,alt:false};
+  const context={
+    document:{readyState:'loading',addEventListener:(name,fn)=>{listeners[name]=fn;}},
+    window:{
+      navigator:{clipboard},setTimeout:fn=>timers.push(fn),
+      __nightShiftUI:{notifyClipboardError:()=>notifications.push('blocked')},
+      desktop:{m:{KeyAction:{DOWN:1,UP:2,EXDOWN:3,EXUP:4},SendKeyMsgKC:(action,code)=>calls.push([action,code])}},
+      _mobileModifiers:held,Q:()=>({checked:true}),
+      _updateMobileModifierUI:()=>{},
+      toggleMobileModifier(mod){held[mod]=!held[mod];},
+      _releaseMobileModifiers(){for(const key of Object.keys(held)){if(held[key]){calls.push(['release',key]);held[key]=false;}}},
+      onSoftKeyboardInput(target){calls.push(['text',target.value]);target.value='';}
+    },Object,Promise
+  };
+  vm.runInNewContext(nativeCompat,context);
+  listeners.DOMContentLoaded();
+  assert.equal(context.window.mobileModifiersSupported(),true);
+  assert.equal(context.window.toggleMobileModifier('ctrl'),true);
+  assert.equal(context.window.toggleMobileModifier('invalid'),false);
+  assert.equal(held.ctrl,true);
+  const target={id:'softKeyboard',value:'に'};
+  const intermediate={target,isComposing:true,stopped:false,stopImmediatePropagation(){this.stopped=true;},preventDefault(){}};
+  listeners.input(intermediate);
+  assert.equal(intermediate.stopped,true);
+  assert.equal(target.value,'に','composition text remains in the native input until committed');
+  listeners.compositionend({target});
+  target.value='日本語';
+  const finalInput={target,isComposing:false,stopped:false,stopImmediatePropagation(){this.stopped=true;},preventDefault(){}};
+  listeners.input(finalInput);
+  assert.equal(finalInput.stopped,true,'the browser follow-up input is not sent twice');
+  timers[0]();
+  assert.deepEqual(calls,[['text','日本語']]);
+  await Promise.allSettled([clipboard.readText(),clipboard.writeText()]);
+  await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(notifications.length,2,'clipboard permission errors reach Night Shift feedback');
+
+  const unsupportedListeners={},unsupportedHeld={ctrl:true,shift:false,alt:true},unsupportedCalls=[];
+  const unsupported={
+    document:{readyState:'complete',addEventListener:(name,fn)=>{unsupportedListeners[name]=fn;}},
+    window:{desktop:{m:{KeyAction:{DOWN:1,UP:2},SendKeyMsgKC:(...args)=>unsupportedCalls.push(args)}},_mobileModifiers:unsupportedHeld,_updateMobileModifierUI(){},Q:()=>({checked:true}),toggleMobileModifier(){throw new Error('must not call unsupported native toggle');},_releaseMobileModifiers(){throw new Error('must not call unsupported native release');},navigator:{}},Object,Promise
+  };
+  vm.runInNewContext(nativeCompat,unsupported);
+  assert.equal(unsupported.window.mobileModifiersSupported(),false);
+  assert.equal(unsupported.window.toggleMobileModifier('ctrl'),false);
+  unsupported.window._releaseMobileModifiers();
+  assert.deepEqual({...unsupportedHeld},{ctrl:false,shift:false,alt:false});
+  assert.deepEqual(unsupportedCalls,[],'unsupported transports receive no unsafe key events');
+
+  const modernClipboard={readText(){return Promise.resolve('');},writeText(){return Promise.resolve();}};
+  const modernListeners={};
+  const modern={
+    document:{readyState:'loading',addEventListener:(name,fn)=>{modernListeners[name]=fn;}},
+    window:{navigator:{clipboard:modernClipboard},setTimeout(){},mobileModifiersSupported:()=>true,onSoftKeyboardCompositionEnd(){},toggleMobileModifier(){}},Object,Promise
+  };
+  vm.runInNewContext(nativeCompat,modern);
+  modernListeners.DOMContentLoaded();
+  assert.equal(modern.window.toggleMobileModifier.name,'toggleMobileModifier','enhanced native handlers remain untouched');
+  assert.equal(modern.window.navigator.clipboard.readText,modernClipboard.readText,'enhanced clipboard handlers are not wrapped twice');
+  assert.deepEqual(Object.keys(modernListeners),['DOMContentLoaded'],'enhanced IME handlers do not receive duplicate listeners');
 });
 
 test('desktop navigation rail expands accessibly without replacing native routes',()=>{
