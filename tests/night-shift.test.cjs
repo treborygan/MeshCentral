@@ -1421,3 +1421,14 @@ test('native server administration overview organizes live status responsively',
   assert.match(template,/id="serverStatsTable"/);
   assert.match(template,/id="serverWarningsDiv"/);
 });
+
+test('account security settings keep native links and use a responsive desktop workspace',()=>{
+  assert.match(css,/@media\(min-width:901px\)[\s\S]*?body\.ns-theme #p2info \{[\s\S]*?grid-template-columns:minmax\(230px/);
+  assert.match(css,/body\.ns-theme :is\(#p2AccountSecurity,#p2AccountActions\) \{grid-column:2\/-1/);
+  assert.match(css,/body\.ns-theme #p2meshes \{display:grid;grid-template-columns:repeat\(auto-fit/);
+  assert.match(css,/body\.ns-theme #p2meshes > div \{[\s\S]*?width:auto!important/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/account_manageAuthApp\(\)/);
+  assert.match(template,/account_showChangePassword\(\)/);
+  assert.match(template,/account_createMesh\(\)/);
+});

@@ -1780,3 +1780,64 @@ body.ns-theme #p6 #serverWarningsDiv :is(#serverCertWarnings,#serverWarnings) {o
   body.ns-theme #p6 #p6info > strong {grid-column:1;grid-row:auto;margin:0 0 -8px}
   body.ns-theme #p6 #serverStats {grid-template-columns:minmax(0,1fr)}
 }
+
+/* Account settings desktop layout: keep profile, security and actions easy to scan. */
+@media(min-width:901px) {
+  body.ns-theme #p2info {
+    display:grid;
+    grid-template-columns:minmax(230px,.7fr) repeat(2,minmax(0,1fr));
+    align-content:start;
+    align-items:start;
+    gap:14px;
+    box-sizing:border-box;
+    width:100%;
+    padding:4px 4px 24px;
+  }
+  body.ns-theme #p2info > br {display:none}
+  body.ns-theme #p2AccountImageFrame {
+    float:none!important;
+    grid-column:1;
+    grid-row:1/span 2;
+    min-height:190px;
+    margin:0;
+  }
+  body.ns-theme :is(#p2AccountSecurity,#p2AccountActions) {grid-column:2/-1;margin:0}
+  body.ns-theme #p2AccountSecurity > div {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px}
+  body.ns-theme #p2AccountSecurity > div > div {min-width:0}
+  body.ns-theme #p2AccountSecurity .p2AccountActions {display:inline-flex;min-width:20px;justify-content:center}
+  body.ns-theme #p2AccountActions .mL {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 18px}
+  body.ns-theme #p2AccountActions .mL > span,
+  body.ns-theme #p2AccountActions .mL > a {min-width:0}
+  body.ns-theme #p2logintokens,
+  body.ns-theme #p2info > strong,
+  body.ns-theme #p2createMeshLink1,
+  body.ns-theme #p2meshes,
+  body.ns-theme #p2noMeshFound {grid-column:1/-1}
+  body.ns-theme #p2info > strong {margin-top:4px;font-size:1rem;color:var(--ns-foreground)}
+  body.ns-theme #p2createMeshLink1 {margin-top:-22px;text-align:right}
+  body.ns-theme #p2meshes {display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:10px}
+  body.ns-theme #p2meshes > div {
+    display:flex!important;
+    align-items:center;
+    min-width:0;
+    min-height:72px;
+    width:auto!important;
+    height:auto!important;
+    float:none!important;
+    padding:10px!important;
+    border:1px solid #344550;
+    border-radius:12px;
+    background:#16222d;
+  }
+  body.ns-theme #p2meshes > div > div:first-child {display:none}
+  body.ns-theme #p2meshes > div .mi {flex:0 0 50px;margin-right:10px}
+  body.ns-theme #p2meshes > div .e2 {width:auto!important;min-width:0}
+  body.ns-theme #p2meshes > div .e1 {max-width:100%;overflow-wrap:anywhere}
+  body.ns-theme #p2meshes > div:focus-within {outline:2px solid var(--ns-focus);outline-offset:2px}
+}
+@media(min-width:901px) and (max-width:1150px) {
+  body.ns-theme #p2info {grid-template-columns:minmax(200px,.65fr) minmax(0,1fr)}
+  body.ns-theme :is(#p2AccountSecurity,#p2AccountActions) {grid-column:2}
+  body.ns-theme #p2AccountSecurity > div,
+  body.ns-theme #p2AccountActions .mL {grid-template-columns:minmax(0,1fr)}
+}
