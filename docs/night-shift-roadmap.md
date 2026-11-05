@@ -8,7 +8,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 
 - [x] Navy/green tokens, responsive shell and current Night Shift styling layers.
 - [x] Contextual appbar, native navigation search, permission-filtered More menu, and live-data dashboard.
-- [x] Responsive live device cards, search and connection filters, native-list fallback, and native quick actions.
+- [x] Responsive live inventory with card/table/compact layouts, native device-tag chips and filtering, search, sorting, favorites, connection filters, native bulk-selection/group actions, and native-list fallback.
 - [x] Login2 activation, Android viewport correction, touch dock, keyboard focus and reduced-motion support.
 - [x] Carry the installed mobile-usability rules into source: contained masthead, compact account control, viewport-bound menu, and non-overflowing appbar/cards/navigation.
 - [x] Fix mobile masthead horizontal overflow and account-area clipping using viewport-contained, safe-area-aware sizing.
@@ -60,6 +60,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 ## Current evidence and blockers
 
 - Source branch: `feature/night-shift-structural`, based on the MeshCentral 1.3.1 fork. PR #3 is open and draft.
+- Upstream compatibility snapshot reviewed on 2026-11-05: `origin/master` is also package version 1.3.1 at `c897d5e5`. Newer upstream commits add file-sharing download permission enforcement (`396e423b`), user-management domain-boundary enforcement (`74b24b77`), device/delegated-permission limits (`5ee4afeb`), and server-side 2FA/session-token/routing hardening (`75ebec8a`). This work changes only web override assets and tests, with no template/backend replacement, so it does not implement or bypass those checks. The installed PRN package's exact source commit is not exposed by its package metadata; do not claim those upstream fixes are present there until verified. Keep production compatibility/security review open.
 - PRN deployment notes record structural source commit `989ae01333c0fc66fa19bc5de77152228345736`, followed by authenticated navigation fix `132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f`. On 2026-11-05 the synchronized mobile rules and safe-area refinement were deployed from this worktree. Local HTTP served CSS/JS exactly matching source SHA-256, and the root returned HTTP 200 with both override names present. The native favorites and recent-device source slices are not deployed; authenticated visual confirmation of the masthead update remains open.
 - Authenticated read-only review passed navigation, search/status filtering, dashboard, Events, Files, Users, Server, and native-list fallback. It recorded a mobile masthead clipping defect. The correction is now deployed and byte-verified through the local HTTP listener; its visual effect has not yet been rechecked in an authenticated browser.
 - PRN Cloudflare Access and service state were preserved. Real Agent/RDP input, terminal commands, file mutation, Android/iOS gestures, role restrictions, AMT, recordings and plugin workflows remain unverified.

@@ -308,6 +308,8 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const devices=add('LeftMenuMyDevices');let devicesMouseup=0;devices.addEventListener('mouseup',()=>devicesMouseup++);
   const events=add('LeftMenuMyEvents');let eventsMouseup=0;events.addEventListener('mouseup',()=>eventsMouseup++);const page=add('p1',column);
   add('p10',column);
+  const toolbar=add('devListToolbarSpan',page);
+  const nativeGroupAction=add('GroupActionButton',toolbar);nativeGroupAction.disabled=true;
   const list=add('xdevices',page);
   list.deviceCheckboxes=[new MockElement('input'),new MockElement('input')];
   add('MainDevDesktop');add('MainDevTerminal');add('MainDevFiles');
@@ -326,10 +328,17 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
       setItem:(key,value)=>recentStorage.set(key,value)
     },
     nodes:[
-      {_id:'node//online',name:'Workstation',meshid:'mesh//one',conn:1,osdesc:'Windows',v:true},
-      {_id:'node//offline',name:'Archive',meshid:'mesh//one',conn:0,osdesc:'Linux',v:true}
+      {_id:'node//online',name:'Workstation',meshid:'mesh//one',conn:1,osdesc:'Windows',tags:['Production','Critical'],v:true},
+      {_id:'node//offline',name:'Archive',meshid:'mesh//one',conn:0,osdesc:'Linux',tags:['Archive'],v:true}
     ],
     meshes:{'mesh//one':{name:'Production'}},
+    checkedNodeids:{},
+    p1devcheck:event=>{
+      const input=event.srcElement,nodeId=input.value.substring(6);
+      if(input.checked)window.checkedNodeids[nodeId]=1;else delete window.checkedNodeids[nodeId];
+      nativeGroupAction.disabled=Object.keys(window.checkedNodeids).length===0;
+    },
+    p1updateInfo(){},
     gotoDevice:(id)=>opened.push(id)
   };
   vm.runInNewContext(js,{
@@ -363,12 +372,55 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(eventsMouseup,1,'The Events route dispatches the native MeshCentral mouseup handler');
   const inventory=ids.get('ns-live-inventory');
   assert.ok(inventory,'The native device collection is enhanced');
+  const controls=inventory.children[1];
+  const layoutSelect=controls.children.find(node=>node.dataset.control==='layout');
+  const sortSelect=controls.children.find(node=>node.dataset.control==='sort');
+  const tagSelect=controls.children.find(node=>node.dataset.control==='tag');
+  assert.ok(layoutSelect,'Inventory offers cards, table and compact layouts');
+  assert.ok(sortSelect,'Inventory offers explicit sorting');
+  assert.ok(tagSelect,'Inventory offers native device-tag filtering');
   const cards=inventory.children[2].children;
   assert.equal(cards.length,2,'Two authorized live device objects produce two cards');
   const onlineCard=cards[0].children.find(node=>node.classList.contains('ns-live-device'));
   let favorite=cards[0].children.find(node=>node.classList.contains('ns-live-favorite'));
   assert.ok(onlineCard,'Each device keeps a native-navigation card action');
   assert.ok(favorite,'Each device exposes a separate accessible favorite control');
+  const selection=cards[0].children.find(node=>node.classList.contains('ns-live-selection'));
+  assert.ok(selection,'Cards expose native bulk-selection controls');
+  selection.checked=true;selection.dispatchEvent({type:'change',srcElement:selection});
+  assert.equal(window.checkedNodeids['node//online'],1,'Card selection updates MeshCentral native selection state');
+  assert.equal(nativeGroupAction.disabled,false,'Native group action activates for a selected device');
+  selection.checked=false;selection.dispatchEvent({type:'change',srcElement:selection});
+  assert.equal(window.checkedNodeids['node//online'],undefined,'Deselecting a card clears the native selection');
+  const tagChips=onlineCard.children.find(node=>node.classList.contains('ns-live-tags'));
+  assert.ok(tagChips && tagChips.children.some(node=>node.textContent==='Critical'),'Device tags are shown on inventory cards');
+  tagSelect.value='Critical';
+  tagSelect.dispatchEvent({type:'change'});
+  assert.equal(inventory.children[2].children.length,1,'Tag filter matches the native device tags');
+  tagSelect.value='';
+  tagSelect.dispatchEvent({type:'change'});
+  sortSelect.value='name';
+  sortSelect.dispatchEvent({type:'change'});
+  const nameSortedCard=inventory.children[2].children[0].children.find(node=>node.classList.contains('ns-live-device'));
+  assert.equal(nameSortedCard.children.find(node=>node.classList.contains('ns-live-device-name')).textContent,'Archive','Name sorting is applied to the live collection');
+  recentStorage.set('nightShiftRecentDevices:user/domain/qa',JSON.stringify([{id:'node//offline',openedAt:20},{id:'node//online',openedAt:10}]));
+  sortSelect.value='recent';
+  sortSelect.dispatchEvent({type:'change'});
+  const recentSortedCard=inventory.children[2].children[0].children.find(node=>node.classList.contains('ns-live-device'));
+  assert.equal(recentSortedCard.children.find(node=>node.classList.contains('ns-live-device-name')).textContent,'Archive','Recent sorting puts the last opened device first');
+  sortSelect.value='reachable';
+  sortSelect.dispatchEvent({type:'change'});
+  layoutSelect.value='table';
+  layoutSelect.dispatchEvent({type:'change'});
+  assert.equal(inventory.children[2].children[0].children[0].tagName,'TABLE','Table layout renders a semantic table');
+  layoutSelect.value='compact';
+  layoutSelect.dispatchEvent({type:'change'});
+  assert.ok(inventory.children[2].children[0].classList.contains('ns-live-compact-row'),'Compact layout renders compact device rows');
+  layoutSelect.value='cards';
+  layoutSelect.dispatchEvent({type:'change'});
+  const cardsAgain=inventory.children[2].children;
+  const firstCard=cardsAgain.find(row=>row.children.some(child=>child.classList.contains('ns-live-device') && child.children.some(part=>part.classList.contains('ns-live-device-name') && part.textContent==='Workstation')));
+  favorite=firstCard.children.find(node=>node.classList.contains('ns-live-favorite'));
   favorite.click();
   assert.equal(window.stars['node//online'],1,'Favorite action updates MeshCentral native stars');
   assert.equal(favoriteWrites[0].key,'stars','Favorite state uses MeshCentral user preferences');
@@ -430,4 +482,5 @@ test('structural layer remains progressive with native sessions and no synthetic
   assert.match(js,/native\.dispatchEvent\(new MouseEvent\('mouseup'/);
   assert.doesNotMatch(js,/Studio Workstation|Travel Laptop|Build Server|Demo session|fake-desktop/);
   assert.doesNotMatch(js,/new\s+WebSocket\s*\(|new\s+RTCPeerConnection\s*\(/);
+  assert.doesNotMatch(css,/#devListToolbarSpan\s*\{\s*display:\s*none/i,'Native bulk-action toolbar stays available');
 });

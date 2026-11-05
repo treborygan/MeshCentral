@@ -565,7 +565,7 @@
     if (text !== undefined) el.textContent = text;
     return el;
   };
-  var mode = 'cards', state = 'all', term = '', list, grid, toggle, filter, stats, tabs, lastSignature = '';
+  var mode = 'cards', layout = 'cards', sort = 'reachable', tag = '', state = 'all', term = '', list, grid, toggle, filter, stats, tabs, tagFilter, sortSelect, layoutSelect, lastSignature = '';
   var maxRendered = 150;
   function reachable(node) { return ((Number(node.conn) || 0) & 7) !== 0; }
   function nativeStars() {
@@ -627,6 +627,18 @@
     lastSignature = '';
     update();
   }
+  function makeSelection(node) {
+    var input = create('input','DeviceCheckbox ns-live-selection');
+    input.type = 'checkbox';
+    input.value = 'devid_' + node._id;
+    input.checked = !!(window.checkedNodeids && window.checkedNodeids[node._id]);
+    input.disabled = typeof window.p1devcheck !== 'function';
+    input.setAttribute('aria-label','Select ' + String(node.name || node.rname || 'Device') + ' for native group actions');
+    input.addEventListener('change',function (event) {
+      if (typeof window.p1devcheck === 'function') window.p1devcheck(event);
+    });
+    return input;
+  }
   function renderFilterTabs() {
     if (!tabs) return;
     var options = [['all','All']];
@@ -667,6 +679,8 @@
     var ready = inventory() !== null && supportsView();
     var enabled = !!on && ready;
     document.body.classList.toggle('ns-cards-enabled', enabled);
+    document.body.classList.toggle('ns-inventory-table', enabled && layout === 'table');
+    document.body.classList.toggle('ns-inventory-compact', enabled && layout === 'compact');
     if (list) list.hidden = !ready;
     if (grid) grid.hidden = !enabled;
     if (filter && filter.parentNode) filter.parentNode.hidden = !enabled;
@@ -702,20 +716,91 @@
       event.stopPropagation();
       toggleFavorite(node, favorite);
     });
-    var top = create('div', 'ns-live-device-top');
+    var top = create('span', 'ns-live-device-top');
     var icon = create('span', 'ns-live-device-icon', node.agent && node.agent.id ? '▣' : '◇');
     icon.setAttribute('aria-hidden', 'true');
     var badge = create('span', 'ns-live-status ' + (online ? 'online' : 'offline'),
       online ? 'Reachable' : 'Offline');
     top.append(icon, badge);
-    var identity = create('div', 'ns-live-device-name', name);
-    var description = create('div', 'ns-live-device-subtitle', groupName);
-    var bottom = create('div', 'ns-live-device-foot');
+    var identity = create('span', 'ns-live-device-name', name);
+    var description = create('span', 'ns-live-device-subtitle', groupName);
+    var bottom = create('span', 'ns-live-device-foot');
     bottom.append(create('span', '', os ? String(os) : 'Device details'));
     bottom.append(create('span', 'ns-live-device-open', 'Open ↗'));
     card.append(top, identity, description, bottom);
-    frame.append(card, favorite);
+    var tags = makeTags(node);
+    if (tags.children.length) card.append(tags);
+    frame.append(card, makeSelection(node), favorite);
     return frame;
+  }
+  function makeTags(node) {
+    var wrap = create('span','ns-live-tags');
+    var values = Array.isArray(node.tags) ? node.tags.filter(function (value) { return typeof value === 'string' && value; }) : [];
+    values.slice(0,4).forEach(function (value) { wrap.append(create('span','ns-live-tag',value)); });
+    if (values.length > 4) wrap.append(create('span','ns-live-tag ns-live-tag-more','+' + (values.length - 4)));
+    return wrap;
+  }
+  function makeCompact(node) {
+    var row = create('div','ns-live-compact-row');
+    var openButton = create('button','ns-live-compact-open');
+    openButton.type = 'button';
+    openButton.setAttribute('aria-label','Open ' + String(node.name || node.rname || 'Device') + ' in MeshCentral');
+    openButton.addEventListener('click',function (event) { open(node,event); });
+    openButton.append(create('span','ns-live-compact-status ' + (reachable(node) ? 'online' : 'offline')));
+    openButton.append(create('span','ns-live-compact-name',String(node.name || node.rname || 'Device')));
+    var group = window.meshes && window.meshes[node.meshid];
+    openButton.append(create('span','ns-live-compact-group',group && group.name ? String(group.name) : 'Device group unavailable'));
+    var tags = makeTags(node);
+    if (tags.children.length) openButton.append(tags);
+    var selection = makeSelection(node);
+    var favorite = create('button','ns-live-favorite');
+    favorite.type = 'button'; updateFavoriteButton(node,favorite);
+    favorite.addEventListener('click',function (event) { event.preventDefault();event.stopPropagation();toggleFavorite(node,favorite); });
+    row.append(selection,openButton,favorite);
+    return row;
+  }
+  function makeTable(nodes) {
+    var wrap = create('div','ns-live-table-wrap');
+    var table = create('table','ns-live-table');
+    table.setAttribute('aria-label','Managed device inventory');
+    var thead = create('thead'), header = create('tr');
+    ['Select','Device','Group','Status','Operating system','Tags','Favorite'].forEach(function (label) { var th=create('th','',label);th.setAttribute('scope','col');header.append(th); });
+    thead.append(header);
+    var tbody = create('tbody');
+    nodes.forEach(function (node) {
+      var row = create('tr'), selectionCell = create('td'), nameCell = create('td'), groupCell = create('td'), statusCell = create('td'), osCell = create('td'), tagsCell = create('td'), favoriteCell = create('td');
+      selectionCell.append(makeSelection(node));
+      var openButton = create('button','ns-live-table-open',String(node.name || node.rname || 'Device'));
+      openButton.type = 'button'; openButton.addEventListener('click',function (event) { open(node,event); });
+      nameCell.append(openButton);
+      var group = window.meshes && window.meshes[node.meshid];
+      groupCell.textContent = group && group.name ? String(group.name) : 'Device group unavailable';
+      statusCell.append(create('span','ns-live-status ' + (reachable(node) ? 'online' : 'offline'),reachable(node) ? 'Reachable' : 'Offline'));
+      osCell.textContent = String(node.osdesc || node.osd || '—');
+      tagsCell.append(makeTags(node));
+      var favorite = create('button','ns-live-favorite'); favorite.type = 'button'; updateFavoriteButton(node,favorite);
+      favorite.addEventListener('click',function (event) { event.preventDefault();event.stopPropagation();toggleFavorite(node,favorite); });
+      favoriteCell.append(favorite);
+      row.append(selectionCell,nameCell,groupCell,statusCell,osCell,tagsCell,favoriteCell); tbody.append(row);
+    });
+    table.append(thead,tbody); wrap.append(table);
+    return wrap;
+  }
+  function refreshTags(nodes) {
+    if (!tagFilter) return;
+    var values = [];
+    nodes.forEach(function (node) {
+      if (Array.isArray(node.tags)) node.tags.forEach(function (value) { if (typeof value === 'string' && value && values.indexOf(value) < 0) values.push(value); });
+    });
+    values.sort(function (a,b) { return a.localeCompare(b); });
+    if (tagFilter.children.length !== values.length + 1 || values.some(function (value,index) { return tagFilter.children[index + 1].value !== value; })) {
+      var selected = tag;
+      tagFilter.replaceChildren();
+      var allOption = create('option','','All tags'); allOption.value = ''; tagFilter.append(allOption);
+      values.forEach(function (value) { var option = create('option','',value); option.value = value; tagFilter.append(option); });
+      tagFilter.value = values.indexOf(selected) >= 0 ? selected : '';
+      tag = tagFilter.value;
+    }
   }
   function update() {
     if (!list) return;
@@ -726,6 +811,7 @@
       var s = Number(reachable(b)) - Number(reachable(a));
       return s || String(a.name || '').localeCompare(String(b.name || ''));
     });
+    refreshTags(all);
     var recent = readRecentDevices(), recentPositions = Object.create(null);
     recent.forEach(function (item,index) { recentPositions[item.id] = index; });
     var onlineCount = all.filter(reachable).length;
@@ -734,29 +820,46 @@
       if (state === 'favorites' && !isFavorite(node)) return false;
       if (state === 'online' && !reachable(node)) return false;
       if (state === 'offline' && reachable(node)) return false;
+      if (tag && (!Array.isArray(node.tags) || node.tags.indexOf(tag) < 0)) return false;
       if (!term) return true;
       var group = window.meshes && window.meshes[node.meshid];
       var haystack = [node.name,node.rname,node.osdesc,group && group.name]
         .filter(Boolean).join(' ').toLowerCase();
       return haystack.includes(term);
     });
-    if (state === 'recent') {
-      view.sort(function (a,b) { return recentPositions[a._id] - recentPositions[b._id]; });
+    if (state === 'recent' || sort === 'recent') {
+      view.sort(function (a,b) {
+        var ap = Object.prototype.hasOwnProperty.call(recentPositions,a._id) ? recentPositions[a._id] : Number.MAX_SAFE_INTEGER;
+        var bp = Object.prototype.hasOwnProperty.call(recentPositions,b._id) ? recentPositions[b._id] : Number.MAX_SAFE_INTEGER;
+        return ap - bp || String(a.name || '').localeCompare(String(b.name || ''));
+      });
+    } else if (sort === 'name') {
+      view.sort(function (a,b) { return String(a.name || a.rname || '').localeCompare(String(b.name || b.rname || '')); });
+    } else if (sort === 'group') {
+      view.sort(function (a,b) {
+        var ga = window.meshes && window.meshes[a.meshid], gb = window.meshes && window.meshes[b.meshid];
+        return String(ga && ga.name || '').localeCompare(String(gb && gb.name || '')) || String(a.name || '').localeCompare(String(b.name || ''));
+      });
+    } else if (sort === 'status') {
+      view.sort(function (a,b) { return Number(reachable(b)) - Number(reachable(a)) || String(a.name || '').localeCompare(String(b.name || '')); });
     }
     var favorites = nativeStars();
-    var signature = [mode,state,term,all.length,onlineCount,favorites ? Object.keys(favorites).length : -1,
+    var selected = window.checkedNodeids && typeof window.checkedNodeids === 'object' ? Object.keys(window.checkedNodeids).sort().join(',') : '';
+    var signature = [mode,layout,sort,tag,state,term,all.length,onlineCount,selected,favorites ? Object.keys(favorites).length : -1,
       recent.map(function (item) { return item.id + ':' + item.openedAt; }).join(','),supportsView(),
       view.slice(0,maxRendered).map(function (n) { return [n._id,n.name,n.conn,n.meshid,n.osdesc,isFavorite(n) ? 1 : 0].join(':'); }).join('|')].join('::');
     if (signature !== lastSignature) {
       lastSignature = signature;
       grid.replaceChildren();
-      view.slice(0,maxRendered).forEach(function (node) { grid.append(makeCard(node)); });
+      var rendered = view.slice(0,maxRendered);
+      if (layout === 'table') grid.append(makeTable(rendered));
+      else rendered.forEach(function (node) { grid.append(layout === 'compact' ? makeCompact(node) : makeCard(node)); });
       if (!view.length) grid.append(create('div','ns-live-empty',state === 'recent'
         ? 'No recent devices yet. Open a device to add it here.'
         : 'No devices match the selected filters.'));
-      stats.textContent = all.length + ' visible devices · ' + onlineCount + ' reachable · ' +
+      stats.textContent = all.length + ' loaded · ' + Math.min(view.length,maxRendered) + ' shown · ' + onlineCount + ' reachable · ' +
         (all.length - onlineCount) + ' offline' +
-        (view.length > maxRendered ? ' · Showing first ' + maxRendered + ' matches' : '');
+        (view.length > maxRendered ? ' · First ' + maxRendered + ' matches' : '');
     }
     useCards(mode === 'cards');
   }
@@ -784,7 +887,17 @@
     tabs = create('div','ns-live-tabs');tabs.setAttribute('role','group');
     tabs.setAttribute('aria-label','Filter devices by connection state');
     renderFilterTabs();
-    controls.append(filter,tabs);
+    tagFilter=create('select','ns-live-select');tagFilter.dataset.control='tag';tagFilter.setAttribute('aria-label','Filter by device tag');
+    sortSelect=create('select','ns-live-select');sortSelect.dataset.control='sort';sortSelect.setAttribute('aria-label','Sort devices');
+    [['reachable','Reachable first'],['name','Name'],['group','Group'],['status','Status'],['recent','Recently opened']].forEach(function (entry) { var option=create('option','',entry[1]);option.value=entry[0];sortSelect.append(option); });
+    sortSelect.value=sort;
+    sortSelect.addEventListener('change',function () { sort=sortSelect.value;update(); });
+    tagFilter.addEventListener('change',function () { tag=tagFilter.value;update(); });
+    layoutSelect=create('select','ns-live-select');layoutSelect.dataset.control='layout';layoutSelect.setAttribute('aria-label','Device layout');
+    [['cards','Cards'],['table','Table'],['compact','Compact']].forEach(function (entry) { var option=create('option','',entry[1]);option.value=entry[0];layoutSelect.append(option); });
+    layoutSelect.value=layout;
+    layoutSelect.addEventListener('change',function () { layout=layoutSelect.value;update(); });
+    controls.append(filter,tabs,tagFilter,sortSelect,layoutSelect);
     grid=create('div','ns-live-grid');
     list.append(header,controls,grid);
     nativeList.parentNode.insertBefore(list,nativeList);

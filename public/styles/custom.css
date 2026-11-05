@@ -977,6 +977,7 @@ body.ns-shell-ready.ns-cards-enabled #xdevices {display:none!important}
   margin-bottom:14px;
   flex-wrap:wrap;
 }
+.ns-live-controls > .ns-live-select {flex:1 1 130px;min-width:0;width:auto}
 .ns-live-filter {
   flex:1 1 240px;
   width:100%;
@@ -989,6 +990,11 @@ body.ns-shell-ready.ns-cards-enabled #xdevices {display:none!important}
 }
 .ns-live-filter:focus {border-color:#b6f078!important;box-shadow:0 0 0 3px #b6f07825!important;outline:0}
 .ns-live-tabs {display:flex;gap:3px;background:#151e28;border:1px solid #334450;border-radius:10px;padding:4px}
+.ns-live-select {
+  min-height:39px;max-width:190px;padding:0 30px 0 11px;border:1px solid #3d4d59!important;
+  border-radius:9px!important;background:#151e28!important;color:#e5eeea!important;font-size:11px
+}
+.ns-live-select:focus-visible {outline:2px solid #c9ffa1!important;outline-offset:2px}
 .ns-live-filter-tab {
   font-size:11px;font-weight:700;padding:8px 12px;
   border-radius:7px;border:0;background:transparent;color:#a4b5c0;
@@ -1003,7 +1009,7 @@ body.ns-shell-ready.ns-cards-enabled #xdevices {display:none!important}
   gap:10px;
   min-width:0;
   min-height:181px;
-  padding:17px;
+  padding:17px 17px 17px 45px;
   text-align:left;
   color:#ecf3f0;
   background:#151e28;
@@ -1021,20 +1027,46 @@ body.ns-shell-ready.ns-cards-enabled #xdevices {display:none!important}
   padding:0;border:1px solid #405260;border-radius:11px;
   background:#1d2a34;color:#aab9c4;font-size:22px;line-height:1;
 }
+.ns-live-selection {width:18px;height:18px;accent-color:#b6f078;cursor:pointer}
+.ns-live-device-frame > .ns-live-selection {position:absolute;left:9px;top:9px;z-index:4}
+.ns-live-table .ns-live-selection {display:block;margin:auto}
+.ns-live-compact-row > .ns-live-selection {flex:0 0 18px}
 .ns-live-favorite:hover {background:#2b3d47;color:#f1f7f3;border-color:#8aaa72}
 .ns-live-favorite[aria-pressed="true"] {background:#2c4034;color:#d0ffa6;border-color:#7a9c63}
 .ns-live-favorite:focus-visible {outline:2px solid #c9ffa1;outline-offset:2px}
 .ns-live-favorite:disabled {opacity:.5;cursor:not-allowed}
-.ns-live-device-top,.ns-live-device-foot {display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ns-live-device-top,.ns-live-device-foot {display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px}
 .ns-live-device-icon {display:grid;place-items:center;width:40px;height:40px;background:#253441;border:1px solid #344c57;color:#c4dfbb;border-radius:11px;font-size:20px}
 .ns-live-status {display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:7px;font-size:10px;font-weight:760;background:#202b36;color:#a8b9c4}
 .ns-live-status::before {content:"";width:6px;height:6px;background:currentColor;border-radius:50%}
 .ns-live-status.online {background:#213c33;color:#91dbb0}
 .ns-live-status.offline {background:#242d37;color:#adbcc8}
-.ns-live-device-name {font-size:14px;line-height:1.3;letter-spacing:-.012em;font-weight:760;overflow-wrap:anywhere}
-.ns-live-device-subtitle {font-size:11px;color:#9aabb9;margin-top:-4px;overflow-wrap:anywhere}
+.ns-live-device-name {display:block;font-size:14px;line-height:1.3;letter-spacing:-.012em;font-weight:760;overflow-wrap:anywhere}
+.ns-live-device-subtitle {display:block;font-size:11px;color:#9aabb9;margin-top:-4px;overflow-wrap:anywhere}
 .ns-live-device-foot {font-size:10px;color:#8ea3b1;line-height:1.5;margin-top:auto;border-top:1px solid #2b3b47;padding:12px 52px 0 0}
 .ns-live-device-open {font-size:11px;color:#b6f078;font-weight:730;white-space:nowrap}
+.ns-live-tags {display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+.ns-live-tag {display:inline-flex;max-width:100%;padding:3px 7px;border:1px solid #3a5148;border-radius:999px;background:#20342d;color:#c7e7c2;font-size:10px;line-height:1.25;overflow-wrap:anywhere}
+.ns-live-tag-more {background:#25313a;border-color:#43525d;color:#b8c5cc}
+.ns-inventory-compact .ns-live-grid {display:flex;flex-direction:column;gap:6px}
+.ns-live-compact-row {display:flex;align-items:center;gap:6px;min-width:0;padding:5px 7px;border:1px solid #2d3c48;border-radius:10px;background:#151e28}
+.ns-live-compact-row > .ns-live-favorite {position:static;flex:0 0 44px}
+.ns-live-compact-open {display:flex;align-items:center;gap:10px;flex:1;min-width:0;padding:7px;border:0;background:transparent;color:#edf4f1;text-align:left}
+.ns-live-compact-name {flex:0 1 220px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:720}
+.ns-live-compact-group {flex:0 1 200px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#99aab4;font-size:11px}
+.ns-live-compact-open .ns-live-tags {flex:1}
+.ns-live-compact-status {width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#87949c}
+.ns-live-compact-status.online {background:#91dbb0;box-shadow:0 0 0 3px #91dbb022}
+.ns-live-table-wrap {max-width:100%;overflow:auto;border:1px solid #2d3c48;border-radius:12px;background:#151e28}
+.ns-inventory-table .ns-live-grid {display:block;min-width:0}
+.ns-live-table {width:100%;border-collapse:collapse;min-width:700px;text-align:left;font-size:12px}
+.ns-live-table th,.ns-live-table td {padding:10px 12px;border-bottom:1px solid #2a3944;vertical-align:middle}
+.ns-live-table th {position:sticky;top:0;background:#202c36;color:#b5c3ca;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.ns-live-table tbody tr:hover {background:#1b2932}
+.ns-live-table-open {padding:5px 0;border:0;background:transparent;color:#d8edda;font-size:12px;font-weight:730;text-align:left}
+.ns-live-table-open:hover {color:#c9ffa1;text-decoration:underline}
+.ns-live-table td:last-child {width:64px;text-align:center}
+.ns-live-table .ns-live-favorite {position:static;margin:auto}
 .ns-live-empty {
   border:1px dashed #344753;border-radius:13px;padding:30px;text-align:center;color:#a1b2bb;
   grid-column:1/-1;font-size:12px
@@ -1042,12 +1074,13 @@ body.ns-shell-ready.ns-cards-enabled #xdevices {display:none!important}
 @media(max-width:900px) {
   .ns-live-inventory {padding:0 3px}
   .ns-live-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-  .ns-live-device {min-height:165px;padding:13px;gap:7px}
+  .ns-live-device {min-height:165px;padding:13px 13px 13px 40px;gap:7px}
   .ns-live-inventory-header h2 {font-size:17px}
   .ns-live-controls {align-items:stretch;gap:8px}
   .ns-live-filter {max-width:none;flex-basis:100%;min-height:44px}
   .ns-live-tabs {width:100%;justify-content:space-between}
   .ns-live-filter-tab {flex:1;padding:9px 4px}
+  .ns-live-controls > .ns-live-select {max-width:none;min-height:44px}
 }
 @media(max-width:390px) {
   .ns-live-grid {grid-template-columns:1fr}
@@ -1061,10 +1094,8 @@ body.ns-shell-ready.ns-cards-enabled #xdevices {display:none!important}
 }
 
 
-/* Remove duplicate upstream inventory chrome only when real Night Shift cards
-   are active; the Original list toggle restores all original controls instantly. */
-body.ns-shell-ready.ns-cards-enabled #p1title,
-body.ns-shell-ready.ns-cards-enabled #devListToolbarSpan {display:none!important}
+/* Keep MeshCentral's native bulk-action toolbar available beside the enhanced views. */
+body.ns-shell-ready.ns-cards-enabled #p1title {display:none!important}
 body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
 
 /* Session-first phone composition, matching Concept B while keeping Back in native dock. */
