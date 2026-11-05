@@ -1557,7 +1557,13 @@
     if (!$('p17')) return;
     update();
     var graphControl = document.querySelector('#devListToolbarViewIcons3 [title="Show device CPU and memory usage."]');
-    if (graphControl) graphControl.addEventListener('click',function () { setTimeout(installChartHook,0); },true);
+    if (graphControl) graphControl.addEventListener('click',function () {
+      setTimeout(function () {
+        if (!window.deviceDetailsStatsChart) {
+          values.cpu.textContent = 'Unavailable'; values.memory.textContent = 'Unavailable';
+        } else installChartHook();
+      },0);
+    },true);
     if (typeof MutationObserver === 'function') {
       var observer = new MutationObserver(update);
       var target = $('p17info2');
@@ -1811,7 +1817,7 @@
   'use strict';
   if (window.__NightShiftAlerts) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, enabled, metricEnabled, cpuLimit, memoryLimit, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotice = null, overThreshold = {};
+  var panel, enabled, metricEnabled, cpuLimit, memoryLimit, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotices = {}, overThreshold = {};
   function create(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -1902,8 +1908,8 @@
     notify(node,dedupeKey,label,enabled.checked,now);
   }
   function notify(node,dedupeKey,label,allowed,now) {
-    if (!allowed || quietNow(now) || (lastNotice && lastNotice.key === dedupeKey && now.getTime() - lastNotice.time < 300000)) return;
-    lastNotice = {key:dedupeKey,time:now.getTime()};
+    if (!allowed || quietNow(now) || (lastNotices[dedupeKey] && now.getTime() - lastNotices[dedupeKey] < 300000)) return;
+    lastNotices[dedupeKey] = now.getTime();
     status.textContent = label;
     if (window.Notification && window.Notification.permission === 'granted') {
       try { new window.Notification('MeshCentral connection changed',{body:label,tag:dedupeKey}); } catch (e) { }

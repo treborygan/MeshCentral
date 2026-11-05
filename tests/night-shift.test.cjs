@@ -88,6 +88,7 @@ test('connection alerts are opt-in, device-scoped, deduplicated and quiet-hours 
   assert.match(alerts,/putstore\(key\(activeNode\)/);
   assert.match(alerts,/Notification\.requestPermission/);
   assert.match(alerts,/300000/);
+  assert.match(alerts,/lastNotices\[dedupeKey\]/);
   assert.match(alerts,/quietNow/);
   assert.match(alerts,/CPU threshold/);
   assert.match(alerts,/ns-native-health-sample/);

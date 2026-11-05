@@ -96,7 +96,13 @@
     if (!$('p17')) return;
     update();
     var graphControl = document.querySelector('#devListToolbarViewIcons3 [title="Show device CPU and memory usage."]');
-    if (graphControl) graphControl.addEventListener('click',function () { setTimeout(installChartHook,0); },true);
+    if (graphControl) graphControl.addEventListener('click',function () {
+      setTimeout(function () {
+        if (!window.deviceDetailsStatsChart) {
+          values.cpu.textContent = 'Unavailable'; values.memory.textContent = 'Unavailable';
+        } else installChartHook();
+      },0);
+    },true);
     if (typeof MutationObserver === 'function') {
       var observer = new MutationObserver(update);
       var target = $('p17info2');
