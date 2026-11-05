@@ -1003,9 +1003,15 @@
     }
     var favorites = nativeStars();
     var selected = window.checkedNodeids && typeof window.checkedNodeids === 'object' ? Object.keys(window.checkedNodeids).sort().join(',') : '';
+    var tagState = all.map(function (node) {
+      return [node._id,Array.isArray(node.tags) ? node.tags.join('\u001f') : ''].join(':');
+    }).join('|');
     var signature = [mode,layout,sort,tag,state,term,all.length,onlineCount,selected,favorites ? Object.keys(favorites).length : -1,
-      recent.map(function (item) { return item.id + ':' + item.openedAt; }).join(','),supportsView(),
-      view.slice(0,maxRendered).map(function (n) { return [n._id,n.name,n.conn,n.meshid,n.osdesc,isFavorite(n) ? 1 : 0].join(':'); }).join('|')].join('::');
+      recent.map(function (item) { return item.id + ':' + item.openedAt; }).join(','),supportsView(),tagState,
+      view.slice(0,maxRendered).map(function (n) {
+        var group = window.meshes && window.meshes[n.meshid];
+        return [n._id,n.name,n.rname,n.conn,n.meshid,group && group.name,n.osdesc,n.osd,isFavorite(n) ? 1 : 0].join(':');
+      }).join('|')].join('::');
     if (signature !== lastSignature) {
       lastSignature = signature;
       grid.replaceChildren();
