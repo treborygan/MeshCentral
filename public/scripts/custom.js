@@ -1692,6 +1692,7 @@
   if (window.__NightShiftFiles) return;
   var $ = function (id) { return document.getElementById(id); };
   var search, inspector, detail, actions = [];
+  var uploadObserver, transferQueue, transferStatus, transferList, lastQueueIndex = null;
   function create(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -1741,6 +1742,60 @@
     detail.append(create('div','ns-file-meta','Size: ' + (item.t < 3 ? '—' : size(item.s))));
     detail.append(create('div','ns-file-meta','Modified: ' + (item.d ? new Date(typeof item.d === 'number' ? item.d * 1000 : item.d).toLocaleString() : 'Unavailable')));
   }
+  function updateUploadQueue() {
+    var upload = window.uploadFile;
+    if (!upload || !upload.xfiles || typeof upload.xfiles.length !== 'number' || !upload.xfiles.length) {
+      if (transferQueue) transferQueue.remove();
+      transferQueue = transferStatus = transferList = null;
+      lastQueueIndex = null;
+      return;
+    }
+    var body = $('xxAddAgentBody') || (document.querySelector && document.querySelector('#xxAddAgentModal .modal-body'));
+    var progress = $('d2progressLabel');
+    if (!body || !progress) return;
+    if (!transferQueue) {
+      transferQueue = create('section','ns-transfer-queue');
+      transferQueue.setAttribute('aria-label','Upload queue');
+      transferStatus = create('p','ns-transfer-status');
+      transferStatus.setAttribute('aria-live','polite');
+      transferStatus.setAttribute('aria-atomic','true');
+      transferList = create('ol','ns-transfer-list');
+      transferQueue.append(transferStatus,transferList);
+      progress.insertAdjacentElement('afterend',transferQueue);
+    }
+    var index = Math.max(0, Math.min(upload.xfiles.length - 1, Number(upload.xfilePtr) || 0));
+    var current = upload.xfiles[index];
+    var nativeName = $('p13dfileName');
+    var name = nativeName && nativeName.textContent || (current && current.name) || 'Current file';
+    var percent = $('d2progressBar');
+    var progressText = $('d2progressLabel');
+    var amount = percent && Number(percent.max) > 0 ? Math.floor((Number(percent.value) / Number(percent.max)) * 100) : null;
+    var state = progressText && progressText.textContent || '';
+    var currentProgress = amount === null ? state : Math.max(0,Math.min(100,amount)) + '%';
+    var statusText = 'File ' + (index + 1) + ' of ' + upload.xfiles.length + ': ' + name + ' · ' + currentProgress;
+    if (transferStatus.textContent !== statusText) transferStatus.textContent = statusText;
+    if (lastQueueIndex !== index || transferList.childElementCount !== upload.xfiles.length) {
+      transferList.replaceChildren();
+      Array.prototype.forEach.call(upload.xfiles,function (file, fileIndex) {
+        var item = create('li','ns-transfer-item');
+        var fileName = create('span','ns-transfer-name',file && file.name || 'Unnamed file');
+        var stateLabel = fileIndex < index ? 'Sent' : fileIndex === index ? 'Current' : 'Queued';
+        item.append(fileName,create('span','ns-transfer-state',stateLabel));
+        if (fileIndex === index) item.setAttribute('aria-current','true');
+        transferList.append(item);
+      });
+      lastQueueIndex = index;
+    }
+  }
+  function watchUploadQueue() {
+    var body = $('xxAddAgentBody') || (document.querySelector && document.querySelector('#xxAddAgentModal .modal-body'));
+    if (!body || typeof MutationObserver !== 'function' || uploadObserver) return;
+    uploadObserver = new MutationObserver(updateUploadQueue);
+    uploadObserver.observe(body,{childList:true,subtree:true,characterData:true});
+    var modal = $('xxAddAgentModal');
+    if (modal) uploadObserver.observe(modal,{attributes:true,attributeFilter:['class','aria-hidden']});
+    updateUploadQueue();
+  }
   function build() {
     var page = $('p13'), title = $('p13title'), list = $('p13filetable');
     if (!page || !title || !list) return;
@@ -1763,6 +1818,7 @@
   }
   function boot() {
     build();
+    watchUploadQueue();
     var dropTarget = $('p13filetable');
     if (dropTarget) {
       dropTarget.addEventListener('dragover',function (event) {

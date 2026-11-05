@@ -70,6 +70,18 @@ test('file workspace filters the current folder and uses native selection action
   assert.doesNotMatch(files,/files\.send|fetch\s*\(|XMLHttpRequest|checksum|resume/);
 });
 
+test('upload queue display follows native queued files and native progress state',()=>{
+  assert.match(files,/window\.uploadFile/);
+  assert.match(files,/upload\.xfiles/);
+  assert.match(files,/typeof upload\.xfiles\.length !== 'number'/);
+  assert.match(files,/d2progressLabel/);
+  assert.match(files,/aria-live',\s*'polite'/);
+  assert.match(files,/new MutationObserver\(updateUploadQueue\)/);
+  assert.match(files,/window\.p13doUploadFiles\(dropped\)/);
+  assert.match(css,/\.ns-transfer-queue/);
+  assert.doesNotMatch(files,/fetch\(|XMLHttpRequest|WebSocket\(/);
+});
+
 test('quick power and command actions mirror MeshCentral rights and open its native audit flow',()=>{
   assert.match(actions,/GetNodeRights\(node\)/);
   assert.match(actions,/window\.deviceActionFunction\(\)/);

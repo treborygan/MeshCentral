@@ -34,7 +34,8 @@ Status labels: **Done** means source and the stated verification exist; it does 
 
 ## Phase 3 — device management and power tools
 
-- [ ] Split-pane file manager with drag/drop, bulk transfers, queue/progress, checksums and only backend-supported retry/resume. (Responsive inspector, local filter and drag/drop now feed the native file page. Native upload already queues multiple files, reports progress, and uses server hash negotiation for resumable uploads when supported. Unified transfer queue/retry and equivalent download progress remain pending.)
+- [x] Split-pane file manager with drag/drop, bulk native uploads, visible per-file queue/progress, SHA-384 checks and only backend-supported resume. The Night Shift queue summary reflects MeshCentral's native upload state and leaves its overwrite prompt, cancellation, transfer and refresh flows authoritative.
+- [ ] Unified transfer history and retry controls remain pending; downloads retain MeshCentral's native progress dialog and transfer behavior.
 - [ ] Live health panels for CPU, memory, storage, uptime, agent status and available system information. (Health summary shows CPU/memory values and threshold alerts from native graph updates while the graph is open; no extra telemetry polling. Live/authenticated acceptance pending.)
 - [ ] Searchable activity/session history and native recording access. (Local search added to loaded native Events and recordings; expanded history workflows and live acceptance remain pending.)
 - [ ] Permission-gated quick actions and reusable audited commands. (Device Details shortcuts now expose native power actions and the native configured-command picker when MeshCentral rights and connection state allow; live acceptance remains pending.)
