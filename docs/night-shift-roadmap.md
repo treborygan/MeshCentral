@@ -63,7 +63,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [ ] Complete authenticated workflows for admin and restricted roles, Agent desktop, browser RDP, terminal, files, reconnect, guest, recordings, AMT and plugins.
 - [ ] Complete screenshot comparison and live physical-device checks; keep the PR draft until these pass.
 - [x] Recheck the installed asset and rollback hashes for the 2026-11-05 mobile masthead update; verify the running asset revision over the local HTTP listener.
-- [ ] Repeat authenticated visual review at 390×844 and on physical phones; the browser-control host was unavailable during this session.
+- [ ] Complete authenticated visual review at 390×844, tablet and desktop sizes, plus physical phones. Playwright Chromium screenshots now cover only the unauthenticated PRN login page; they do not verify dashboard or current source branch rendering.
 
 ## Current evidence and blockers
 
@@ -87,5 +87,5 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - Authenticated read-only review passed navigation, search/status filtering, dashboard, Events, Files, Users, Server, and native-list fallback. It recorded a mobile masthead clipping defect. The correction is now deployed and byte-verified through the local HTTP listener; its visual effect has not yet been rechecked in an authenticated browser.
 - PRN Cloudflare Access and service state were preserved. Real Agent/RDP input, terminal commands, file mutation, Android/iOS gestures, role restrictions, AMT, recordings and plugin workflows remain unverified.
 - Current PRN target is `C:\ProgramData\MeshCentral` (data directory present, MeshCentral, Cloudflared and Mesh Agent services running, configured listener port 9455, local override endpoints HTTP 200). The installer created rollback `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-000507-28f309`; its manifest preserves the prior CSS/JS hashes. Source and served CSS hash: `D2965A0B9CA93D312D65A0583BBF44D81D6E67CBEE6923438AE3991F38F26E0D`; source and served JS hash: `7D50EED58E7B8C4C1C915EE120B0EF3DFA6245B11CF2E03D83BBA896EF275217`.
-- No current blocker to source development. Browser access tooling was unavailable in this session, so live authenticated visual acceptance could not be repeated. Physical-device acceptance also requires authenticated Android/iOS devices and eligible MeshCentral test sessions; these are acceptance dependencies, not reasons to claim completion.
+- No current blocker to source development. Playwright Chromium captured the unauthenticated PRN login at 390×844 and 1440×900 in `docs/night-shift-acceptance/`. Served CSS/JS hashes differ from this source branch, so the captures verify the installed login surface only. Authenticated visual acceptance remains open because browser-control access is unavailable; physical-device acceptance requires authenticated Android/iOS devices and eligible MeshCentral test sessions.
 
