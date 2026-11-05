@@ -1841,3 +1841,87 @@ body.ns-theme #p6 #serverWarningsDiv :is(#serverCertWarnings,#serverWarnings) {o
   body.ns-theme #p2AccountSecurity > div,
   body.ns-theme #p2AccountActions .mL {grid-template-columns:minmax(0,1fr)}
 }
+
+/* Native dialogs: clarify title, content and action hierarchy at every width. */
+body.ns-theme #dialog {
+  box-sizing:border-box;
+  max-width:calc(100vw - 24px);
+  max-height:calc(100dvh - 24px);
+  border:1px solid #43535e;
+  border-radius:16px;
+  background:#151e28;
+  color:var(--ns-foreground);
+  box-shadow:0 22px 70px #0009;
+  overscroll-behavior:contain;
+}
+body.ns-theme #dialogHeader {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  box-sizing:border-box;
+  min-height:54px;
+  padding:8px 10px 8px 16px;
+  margin:0;
+  border-bottom:1px solid #34434e;
+  border-radius:15px 15px 0 0;
+  background:#101923;
+  color:var(--ns-foreground);
+}
+body.ns-theme #id_dialogtitle {order:1;flex:1;min-width:0;padding:0;font-size:16px;font-weight:720;overflow-wrap:anywhere}
+body.ns-theme #id_dialogclose {
+  order:2;
+  float:none;
+  display:flex;
+  flex:0 0 38px;
+  width:38px;
+  height:38px;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  margin:0;
+  border:1px solid #40515d;
+  border-radius:10px;
+  background:#1c2834;
+  color:#eaf2f0;
+}
+body.ns-theme #dialogBody {
+  box-sizing:border-box;
+  max-height:min(68dvh,620px);
+  overflow:auto;
+  margin:0;
+  padding:14px 16px 8px;
+  color:var(--ns-foreground);
+  scrollbar-color:#405563 #151e28;
+}
+body.ns-theme #dialogBody :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea) {max-width:100%}
+body.ns-theme #dialogBody :is(.dialogText,#d3serverfiles,#d7otherset,#d7rdpflags) {
+  max-width:100%;
+  border-color:#344550;
+  border-radius:9px;
+  background:#111a23;
+  color:var(--ns-foreground);
+}
+body.ns-theme #idx_dlgButtonBar {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:8px;
+  box-sizing:border-box;
+  padding:10px 14px 14px;
+  margin:0;
+  border-top:1px solid #2d3943;
+  overflow:visible;
+}
+body.ns-theme #idx_dlgButtonBar > input,
+body.ns-theme #idx_dlgButtonBar > div {float:none;margin:0}
+body.ns-theme #idx_dlgButtonBar > div:first-of-type {order:0;margin-right:auto}
+body.ns-theme #idx_dlgButtonBar > input {min-width:88px;min-height:42px;padding:8px 14px}
+body.ns-theme #idx_dlgOkButton {border-color:#b6f078;background:#b6f078;color:#17221a;font-weight:720}
+body.ns-theme #idx_dlgCancelButton {border-color:#40515d;background:#1c2834;color:var(--ns-foreground)}
+body.ns-theme #idx_dlgButtonBar :is(input,a):focus-visible {outline:2px solid var(--ns-focus);outline-offset:2px}
+@media(max-width:600px) {
+  body.ns-theme #dialogBody {max-height:calc(100dvh - 170px);padding:12px}
+  body.ns-theme #idx_dlgButtonBar {gap:6px;padding:8px 10px 10px}
+  body.ns-theme #idx_dlgButtonBar > input {flex:1 1 38%;min-width:0}
+}

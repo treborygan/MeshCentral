@@ -1432,3 +1432,15 @@ test('account security settings keep native links and use a responsive desktop w
   assert.match(template,/account_showChangePassword\(\)/);
   assert.match(template,/account_createMesh\(\)/);
 });
+
+test('native dialogs preserve their actions with responsive content and button bars',()=>{
+  assert.match(css,/body\.ns-theme #dialogHeader \{[\s\S]*?display:flex/);
+  assert.match(css,/body\.ns-theme #dialogBody \{[\s\S]*?overflow:auto/);
+  assert.match(css,/body\.ns-theme #idx_dlgButtonBar \{[\s\S]*?display:flex/);
+  assert.match(css,/body\.ns-theme #idx_dlgOkButton \{border-color:#b6f078/);
+  assert.match(css,/@media\(max-width:600px\)[\s\S]*?body\.ns-theme #dialogBody \{max-height:calc\(100dvh - 170px\)/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/onclick="dialogclose\(0\)"/);
+  assert.match(template,/onclick="dialogclose\(1\)"/);
+  assert.match(template,/onclick="dialogclose\(2\)"/);
+});
