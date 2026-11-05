@@ -1459,3 +1459,91 @@ body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
 .ns-viewer-info-close:disabled,.ns-viewer-info-details:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:700px){.ns-viewer-controls{display:none!important}.ns-viewer-info-drawer{top:env(safe-area-inset-top);bottom:calc(125px + env(safe-area-inset-bottom));width:min(24rem,calc(100vw - 1rem));border-radius:0 0 0 16px}.ns-viewer-info-toggle{top:calc(.65rem + env(safe-area-inset-top));right:.65rem}}
 @media(prefers-reduced-motion:no-preference){.ns-viewer-info-drawer:not([hidden]){animation:ns-viewer-drawer-in .16s ease-out}@keyframes ns-viewer-drawer-in{from{transform:translateX(1rem);opacity:.7}to{transform:translateX(0);opacity:1}}}
+
+/* Native user-group management: keep MeshCentral's table and actions while
+   giving the page a clearer toolbar, readable rows and a contained mobile scroll. */
+body.ns-theme #p50title {
+  min-height:49px;
+  margin-bottom:12px;
+  padding:5px 0 12px;
+  border-bottom:1px solid var(--ns-border);
+  color:var(--ns-foreground);
+}
+body.ns-theme #p50title h1 {margin:0;font-size:1.2rem;font-weight:720;letter-spacing:-.02em}
+body.ns-theme #p50 > .pTable {
+  width:100%;
+  margin:0 0 12px;
+  border:1px solid var(--ns-border);
+  border-radius:12px;
+  background:var(--ns-surface);
+}
+body.ns-theme #p50userGroupOps {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:8px;
+  padding:10px;
+}
+body.ns-theme #p50userGroupOps input {
+  min-height:40px;
+  border:1px solid #40515d;
+  border-radius:9px;
+  background:var(--ns-surface-raised);
+  color:var(--ns-foreground);
+  padding:8px 12px;
+}
+body.ns-theme #p50userGroupOps #NewUserGroupButton {
+  border-color:#b6f078;
+  background:#b6f078;
+  color:#17221a;
+  font-weight:700;
+}
+body.ns-theme #p50userGroupOps input:disabled {opacity:.5;cursor:not-allowed}
+body.ns-theme #p50userGroupOps input:focus-visible,
+body.ns-theme #p50groups tr:focus-visible {outline:2px solid var(--ns-focus);outline-offset:2px}
+body.ns-theme #p50groups {
+  max-width:100%;
+  max-height:calc(100dvh - 190px)!important;
+  overflow:auto;
+  scrollbar-color:#405563 var(--ns-canvas);
+}
+body.ns-theme #p50groups .p3usersTable {
+  width:100%;
+  min-width:500px;
+  border-collapse:separate;
+  border-spacing:0 7px;
+}
+body.ns-theme #p50groups .p3usersTable > tbody > tr:first-child th {
+  padding:8px 12px;
+  color:var(--ns-muted);
+  font-size:11px;
+  font-weight:650;
+  letter-spacing:.045em;
+  text-align:left;
+  text-transform:uppercase;
+}
+body.ns-theme #p50groups .p3usersTable > tbody > tr:not(:first-child) > td {
+  padding:10px 12px;
+  border-block:1px solid #2d3b46;
+  background:#151f29;
+  color:var(--ns-foreground);
+}
+body.ns-theme #p50groups .p3usersTable > tbody > tr:not(:first-child) > td:first-child {
+  border-left:1px solid #2d3b46;
+  border-radius:10px 0 0 10px;
+}
+body.ns-theme #p50groups .p3usersTable > tbody > tr:not(:first-child) > td:last-child {
+  border-right:1px solid #2d3b46;
+  border-radius:0 10px 10px 0;
+}
+body.ns-theme #p50groups .p3usersTable > tbody > tr:not(:first-child):hover > td {
+  border-color:#526a59;
+  background:#1b2a30;
+}
+body.ns-theme #p50groups .UserGroupCheckbox {width:18px;height:18px;vertical-align:middle}
+@media(max-width:600px) {
+  body.ns-theme #p50userGroupOps {justify-content:stretch}
+  body.ns-theme #p50userGroupOps input {flex:1 1 42%;white-space:normal}
+  body.ns-theme #p50groups .p3usersTable {min-width:500px}
+}

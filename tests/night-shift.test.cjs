@@ -1372,3 +1372,14 @@ test('structural layer remains progressive with native sessions and no synthetic
   assert.doesNotMatch(js,/new\s+WebSocket\s*\(|new\s+RTCPeerConnection\s*\(/);
   assert.doesNotMatch(css,/#devListToolbarSpan\s*\{\s*display:\s*none/i,'Native bulk-action toolbar stays available');
 });
+
+test('native user-group management receives responsive styling without replacing actions',()=>{
+  assert.match(css,/body\.ns-theme #p50userGroupOps/);
+  assert.match(css,/body\.ns-theme #p50groups \.p3usersTable/);
+  assert.match(css,/body\.ns-theme #p50groups tr:focus-visible/);
+  assert.match(css,/@media\(max-width:600px\)[\s\S]*?#p50groups \.p3usersTable \{min-width:500px\}/);
+  assert.match(read('views/default.handlebars'),/p50usersSelectallButtonFunction\(\)/);
+  assert.match(read('views/default.handlebars'),/p50usersGroupActionFunction\(\)/);
+  assert.match(read('views/default.handlebars'),/function addUserGroupHtml\(group\)/);
+  assert.match(read('views/default.handlebars'),/gotoUserGroup/);
+});
