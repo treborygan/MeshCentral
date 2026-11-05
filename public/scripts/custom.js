@@ -2150,8 +2150,17 @@
   function load(node) {
     try { return JSON.parse(window.getstore(key(node), '{}')); } catch (e) { return {}; }
   }
+  function normalizeThreshold(value, fallback) {
+    if (value === null || value === undefined || String(value).trim() === '') return String(fallback);
+    var number = Number(value);
+    if (!isFinite(number)) return String(fallback);
+    return String(Math.max(1,Math.min(100,Math.round(number))));
+  }
   function save() {
     if (!activeNode || typeof window.putstore !== 'function') return;
+    cpuLimit.value = normalizeThreshold(cpuLimit.value,85);
+    memoryLimit.value = normalizeThreshold(memoryLimit.value,90);
+    storageLimit.value = normalizeThreshold(storageLimit.value,15);
     window.putstore(key(activeNode), JSON.stringify({e:enabled.checked?1:0,m:metricEnabled.checked?1:0,c:cpuLimit.value,r:memoryLimit.value,s:quietStart.value,t:quietEnd.value}));
     window.putstore('nsAlertsS.' + activeNode,JSON.stringify({b:storageEnabled.checked?1:0,f:storageLimit.value}));
   }
@@ -2212,8 +2221,8 @@
     enabled.checked = prefs.e === 1;
     metricEnabled.checked = prefs.m === 1;
     storageEnabled.checked = storagePrefs.b === 1;
-    cpuLimit.value = prefs.c || '85'; memoryLimit.value = prefs.r || '90';
-    storageLimit.value = storagePrefs.f || '15';
+    cpuLimit.value = normalizeThreshold(prefs.c,85); memoryLimit.value = normalizeThreshold(prefs.r,90);
+    storageLimit.value = normalizeThreshold(storagePrefs.f,15);
     quietStart.value = typeof prefs.s === 'string' ? prefs.s : '';
     quietEnd.value = typeof prefs.t === 'string' ? prefs.t : '';
   }
@@ -2253,8 +2262,8 @@
   function sample(event) {
     var value = event && event.detail, node = window.currentNode;
     if (!metricEnabled || !metricEnabled.checked || !value || !node || value.nodeid !== node._id) return;
-    var cpu = typeof value.cpu === 'number' && value.cpu >= Number(cpuLimit.value);
-    var memory = typeof value.memory === 'number' && value.memory >= Number(memoryLimit.value);
+    var cpu = typeof value.cpu === 'number' && value.cpu >= Number(normalizeThreshold(cpuLimit.value,85));
+    var memory = typeof value.memory === 'number' && value.memory >= Number(normalizeThreshold(memoryLimit.value,90));
     var now = new Date(), name = node.name || node.rname || 'Device';
     [['cpu',cpu,value.cpu],['memory',memory,value.memory]].forEach(function (item) {
       var metricKey = node._id + '|metric|' + item[0];
@@ -2265,7 +2274,7 @@
   function storageSample(event) {
     var value = event && event.detail, node = window.currentNode;
     if (!storageEnabled || !storageEnabled.checked || !value || !node || value.nodeid !== node._id || !Array.isArray(value.volumes)) return;
-    var threshold = Number(storageLimit.value), now = new Date(), device = node.name || node.rname || 'Device';
+    var threshold = Number(normalizeThreshold(storageLimit.value,15)), now = new Date(), device = node.name || node.rname || 'Device';
     value.volumes.forEach(function (volume) {
       if (!volume || typeof volume.name !== 'string' || !(volume.size > 0) || !(volume.free >= 0)) return;
       var freePercent = volume.free / volume.size * 100, low = freePercent <= threshold;

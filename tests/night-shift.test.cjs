@@ -311,6 +311,20 @@ test('connection alerts are opt-in, device-scoped, deduplicated and quiet-hours 
   assert.doesNotMatch(alerts,/setInterval|meshserver\.send|poweraction|runcommands/);
 });
 
+test('configurable alert thresholds clamp to valid percentages and recover invalid preferences',()=>{
+  const helper=alerts.match(/function normalizeThreshold\(value, fallback\) \{[\s\S]*?\n  \}/);
+  assert.ok(helper,'alert threshold normalizer exists');
+  const normalize=vm.runInNewContext('('+helper[0]+')');
+  assert.equal(normalize('',85),'85','empty settings fall back to the documented default');
+  assert.equal(normalize('not-a-number',90),'90','malformed saved settings recover to the documented default');
+  assert.equal(normalize('-4',15),'1','thresholds cannot be set below one percent');
+  assert.equal(normalize('130',15),'100','thresholds cannot exceed one hundred percent');
+  assert.equal(normalize('36.7',15),'37','percentage thresholds use whole numbers');
+  assert.match(alerts,/normalizeThreshold\(prefs\.c,85\)/);
+  assert.match(alerts,/value\.cpu >= Number\(normalizeThreshold\(cpuLimit\.value,85\)\)/);
+  assert.match(alerts,/normalizeThreshold\(storageLimit\.value,15\)/);
+});
+
 test('fleet connection alerts observe native device updates only for opted-in devices',()=>{
   const alertsSource=read('public/scripts/night-shift/alerts.js'),notifications=[],nativeCalls=[];
   const nodes=[{_id:'node/a',name:'Allowed',conn:0},{_id:'node/b',name:'Muted',conn:0}];
