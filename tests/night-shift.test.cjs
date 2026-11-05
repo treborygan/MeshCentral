@@ -1271,6 +1271,11 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(diagnostic('control').children[1].textContent,'Connected','MeshCentral control-channel state uses the native socket');
   assert.equal(diagnostic('device').children[1].textContent,'Agent via relay','Device route reports native agent and relay flags');
   assert.equal(diagnostic('cloudflare').children[1].textContent,'Not observable after page load','The UI does not infer Cloudflare tunnel health from an authenticated page');
+  const savedDesktop=window.desktop;window.currentNode.conn=0;window.desktop=null;window.__NightShiftDiagnostics.refresh();
+  assert.match(guidance.textContent,/Browser RDP is available/i,'Missing Agent/AMT route guidance preserves an enabled RDP option');
+  nativeRdpConnect.disabled=true;window.__NightShiftDiagnostics.refresh();
+  assert.match(guidance.textContent,/Browser RDP is unavailable/i,'Guidance does not recommend RDP when its native control is disabled');
+  nativeRdpConnect.disabled=false;window.currentNode.conn=9;window.desktop=savedDesktop;window.__NightShiftDiagnostics.refresh();
   const showNativeControls=diagnostics.children.find(node=>node.classList.contains('ns-diagnostics-action'));
   assert.ok(showNativeControls,'Unconnected sessions offer a shortcut to native connect controls');
   showNativeControls.click();

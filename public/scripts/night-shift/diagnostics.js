@@ -46,13 +46,7 @@
       var controls = recoveringDisplay ? ['disconnectbutton1','connectbutton1','connectbutton1r','connectbutton1h'] : ['connectbutton1','connectbutton1r','connectbutton1h'];
       for (var i = 0; i < controls.length; i++) {
         var target = $(controls[i]);
-        var visible = !!target && !target.disabled && target.getAttribute('aria-disabled') !== 'true' &&
-          !!(target.getClientRects && target.getClientRects().length);
-        for (var parent = target && (target.parentElement || target.parentNode); visible && parent; parent = parent.parentElement || parent.parentNode) {
-          var style = getComputedStyle(parent);
-          if (parent.hidden || style.display === 'none' || style.visibility === 'hidden') visible = false;
-        }
-        if (visible) {
+        if (nativeControlAvailable(controls[i])) {
           target.focus();
           if (target.scrollIntoView) target.scrollIntoView({block:'nearest',inline:'nearest'});
           return;
@@ -80,6 +74,15 @@
     var state = Number.isInteger(desktop.State) ? desktop.State : desktop.state;
     return transport + ' · ' + (stateNames[state] || 'State unavailable');
   }
+  function nativeControlAvailable(id) {
+    var target = $(id);
+    if (!target || target.disabled || target.getAttribute('aria-disabled') === 'true' || !target.getClientRects || !target.getClientRects().length) return false;
+    for (var parent = target.parentElement || target.parentNode; parent; parent = parent.parentElement || parent.parentNode) {
+      var style = getComputedStyle(parent);
+      if (parent.hidden || style.display === 'none' || style.visibility === 'hidden') return false;
+    }
+    return true;
+  }
   function update() {
     build();
     if (!panel || !rows.browser) return;
@@ -103,7 +106,9 @@
       var next = 'Choose a native connection control to start a remote session.';
       if (browser === 'Offline') next = 'This browser is offline. Restore network access, then check the native connection status.';
       else if (typeof socket === 'number' && socket !== 2) next = 'The MeshCentral control channel is disconnected. Restore the page connection before reconnecting a device.';
-      else if (route !== null && (route & 15) === 0) next = 'No Agent or AMT route is currently reported for this device. Check that it is online, then use the native Connect controls.';
+      else if (route !== null && (route & 15) === 0) next = nativeControlAvailable('connectbutton1r')
+        ? 'No Agent or AMT route is currently reported for this device. Browser RDP is available; use the native RDP Connect control or check the device agent.'
+        : 'No Agent or AMT route is currently reported for this device, and Browser RDP is unavailable. Check the device status and use an enabled native connection method.';
       else if (Number.isInteger(desktopState) && (desktopState === 1 || desktopState === 2)) next = 'The native remote session is still connecting. Wait for its state to change before retrying.';
       else if (active && !canvasMounted) next = 'The session reports connected, but the display canvas is not mounted. Use the native Disconnect control before reconnecting.';
       else if (active) next = 'The native session is connected. Connection, input, monitor and recording controls remain available in MeshCentral.';
