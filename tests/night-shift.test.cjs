@@ -239,6 +239,29 @@ test('history search filters only native rendered events and recordings',()=>{
   assert.doesNotMatch(history,/meshserver\.send|downloadFile|openRecodringPlayer|localStorage|sessionStorage/);
 });
 
+test('rendered native events can be opened from the keyboard',()=>{
+  const eventRow={dataset:{},textContent:'Server restarted',attributes:{},listeners:{},clicks:0,
+    setAttribute(name,value){this.attributes[name]=value;},
+    addEventListener(name,callback){(this.listeners[name]||=[]).push(callback);},
+    click(){this.clicks++;}};
+  const rootNode={querySelectorAll(selector){return selector==='table.p3eventsTable tr[onclick*="showEventDetails"]'?[eventRow]:[];}};
+  const document={readyState:'complete',getElementById(id){return id==='p3events'?rootNode:null;}};
+  const window={addEventListener(){}};
+  vm.runInNewContext(history,{window,document,console},{timeout:1000});
+  assert.equal(eventRow.tabIndex,0,'native click rows enter keyboard tab order');
+  assert.match(eventRow.attributes['aria-label'],/Open event details: Server restarted/);
+  assert.equal(eventRow.listeners.keydown.length,1);
+  for(const key of ['Enter',' ']){
+    let prevented=false;
+    eventRow.listeners.keydown[0]({target:eventRow,key,preventDefault(){prevented=true;}});
+    assert.equal(prevented,true,key+' prevents its page-level default action');
+  }
+  assert.equal(eventRow.clicks,2,'Enter and Space delegate through the existing native event-row click handler');
+  window.__NightShiftHistory.refresh();
+  assert.equal(eventRow.listeners.keydown.length,1,'native rerenders do not install duplicate handlers');
+  assert.match(css,/tr\[onclick\*="showEventDetails"\]:focus-visible/);
+});
+
 test('history search counts matches and preserves date headings for matching recordings',()=>{
   const ids=new Map();
   class Element {

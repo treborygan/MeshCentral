@@ -31,6 +31,21 @@
   function matches(element, query) {
     return !query || (element.textContent || '').toLocaleLowerCase().includes(query);
   }
+  function enhanceEventRows() {
+    var root = $('p3events'); if (!root) return;
+    root.querySelectorAll('table.p3eventsTable tr[onclick*="showEventDetails"]').forEach(function (row) {
+      if (row.dataset.nsKeyboardReady === '1') return;
+      row.dataset.nsKeyboardReady = '1';
+      row.tabIndex = 0;
+      var summary = (row.textContent || '').replace(/\s+/g,' ').trim();
+      if (summary) row.setAttribute('aria-label','Open event details: ' + summary);
+      row.addEventListener('keydown',function (event) {
+        if (event.target !== row || (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar')) return;
+        event.preventDefault();
+        row.click();
+      });
+    });
+  }
   function filterEvents(query) {
     var root = $('p3events'), total = 0, visible = 0; if (!root) return {total:0,visible:0};
     var tables = root.querySelectorAll('table.p3eventsTable');
@@ -80,6 +95,7 @@
   function install() {
     addSearch('p3', 'p3title', 'events', 'Search events');
     addSearch('p52', 'p52title', 'recordings', 'Search recordings');
+    enhanceEventRows();
     filter('events'); filter('recordings');
   }
   function boot() {
