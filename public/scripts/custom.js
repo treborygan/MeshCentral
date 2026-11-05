@@ -209,9 +209,15 @@
     add(primary,'Right click','',()=>act(()=>nativeFunction('deskToggleRightClickMode'),'Right-click mode unavailable'),'ns-rightclick');
     add(secondary,'Fit / 1:1','',()=>act(()=>nativeFunction('deskMobileToggleZoom'),'Zoom unavailable'),'ns-zoom');
     add(secondary,'Special keys','',()=>{
-      const picker=$('deskkeys');if(picker){picker.focus();return;}
+      const picker=$('deskkeys');if(picker){picker.focus();picker.click();return;}
       act(()=>nativeFunction('sendSpecialKeys'),'Special keys unavailable');
     },'ns-keys');
+    add(secondary,'Send selected key','',()=>act(()=>nativeFunction('deskSendKeys'),'Choose an available key first'),'ns-send-key');
+    add(secondary,'Type text','',()=>act(()=>nativeFunction('showDeskType'),'Text entry unavailable'),'ns-type-text');
+    add(secondary,'Ctrl+Alt+Del','',()=>act(()=>nativeFunction('sendCAD'),'Shortcut unavailable'),'ns-cad');
+    add(secondary,'Escape','',()=>act(()=>nativeFunction('sendDeskEsc'),'Shortcut unavailable'),'ns-escape');
+    add(secondary,'Clipboard to remote','',()=>act(()=>nativeFunction('deskClipboardOutFunction'),'Clipboard read is unavailable'),'ns-clipboard-out');
+    add(secondary,'Remote clipboard here','',()=>act(()=>nativeFunction('deskClipboardInFunction'),'Remote clipboard is unavailable'),'ns-clipboard-in');
     add(secondary,'Settings','',()=>act(()=>nativeFunction('showDesktopSettings'),'Desktop settings unavailable'));
     add(secondary,'Fullscreen','',()=>act(()=>nativeFunctionWithArg('deskToggleFull',{shiftKey:false}),'Fullscreen unavailable'));
     add(secondary,'Monitors','',()=>act(()=>nativeClick('DeskScreens'),'Monitor selection unavailable'),'ns-monitors');
@@ -246,7 +252,13 @@
       if(t){t.disabled=!connected||typeof window.deskToggleTrackpad!=='function';t.setAttribute('aria-pressed',window.trackpadMode?'true':'false');}
       const k=$('ns-keyboard');if(k)k.disabled=!connected||typeof window.toggleMobileKeyboard!=='function';
       const z=$('ns-zoom');if(z)z.disabled=!connected||typeof window.deskMobileToggleZoom!=='function';
-      const keys=$('ns-keys');if(keys)keys.disabled=!connected;
+      const inputAllowed=connected&&usable($('DeskWD'));
+      const keys=$('ns-keys');if(keys)keys.disabled=!inputAllowed;
+      ['ns-send-key','ns-type-text','ns-cad','ns-escape'].forEach(id=>{const key=$(id);if(key)key.disabled=!inputAllowed;});
+      const type=$('ns-type-text');if(type)type.hidden=!usable($('DeskType'));
+      const clipboardOut=$('ns-clipboard-out'),clipboardIn=$('ns-clipboard-in');
+      if(clipboardOut){clipboardOut.disabled=!connected;clipboardOut.hidden=!usable($('DeskClipboardOutButton'));}
+      if(clipboardIn){clipboardIn.disabled=!connected;clipboardIn.hidden=!usable($('DeskClipboardInButton'));}
       const right=$('ns-rightclick');if(right){right.disabled=!connected||typeof window.deskToggleRightClickMode!=='function';right.setAttribute('aria-pressed',window.desktop&&window.desktop.m&&window.desktop.m.SwapMouse?'true':'false');}
       const monitors=$('ns-monitors');if(monitors)monitors.hidden=!usable($('DeskScreens'));
     }
@@ -269,7 +281,7 @@
     if(q('link[href*="style-bootstrap"]'))document.documentElement.setAttribute('data-bs-theme','dark');
     installSearch();labelRail();installMobileNav();installDock();updateNow();
     const observer=new MutationObserver(scheduleUpdate);
-    ['p11','container','connectbutton1','connectbutton1r','disconnectbutton1','MainSubMenuSpan','page_leftbar'].forEach(name=>{
+    ['p11','container','connectbutton1','connectbutton1r','disconnectbutton1','DeskWD','DeskType','deskkeys','DeskClipboardOutButton','DeskClipboardInButton','MainSubMenuSpan','page_leftbar'].forEach(name=>{
       const el=$(name);if(el)observer.observe(el,{attributes:true,attributeFilter:['class','style','disabled','hidden']});
     });
     addEventListener('resize',scheduleUpdate,{passive:true});

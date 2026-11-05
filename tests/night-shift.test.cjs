@@ -75,6 +75,10 @@ function createMobileHarness(isMobile = true) {
   const rdpConnect = addExisting('connectbutton1r');
   const disconnect = addExisting('disconnectbutton1', false);
   addExisting('DeskScreens');
+  addExisting('DeskWD');
+  addExisting('DeskType');
+  addExisting('DeskClipboardOutButton');
+  addExisting('DeskClipboardInButton');
   const calls = [];
   const window = {
     trackpadMode: false,
@@ -85,7 +89,14 @@ function createMobileHarness(isMobile = true) {
     deskToggleRightClickMode: () => calls.push(['right-click']),
     deskToggleFull: event => calls.push(['fullscreen', event]),
     deskToggleMobileActions: () => calls.push(['more-actions']),
-    showDesktopSettings: () => calls.push(['settings'])
+    showDesktopSettings: () => calls.push(['settings']),
+    deskClipboardOutFunction: () => calls.push(['clipboard-out']),
+    deskClipboardInFunction: () => calls.push(['clipboard-in']),
+    showDeskType: () => calls.push(['type-text']),
+    sendCAD: () => calls.push(['cad']),
+    sendDeskEsc: () => calls.push(['escape']),
+    deskSendKeys: () => calls.push(['send-keys']),
+    navigator:{clipboard:{readText(){},writeText(){}}}
   };
   const context = {
     window, document, console,
@@ -97,7 +108,7 @@ function createMobileHarness(isMobile = true) {
     MouseEvent: class { constructor(type, init = {}) { this.type = type; Object.assign(this, init); } }
   };
   vm.runInNewContext(js, context, { timeout: 1000 });
-  return { document, byId, calls, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement };
+  return { document, byId, calls, window, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement };
 }
 
 test('custom JavaScript parses and registers without requiring a live server', () => {
@@ -176,6 +187,15 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   assert.deepEqual(h.calls.map(call => call[0]), ['trackpad', 'keyboard', 'zoom', 'right-click', 'fullscreen']);
   assert.equal(h.calls.find(call => call[0] === 'fullscreen')[1].shiftKey, false, 'fullscreen receives the native event shape');
   assert.equal(h.byId.get('DeskScreens').clickCount, 1, 'monitor picker remains the native MeshCentral control');
+
+  h.disconnect.hidden=false;h.disconnect.isVisible=true;
+  h.window.__nightShiftUI.refresh();
+  for (const id of ['ns-clipboard-out','ns-clipboard-in','ns-type-text','ns-cad','ns-escape','ns-send-key']) {
+    assert.ok(h.byId.get(id), 'Touch dock exposes ' + id);
+    assert.equal(h.byId.get(id).disabled,false,id + ' is available during a connected session');
+    h.byId.get(id).click();
+  }
+  assert.deepEqual(h.calls.slice(-6).map(call=>call[0]),['clipboard-out','clipboard-in','type-text','cad','escape','send-keys'],'Clipboard, text entry and shortcut buttons delegate to MeshCentral native handlers');
 
   const mobileNav = h.byId.get('ns-mobile-nav');
   assert.ok(mobileNav, 'mobile workspace navigation is installed');
