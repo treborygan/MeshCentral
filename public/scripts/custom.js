@@ -1523,11 +1523,18 @@
     }
     values.uptime.textContent = boot && isFinite(boot.getTime()) ? boot.toLocaleString() : 'Unavailable';
     var volumes = hardware && hardware.windows && hardware.windows.volumes, safe = [];
+    var storageSamples = [];
     if (volumes && typeof volumes === 'object') Object.keys(volumes).forEach(function (name) {
       var volume = volumes[name] || {}, total = size(volume.size), free = size(volume.sizeremaining);
       if (total || free) safe.push(name + ': ' + (free || 'Unavailable') + ' free / ' + (total || 'Unavailable'));
+      if (typeof volume.size === 'number' && volume.size > 0 && typeof volume.sizeremaining === 'number' && volume.sizeremaining >= 0) {
+        storageSamples.push({name:name,size:volume.size,free:volume.sizeremaining});
+      }
     });
     values.storage.textContent = safe.length ? safe.join(' · ') : 'Unavailable';
+    if (window.dispatchEvent && typeof CustomEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('ns-native-storage-sample',{detail:{nodeid:node._id,volumes:storageSamples}}));
+    }
     var os = node.osdesc || (hardware && hardware.windows && hardware.windows.osinfo && hardware.windows.osinfo.Description);
     values.system.textContent = typeof os === 'string' && os ? os : 'Unavailable';
   }
@@ -1817,7 +1824,7 @@
   'use strict';
   if (window.__NightShiftAlerts) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, enabled, metricEnabled, cpuLimit, memoryLimit, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotices = {}, overThreshold = {};
+  var panel, enabled, metricEnabled, storageEnabled, cpuLimit, memoryLimit, storageLimit, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotices = {}, overThreshold = {};
   function create(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -1831,6 +1838,7 @@
   function save() {
     if (!activeNode || typeof window.putstore !== 'function') return;
     window.putstore(key(activeNode), JSON.stringify({e:enabled.checked?1:0,m:metricEnabled.checked?1:0,c:cpuLimit.value,r:memoryLimit.value,s:quietStart.value,t:quietEnd.value}));
+    window.putstore('nsAlertsS.' + activeNode,JSON.stringify({b:storageEnabled.checked?1:0,f:storageLimit.value}));
   }
   function addTimeControl(host, label, id) {
     var wrap = create('label','ns-alert-time'); wrap.append(create('span','',label));
@@ -1856,6 +1864,12 @@
       else save();
     });
     metricToggle.append(metricEnabled,create('span','','Notify when CPU or memory crosses its threshold')); panel.append(metricToggle);
+    var storageToggle = create('label','ns-alert-toggle'); storageEnabled = create('input',''); storageEnabled.type = 'checkbox';
+    storageEnabled.addEventListener('change',function () {
+      if (storageEnabled.checked && window.Notification && window.Notification.permission === 'default') window.Notification.requestPermission().then(save);
+      else save();
+    });
+    storageToggle.append(storageEnabled,create('span','','Notify when Windows volume free space falls below threshold')); panel.append(storageToggle);
     var thresholds = create('div','ns-alert-times');
     function numberControl(label,id,value) {
       var wrap = create('label','ns-alert-time'); wrap.append(create('span','',label));
@@ -1864,6 +1878,7 @@
     }
     cpuLimit = numberControl('CPU threshold (%)','ns-alert-cpu-limit','85');
     memoryLimit = numberControl('Memory threshold (%)','ns-alert-memory-limit','90');
+    storageLimit = numberControl('Free space threshold (%)','ns-alert-storage-limit','15');
     panel.append(thresholds);
     var times = create('div','ns-alert-times');
     quietStart = addTimeControl(times,'Quiet hours start','ns-alert-quiet-start');
@@ -1877,9 +1892,13 @@
   function hydrate(node) {
     if (!enabled) return;
     var prefs = load(node);
+    var storagePrefs = {};
+    try { storagePrefs = JSON.parse(window.getstore('nsAlertsS.' + node._id,'{}')); } catch (e) { }
     enabled.checked = prefs.e === 1;
     metricEnabled.checked = prefs.m === 1;
+    storageEnabled.checked = storagePrefs.b === 1;
     cpuLimit.value = prefs.c || '85'; memoryLimit.value = prefs.r || '90';
+    storageLimit.value = storagePrefs.f || '15';
     quietStart.value = typeof prefs.s === 'string' ? prefs.s : '';
     quietEnd.value = typeof prefs.t === 'string' ? prefs.t : '';
   }
@@ -1927,6 +1946,18 @@
       overThreshold[metricKey] = item[1];
     });
   }
+  function storageSample(event) {
+    var value = event && event.detail, node = window.currentNode;
+    if (!storageEnabled || !storageEnabled.checked || !value || !node || value.nodeid !== node._id || !Array.isArray(value.volumes)) return;
+    var threshold = Number(storageLimit.value), now = new Date(), device = node.name || node.rname || 'Device';
+    value.volumes.forEach(function (volume) {
+      if (!volume || typeof volume.name !== 'string' || !(volume.size > 0) || !(volume.free >= 0)) return;
+      var freePercent = volume.free / volume.size * 100, low = freePercent <= threshold;
+      var metricKey = node._id + '|storage|' + volume.name;
+      if (low && !overThreshold[metricKey]) notify(node,metricKey,device + ' volume ' + volume.name + ' has ' + freePercent.toFixed(1) + '% free',true,now);
+      overThreshold[metricKey] = low;
+    });
+  }
   function update() {
     build(); if (!panel) return;
     var node = window.currentNode;
@@ -1948,6 +1979,7 @@
     }
     if (document.addEventListener) document.addEventListener('visibilitychange',update);
     if (window.addEventListener) window.addEventListener('ns-native-health-sample',sample);
+    if (window.addEventListener) window.addEventListener('ns-native-storage-sample',storageSample);
   }
   window.__NightShiftAlerts = {refresh:update};
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();

@@ -62,11 +62,18 @@
     }
     values.uptime.textContent = boot && isFinite(boot.getTime()) ? boot.toLocaleString() : 'Unavailable';
     var volumes = hardware && hardware.windows && hardware.windows.volumes, safe = [];
+    var storageSamples = [];
     if (volumes && typeof volumes === 'object') Object.keys(volumes).forEach(function (name) {
       var volume = volumes[name] || {}, total = size(volume.size), free = size(volume.sizeremaining);
       if (total || free) safe.push(name + ': ' + (free || 'Unavailable') + ' free / ' + (total || 'Unavailable'));
+      if (typeof volume.size === 'number' && volume.size > 0 && typeof volume.sizeremaining === 'number' && volume.sizeremaining >= 0) {
+        storageSamples.push({name:name,size:volume.size,free:volume.sizeremaining});
+      }
     });
     values.storage.textContent = safe.length ? safe.join(' · ') : 'Unavailable';
+    if (window.dispatchEvent && typeof CustomEvent === 'function') {
+      window.dispatchEvent(new CustomEvent('ns-native-storage-sample',{detail:{nodeid:node._id,volumes:storageSamples}}));
+    }
     var os = node.osdesc || (hardware && hardware.windows && hardware.windows.osinfo && hardware.windows.osinfo.Description);
     values.system.textContent = typeof os === 'string' && os ? os : 'Unavailable';
   }

@@ -28,6 +28,7 @@ test('device health uses cached native details and delegates CPU graph to MeshCe
   assert.match(health,/DeviceDetailsHardware/);
   assert.match(health,/deviceDetailsStatsChart/);
   assert.match(health,/ns-native-health-sample/);
+  assert.match(health,/ns-native-storage-sample/);
   assert.match(health,/devListToolbarViewIcons3/);
   assert.match(health,/native\.click\(\)/);
   assert.doesNotMatch(health,/setInterval|send\(\s*\{\s*action:\s*['"]msg['"]|recoveryPassword|encryptionMethod|bitlocker/i);
@@ -93,6 +94,7 @@ test('connection alerts are opt-in, device-scoped, deduplicated and quiet-hours 
   assert.match(alerts,/quietNow/);
   assert.match(alerts,/CPU threshold/);
   assert.match(alerts,/ns-native-health-sample/);
+  assert.match(alerts,/ns-native-storage-sample/);
   assert.doesNotMatch(alerts,/setInterval|meshserver\.send|poweraction|runcommands/);
 });
 
