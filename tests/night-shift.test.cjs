@@ -497,6 +497,10 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(diagnostic('session').children[1].textContent,'Browser RDP · Connected','Session transport and state use native MeshCentral values');
   assert.equal(diagnostic('display').children[1].textContent,'Canvas mounted','Remote-display diagnosis checks the native canvas without intercepting input');
   assert.equal(showNativeControls.hidden,true,'Native connect shortcut is hidden while the session is active');
+  window.desktop.State=4;
+  window.__NightShiftDiagnostics.refresh();
+  assert.equal(diagnostic('session').children[1].textContent,'Browser RDP · Connected','MeshCentral terminal connected state is also treated as active');
+  assert.equal(showNativeControls.hidden,true,'Native connect shortcut stays hidden in state four');
   window.navigator.onLine=false;window.meshserver.State=0;
   window.__NightShiftDiagnostics.refresh();
   assert.equal(diagnostic('browser').children[1].textContent,'Offline','Offline browser state is distinguished from the MeshCentral channel');

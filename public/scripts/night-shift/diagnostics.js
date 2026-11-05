@@ -84,7 +84,8 @@
     rows.device.textContent = routeStatus(window.currentNode);
     var desktop = window.desktop;
     rows.session.textContent = transportName(desktop);
-    var active = !!(desktop && (desktop.State === 3 || desktop.state === 3));
+    var desktopState = desktop && (Number.isInteger(desktop.State) ? desktop.State : desktop.state);
+    var active = Number.isInteger(desktopState) && desktopState >= 3;
     var canvas = $('Desk');
     rows.display.textContent = active ? (canvas && canvas.getClientRects && canvas.getClientRects().length ? 'Canvas mounted' : 'Connected; canvas not mounted') : 'No active display session';
     rows.cloudflare.textContent = 'Not observable after page load';
@@ -103,7 +104,7 @@
       var observer = new MutationObserver(schedule);
       ['p11','deskarea0','deskstatus','connectbutton1','connectbutton1r','connectbutton1h','disconnectbutton1'].forEach(function (id) {
         var target = $(id);
-        if (target) observer.observe(target,{attributes:true,attributeFilter:['class','style','disabled','hidden'],childList:id === 'deskstatus',characterData:id === 'deskstatus',subtree:id === 'deskstatus'});
+        if (target) observer.observe(target,{attributes:true,attributeFilter:['class','style','disabled','hidden'],childList:id === 'deskstatus' || id === 'deskarea0',characterData:id === 'deskstatus',subtree:id === 'deskstatus' || id === 'deskarea0'});
       });
     }
     if (window.addEventListener) {
