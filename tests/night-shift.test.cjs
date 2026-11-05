@@ -39,6 +39,8 @@ test('history search filters only native rendered events and recordings',()=>{
 test('file workspace filters the current folder and uses native selection actions',()=>{
   assert.match(files,/p13files/);
   assert.match(files,/p13filetree/);
+  assert.match(files,/window\.p13doUploadFiles\(dropped\)/);
+  assert.match(files,/p13UploadButton/);
   for (const id of ['p13DownloadButton','p13RenameFileButton','p13DeleteFileButton']) assert.ok(files.includes(id));
   assert.doesNotMatch(files,/files\.send|fetch\s*\(|XMLHttpRequest|checksum|resume/);
 });

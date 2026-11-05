@@ -1690,6 +1690,25 @@
   }
   function boot() {
     build();
+    var dropTarget = $('p13filetable');
+    if (dropTarget) {
+      dropTarget.addEventListener('dragover',function (event) {
+        var upload = $('p13UploadButton');
+        if (event.dataTransfer && event.dataTransfer.types && Array.prototype.indexOf.call(event.dataTransfer.types,'Files') >= 0 && upload && !upload.disabled) {
+          event.preventDefault(); dropTarget.classList.add('ns-file-drop-active');
+        }
+      });
+      dropTarget.addEventListener('dragleave',function (event) {
+        if (!event.relatedTarget || !dropTarget.contains(event.relatedTarget)) dropTarget.classList.remove('ns-file-drop-active');
+      });
+      dropTarget.addEventListener('drop',function (event) {
+        dropTarget.classList.remove('ns-file-drop-active');
+        var upload = $('p13UploadButton'), dropped = event.dataTransfer && event.dataTransfer.files;
+        if (!upload || upload.disabled || !dropped || !dropped.length || typeof window.p13doUploadFiles !== 'function') return;
+        event.preventDefault();
+        window.p13doUploadFiles(dropped);
+      });
+    }
     if (typeof MutationObserver === 'function') {
       var observer = new MutationObserver(build);
       var target = $('p13files');
