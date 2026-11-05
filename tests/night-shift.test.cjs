@@ -550,6 +550,19 @@ test('alert settings explain denied and unavailable browser notifications',()=>{
   assert.match(alerts,/permissionStatus = create\('p','ns-alert-permission-status',notificationStatus\(\)\)/);
 });
 
+test('alert delivery failures retain the in-page notice and explain browser fallback',()=>{
+  const helper=alerts.match(/function notify\(node,dedupeKey,label,allowed,now,quietPreferences\) \{[\s\S]*?\n  \}/);
+  assert.ok(helper,'alert delivery helper exists');
+  const permissionStatus={textContent:''},status={textContent:''};
+  function Notification(){throw new Error('OS notifications unavailable');}
+  Notification.permission='granted';
+  const context={window:{Notification},lastNotices:{},status,permissionStatus,quietNow:()=>false,pruneNoticeHistory:()=>{}};
+  const notify=vm.runInNewContext('('+helper[0]+')',context);
+  notify({_id:'node/a'},'node/a|offline','Archive connection: offline',true,new Date(1000));
+  assert.equal(status.textContent,'Archive connection: offline','the alert remains visible in-page when OS notification creation fails');
+  assert.match(permissionStatus.textContent,/could not display.*in-page alerts remain available/i,'the failure is explained through the permission guidance region');
+});
+
 test('fleet connection alerts observe native device updates only for opted-in devices',()=>{
   const alertsSource=read('public/scripts/night-shift/alerts.js'),notifications=[],nativeCalls=[];
   const nodes=[{_id:'node/a',name:'Allowed',conn:0},{_id:'node/b',name:'Muted',conn:0}];

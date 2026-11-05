@@ -2557,7 +2557,10 @@
     lastNotices[dedupeKey] = nowTime;
     if (status) status.textContent = label;
     if (window.Notification && window.Notification.permission === 'granted') {
-      try { new window.Notification('MeshCentral connection changed',{body:label,tag:dedupeKey}); } catch (e) { }
+      try { new window.Notification('MeshCentral connection changed',{body:label,tag:dedupeKey}); }
+      catch (e) {
+        if (permissionStatus) permissionStatus.textContent = 'The browser could not display this notification. In-page alerts remain available while this page is open.';
+      }
     }
   }
   function pruneNoticeHistory(nowTime) {

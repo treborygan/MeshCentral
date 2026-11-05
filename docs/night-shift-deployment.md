@@ -242,3 +242,7 @@ Allowed health/connection notices now prune deduplication keys older than five m
 ## Persistent alert permission guidance — 2026-11-05
 
 Separated browser-notification permission guidance from latest alert announcements. The permission region remains visible and refreshes when alert settings/device state update; the polite alert region reports individual health or connection notices without erasing whether notifications are denied, enabled or unavailable. The alert-focused tests and full 56-test suite passed; generated-bundle consistency, JavaScript syntax and whitespace checks passed. Source only; no PRN install was made.
+
+## Browser notification creation fallback — 2026-11-05
+
+When notification permission is granted but the browser/OS rejects construction of a notification, the latest alert remains in the in-page live region and the separate permission guidance region explains that delivery failure. This preserves a usable fallback without retry loops or changed notification permissions. The focused failure-path regression and full 57-test suite passed; generated-bundle consistency, JavaScript syntax and whitespace checks passed. Source only; PRN install remains gated.
