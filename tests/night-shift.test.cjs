@@ -146,12 +146,26 @@ test('native MeshCentral Classic template enters fallback without a Night Shift 
   assert.doesNotMatch(classic,/styles\/style-bootstrap\.css/,'Classic app template omits Modern UI bootstrap styles');
   assert.match(modern,/styles\/style-bootstrap\.css/,'Modern app template carries the Modern UI marker');
   assert.doesNotMatch(login,/scripts\/meshcentral\{\{\{min\}\}\}\.js/,'login templates are not mistaken for an authenticated Classic app');
+  assert.match(classic,/function toggleBootstrapUIMode\(\)/,'the native Classic template exposes MeshCentral UI selection');
+  assert.match(classic,/putstore\('uiViewMode', nUiViewMode\)/,'the native UI selector persists the selected Modern or Classic mode');
 
   const h=createMobileHarness(true,false,false,'classic');
   assert.equal(h.window.__NightShiftClassicMode,true,'native template detection happens before feature modules evaluate');
+  assert.equal(h.window.__NightShiftNativeClassicTemplate,true,'the restore action knows the native template selected Classic mode');
   assert.equal(h.styleSheet.disabled,true,'Night Shift CSS is disabled for the native Classic template');
   assert.equal(h.byId.has('ns-appbar'),false,'Modern-only controls do not attach to the native Classic template');
-  assert.ok(h.byId.has('ns-classic-toggle'),'the accessible return control remains available');
+  const restore=h.byId.get('ns-classic-toggle');
+  assert.ok(restore,'the accessible return control remains available');
+  assert.equal(restore.textContent,'Modern UI','the return control explains that it changes MeshCentral UI mode');
+  assert.equal(restore.getAttribute('aria-label'),'Switch to Modern UI with Night Shift');
+  restore.click();
+  assert.deepEqual(h.calls,[['native-ui-mode']],'the control opens MeshCentral native interface selection');
+  assert.equal(h.reloadCount,0,'MeshCentral owns saving the new mode and performing its reload');
+
+  const storedFallback=createMobileHarness(true,true,false,'classic');
+  storedFallback.byId.get('ns-classic-toggle').click();
+  assert.equal(storedFallback.storage.has('_nsClassicUI'),false,'stale local fallback preference is cleared before switching native mode');
+  assert.deepEqual(storedFallback.calls,[['native-ui-mode']]);
 });
 
 test('contextual breadcrumbs route through native MeshCentral navigation',()=>{
@@ -908,6 +922,7 @@ function createMobileHarness(isMobile = true, classicMode = false, isLandscape =
     sendCAD: () => calls.push(['cad']),
     sendDeskEsc: () => calls.push(['escape']),
     deskSendKeys: () => calls.push(['send-keys']),
+    toggleBootstrapUIMode: () => calls.push(['native-ui-mode']),
     navigator:{clipboard:{readText(){},writeText(){}}}
   };
   const context = {

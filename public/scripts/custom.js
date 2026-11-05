@@ -6,6 +6,7 @@
   'use strict';
   if (window.__nightShiftUI) return;
   var classicMode = false;
+  var nativeClassicTemplate = false;
   try { classicMode = window.localStorage && window.localStorage.getItem('_nsClassicUI') === '1'; } catch (error) { }
   // Detect MeshCentral's native Classic template before the other bundled
   // modules evaluate. The authenticated app templates load meshcentral.js;
@@ -14,9 +15,11 @@
   try {
     var hasNativeAppRuntime = !!document.querySelector('script[src*="meshcentral"]');
     var hasModernUiStyles = !!document.querySelector('link[href*="style-bootstrap"]');
-    if (hasNativeAppRuntime && !hasModernUiStyles) classicMode = true;
+    nativeClassicTemplate = hasNativeAppRuntime && !hasModernUiStyles;
+    if (nativeClassicTemplate) classicMode = true;
   } catch (error) { }
   window.__NightShiftClassicMode = !!classicMode;
+  window.__NightShiftNativeClassicTemplate = nativeClassicTemplate;
   const $ = (id) => document.getElementById(id);
   const q = (selector, root = document) => root.querySelector(selector);
   const make = (tag, className, text) => {
@@ -75,6 +78,15 @@
   function changeClassicMode(classic) {
     try {
       if (!window.localStorage) throw new Error('Browser storage is unavailable');
+      if (!classic && nativeClassicTemplate) {
+        window.localStorage.removeItem('_nsClassicUI');
+        if (typeof window.toggleBootstrapUIMode !== 'function') {
+          message('MeshCentral could not open the native interface selector. Use its interface mode control, then reload.');
+          return false;
+        }
+        window.toggleBootstrapUIMode();
+        return true;
+      }
       if (classic) window.localStorage.setItem('_nsClassicUI','1');
       else window.localStorage.removeItem('_nsClassicUI');
     } catch (error) {
@@ -88,7 +100,8 @@
   function installClassicRestore() {
     if (!document.body || $('ns-classic-toggle')) return;
     document.body.classList.add('ns-classic-active');
-    const restore=button('Night Shift','ns-classic-toggle',()=>changeClassicMode(false),'Switch back to Night Shift');
+    const nativeRestore=!!nativeClassicTemplate;
+    const restore=button(nativeRestore?'Modern UI':'Night Shift','ns-classic-toggle',()=>changeClassicMode(false),nativeRestore?'Switch to Modern UI with Night Shift':'Switch back to Night Shift');
     restore.id='ns-classic-toggle';
     restore.style.cssText='position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483000;min-height:42px;padding:9px 14px;border:1px solid #6c8c69;border-radius:999px;background:#14221c;color:#e8f3e5;font:600 14px/1.2 system-ui,sans-serif;box-shadow:0 8px 28px #0008;cursor:pointer;outline:2px solid transparent;outline-offset:3px';
     document.body.append(restore);
