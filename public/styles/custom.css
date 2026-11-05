@@ -1623,3 +1623,67 @@ body.ns-theme #p3users .p3usersTable > tbody > tr:focus-visible {outline:2px sol
   body.ns-theme #p4 > .pTable input[type="button"] {flex:1 1 42%;white-space:normal}
   body.ns-theme #p3users .p3usersTable {min-width:560px}
 }
+
+/* User-group detail: make the native information and image columns adapt to phones. */
+body.ns-theme #p51title {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  min-height:49px;
+  margin-bottom:12px;
+  padding:5px 0 12px;
+  border-bottom:1px solid var(--ns-border);
+  color:var(--ns-foreground);
+}
+body.ns-theme #p51title > div {float:none!important;flex:0 0 auto}
+body.ns-theme #p51title h1 {min-width:0;margin:0;font-size:1.2rem;font-weight:720;overflow-wrap:anywhere}
+body.ns-theme #p51info {
+  max-width:100%;
+  max-height:calc(100dvh - 190px)!important;
+  overflow:auto!important;
+  color:var(--ns-foreground);
+  scrollbar-color:#405563 var(--ns-canvas);
+}
+body.ns-theme #p51info > table {
+  width:100%;
+  margin:0 0 14px;
+  border:1px solid var(--ns-border);
+  border-radius:14px;
+  background:var(--ns-surface);
+}
+body.ns-theme #p51info > table > tbody > tr > td:first-child {padding:16px;vertical-align:top}
+body.ns-theme #p51info > table > tbody > tr > td:nth-child(2) {width:12px!important}
+body.ns-theme #p51info > table > tbody > tr > td:last-child {
+  width:190px!important;
+  padding:16px;
+  border-left:1px solid var(--ns-border);
+  background:#111a23;
+  text-align:center;
+  vertical-align:top;
+}
+body.ns-theme #MainUserImage {float:none!important;display:block;margin:0 auto 10px}
+body.ns-theme #MainUserImage img {max-width:100%;height:auto;border-radius:18px}
+body.ns-theme #p51group2 {max-width:100%;overflow:auto}
+body.ns-theme #p51group :is(input,select,textarea) {max-width:100%}
+@media(max-width:700px) {
+  body.ns-theme #p51info > table,
+  body.ns-theme #p51info > table > tbody,
+  body.ns-theme #p51info > table > tbody > tr {display:block;width:100%}
+  body.ns-theme #p51info > table > tbody > tr > td:first-child {display:block;width:100%!important;padding:12px}
+  body.ns-theme #p51info > table > tbody > tr > td:nth-child(2) {display:none}
+  body.ns-theme #p51info > table > tbody > tr > td:last-child {
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:12px;
+    width:100%!important;
+    padding:12px;
+    border-top:1px solid var(--ns-border);
+    border-left:0;
+    text-align:left;
+  }
+  body.ns-theme #MainUserImage {width:72px!important;height:72px!important;margin:0;flex:0 0 72px}
+  body.ns-theme #MainUserImage img {width:72px;height:72px;object-fit:cover;border-radius:14px}
+  body.ns-theme #p51info > table > tbody > tr > td:last-child > div {text-align:left!important}
+}

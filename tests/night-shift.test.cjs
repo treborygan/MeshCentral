@@ -1397,3 +1397,14 @@ test('native user administration keeps its permission-aware search and bulk cont
   assert.match(template,/function addUserHtml\(user, sessions\)/);
   assert.match(template,/gotoUser/);
 });
+
+test('native user-group details stack safely at mobile widths',()=>{
+  assert.match(css,/body\.ns-theme #p51info > table/);
+  assert.match(css,/body\.ns-theme #MainUserImage \{float:none!important/);
+  assert.match(css,/@media\(max-width:700px\)[\s\S]*?#p51info > table > tbody > tr > td:nth-child\(2\) \{display:none\}/);
+  assert.match(css,/body\.ns-theme #p51info > table > tbody > tr > td:last-child \{[\s\S]*?width:100%!important/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/id=p51group/);
+  assert.match(template,/id=MainUserImage/);
+  assert.match(template,/onclick=goBack\(\)/);
+});
