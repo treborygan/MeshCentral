@@ -58,6 +58,14 @@ test('device inventory refreshes from native changes without polling and explain
   assert.match(devicesSource,/Clear filters/);
 });
 
+test('mobile dock state follows native page and control changes without polling',()=>{
+  assert.match(mobileControls,/new MutationObserver\(scheduleUpdate\)/);
+  assert.match(mobileControls,/watchIds\.push\('p'\+page\)/);
+  assert.match(mobileControls,/target\.id==='deskarea0'/);
+  assert.match(mobileControls,/else scheduleUpdate\(\)/);
+  assert.doesNotMatch(mobileControls,/setInterval/);
+});
+
 test('custom script bundle matches its modular source components',()=>{
   const result=spawnSync(process.execPath,['scripts/build-night-shift.js','--check'],{cwd:root,encoding:'utf8'});
   assert.equal(result.status,0,result.stderr || 'Generated custom.js is stale or the build script is missing');

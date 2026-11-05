@@ -75,7 +75,10 @@
     try { window[name](); return true; }
     catch (error) { console.warn('[Night Shift] Original action error',name,error); return false; }
   }
-  function act(fn, unavailable) { if (!fn()) message(unavailable || 'Action unavailable for this session.'); }
+  function act(fn, unavailable) {
+    if (!fn()) message(unavailable || 'Action unavailable for this session.');
+    else scheduleUpdate();
+  }
   function workspace(index) {
     const item = destinations[index]; const el = $(item[1]);
     if (!el) return false;
@@ -297,14 +300,24 @@
     if(!hasAppContainer)return;
     if(q('link[href*="style-bootstrap"]'))document.documentElement.setAttribute('data-bs-theme','dark');
     installSearch();labelRail();installRailToggle();installMobileNav();installDock();updateNow();
-    const observer=new MutationObserver(scheduleUpdate);
-    ['p11','container','connectbutton1','connectbutton1r','disconnectbutton1','DeskWD','DeskType','deskkeys','DeskClipboardOutButton','DeskClipboardInButton','MainSubMenuSpan','page_leftbar'].forEach(name=>{
-      const el=$(name);if(el)observer.observe(el,{attributes:true,attributeFilter:['class','style','disabled','hidden']});
+    const observer=new MutationObserver(scheduleUpdate),watchIds=['container','LeftMenuMyDevices','connectbutton1','connectbutton1r',
+      'disconnectbutton1','DeskWD','DeskType','deskkeys','DeskClipboardOutButton','DeskClipboardInButton','MainSubMenuSpan',
+      'page_leftbar','trackpadCursor','DeskTools','deskMobileActionsPanel','deskRightClickItem'];
+    for(let page=1;page<=14;page++)watchIds.push('p'+page);
+    watchIds.forEach(name=>{
+      const el=$(name);if(el)observer.observe(el,{attributes:true,attributeFilter:['class','style','disabled','hidden','aria-current'],
+        childList:name==='deskMobileActionsPanel'||name==='deskRightClickItem',characterData:name==='deskRightClickItem',subtree:name==='deskMobileActionsPanel'});
     });
+    document.addEventListener('click',event=>{
+      let target=event.target;
+      while(target&&target!==document){
+        if(target.id==='deskarea0'||target.id==='deskMobileActionsPanel'||target.id==='deskTools'||target.id==='DeskTools'){scheduleUpdate();break;}
+        target=target.parentElement||target.parentNode;
+      }
+    },true);
     addEventListener('resize',scheduleUpdate,{passive:true});
     addEventListener('orientationchange',scheduleUpdate,{passive:true});
     document.addEventListener('visibilitychange',scheduleUpdate);
-    setInterval(()=>{if(document.visibilityState==='visible')scheduleUpdate();},1200);
   }
   window.__nightShiftUI={version:'1.0.0',refresh:scheduleUpdate,search:showSearch};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
