@@ -27,6 +27,7 @@ The aesthetic follows the independently prototyped Night Shift concept: deep nav
 - [x] Coarse-pointer target sizing and reduced-motion support
 - [ ] Real-browser visual and functional acceptance on live MeshCentral pages
 - [x] Command search, labeled sidebar, streamlined navigation and mobile dock integrated with upstream markup (additive overlay, not a pixel-identical template replacement)
+- [x] Expandable desktop navigation rail with keyboard-accessible, session-only toggle; native stacked/full-desktop modes and mobile navigation are preserved
 - [x] Dark device detail, remote desktop, terminal, files and settings presentation without displacing original MeshCentral controls
 - [x] Mobile actions wired to existing MeshCentral Connect, RDP, Disconnect, trackpad, right-click, keyboard, zoom, fullscreen, monitor and settings handlers (source-level interaction harness passes; real-session acceptance remains open)
 - [x] PCRN web override installed and exact CSS/JS assets verified from the local MeshCentral listener
@@ -42,7 +43,7 @@ Apply CSS and JS via built-in custom overrides. Preserve all IDs, event handlers
 
 ### Slice B — Structural composition (additive controls implemented; more intrusive template restructuring deferred)
 
-For the primary desktop view, create a modern hierarchy: collapsible navigation rail, searchable device inventory, device details, contextual actions and remote-session workspace. Prefer additive components, feature detection and retained upstream DOM IDs/handlers; if a template override is required, make it narrow, keep source diffs reviewable, and retain an immediate classic-UI fallback.
+For the primary desktop view, create a modern hierarchy: expandable navigation rail, searchable device inventory, device details, contextual actions and remote-session workspace. Prefer additive components, feature detection and retained upstream DOM IDs/handlers; if a template override is required, make it narrow, keep source diffs reviewable, and retain an immediate classic-UI fallback.
 
 ### Slice C — Mobile session UX (native-action dock implemented; device acceptance pending)
 

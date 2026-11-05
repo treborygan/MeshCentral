@@ -8,6 +8,7 @@ This slice extends the generated `custom.js` and `custom.css` overrides without 
 
 Included:
 - Contextual workspace appbar with live page title, native navigation search, and a functional More menu exposing only original account-accessible sections.
+- Desktop left navigation rail expands from the icon-only state to show text labels. The accessible toggle is session-only and applies only in the standard desktop sidebar mode; MeshCentral stacked/full-desktop modes and the mobile navigation remain native.
 - Responsive overview in the real Devices page: genuine live online/offline counts, actionable links to existing pages, clear provenance, and no fake events/devices/connection counts.
 - A responsive real-device inventory built from the authenticated MeshCentral `window.nodes`/`window.meshes` collection, with Cards, semantic Table and Compact layouts; name/group/status/recent sorting; native `node.tags` chips and tag filter; local search; and reachable/offline filters. Selection checkboxes delegate to native `p1devcheck()` state and keep MeshCentral's group-action toolbar available. Device opening still delegates to `gotoDevice()` permission/2FA/verification checks. **Original list** restores the complete native inventory and advanced layouts. Only device list views 1 and 2 are replaced by Night Shift layouts; other views remain native.
 - Per-card favorite controls and a Favorites filter use MeshCentral's native `stars` state and `putstore('stars', ...)` preference path, including its 200-device limit; no separate identity or credential data is stored.

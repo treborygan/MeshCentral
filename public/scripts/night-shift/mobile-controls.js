@@ -173,6 +173,23 @@
       el.append(make('span','ns-rail-label',label));
     });
   }
+  function installRailToggle() {
+    const rail = $('page_leftbar');
+    const nav = rail && q('nav', rail);
+    if (!rail || !nav || $('ns-rail-toggle')) return;
+    const toggle = button('›', 'ns-rail-toggle', () => {
+      const expanded = !document.body.classList.contains('ns-rail-expanded');
+      document.body.classList.toggle('ns-rail-expanded', expanded);
+      toggle.textContent = expanded ? '‹' : '›';
+      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      toggle.setAttribute('aria-label', expanded ? 'Collapse navigation' : 'Expand navigation');
+      toggle.title = expanded ? 'Collapse navigation' : 'Expand navigation';
+    }, 'Expand navigation');
+    toggle.id = 'ns-rail-toggle';
+    toggle.setAttribute('aria-controls', 'page_leftbar');
+    toggle.setAttribute('aria-expanded', 'false');
+    nav.before(toggle);
+  }
   function installMobileNav() {
     if(!$('ns-mobile-nav')&&$('LeftMenuMyDevices')){
       nav=make('nav','ns-mobile-nav');nav.id='ns-mobile-nav';
@@ -279,7 +296,7 @@
     // authentication flow and page controls entirely under the native scripts.
     if(!hasAppContainer)return;
     if(q('link[href*="style-bootstrap"]'))document.documentElement.setAttribute('data-bs-theme','dark');
-    installSearch();labelRail();installMobileNav();installDock();updateNow();
+    installSearch();labelRail();installRailToggle();installMobileNav();installDock();updateNow();
     const observer=new MutationObserver(scheduleUpdate);
     ['p11','container','connectbutton1','connectbutton1r','disconnectbutton1','DeskWD','DeskType','deskkeys','DeskClipboardOutButton','DeskClipboardInButton','MainSubMenuSpan','page_leftbar'].forEach(name=>{
       const el=$(name);if(el)observer.observe(el,{attributes:true,attributeFilter:['class','style','disabled','hidden']});

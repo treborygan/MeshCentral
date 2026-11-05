@@ -19,6 +19,16 @@ const alerts = read('public/scripts/night-shift/alerts.js');
 const pwa = read('public/scripts/night-shift/pwa.js');
 const capabilities = read('public/scripts/night-shift/capabilities.js');
 const viewer = read('public/scripts/night-shift/viewer.js');
+const mobileControls = read('public/scripts/night-shift/mobile-controls.js');
+
+test('desktop navigation rail expands accessibly without replacing native routes',()=>{
+  assert.match(mobileControls,/function installRailToggle\(\)/);
+  assert.match(mobileControls,/aria-controls', 'page_leftbar'/);
+  assert.match(mobileControls,/aria-expanded/);
+  assert.match(mobileControls,/ns-rail-expanded/);
+  assert.match(css,/fullscreen:not\(\.menu_stack\):not\(\.arg_hide\):not\(\.fulldesk\) #container\{grid-template-columns:90px minmax\(0,1fr\)\}/);
+  assert.match(css,/body\.ns-theme\.ns-rail-expanded\.fullscreen[^\n]*#container\{grid-template-columns:168px minmax\(0,1fr\)\}/);
+});
 
 test('custom script bundle matches its modular source components',()=>{
   const result=spawnSync(process.execPath,['scripts/build-night-shift.js','--check'],{cwd:root,encoding:'utf8'});
