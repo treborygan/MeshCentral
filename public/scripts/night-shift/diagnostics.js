@@ -96,6 +96,8 @@
   function update() {
     build();
     if (!panel || !rows.browser) return;
+    var rtc = window.webRtcDesktop, peer = rtc && rtc.webrtc, channel = rtc && rtc.webchannel;
+    if (lastWebRtcFailure && peer && channel && channel.readyState === 'open' && (peer.iceConnectionState === 'connected' || peer.iceConnectionState === 'completed')) lastWebRtcFailure = null;
     var browser = window.navigator && typeof window.navigator.onLine === 'boolean'
       ? (window.navigator.onLine ? 'Online' : 'Offline') : 'Unknown';
     var socket = window.meshserver && window.meshserver.State;
@@ -117,6 +119,7 @@
       var next = 'Choose a native connection control to start a remote session.';
       if (browser === 'Offline') next = 'This browser is offline. Restore network access, then check the native connection status.';
       else if (typeof socket === 'number' && socket !== 2) next = 'The MeshCentral control channel is disconnected. Restore the page connection before reconnecting a device.';
+      else if (lastWebRtcFailure) next = 'WebRTC ICE ' + lastWebRtcFailure + '; MeshCentral reset the WebRTC path.' + (active ? ' The native desktop session remains active; if the display did not recover, use native Disconnect and reconnect controls.' : ' Start or retry the session with MeshCentral’s native controls.');
       else if (route !== null && (route & 15) === 0) next = nativeControlAvailable('connectbutton1r')
         ? 'No Agent or AMT route is currently reported for this device. Browser RDP is available; use the native RDP Connect control or check the device agent.'
         : 'No Agent or AMT route is currently reported for this device, and Browser RDP is unavailable. Check the device status and use an enabled native connection method.';
