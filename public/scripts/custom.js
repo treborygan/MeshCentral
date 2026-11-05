@@ -1763,7 +1763,7 @@
     if (!node || typeof window.GetNodeRights !== 'function') return {power:false,commands:false};
     var rights = window.GetNodeRights(node), conn = Number(node.conn) || 0;
     if (node.agent && node.agent.id === 14) return {power:!!((conn & 1) && hasRights(rights,8)),commands:false};
-    var canCommand = !!(conn & 1) && hasRights(rights,131072) && node.agent != null;
+    var canCommand = node.mtype === 2 && !!(conn & 1) && hasRights(rights,131072) && node.agent != null;
     var canPower = hasRights(rights,64) || (conn !== 0 && hasRights(rights,262144)) ||
       ((conn & 16) !== 0) || (hasRights(rights,32768) && (conn & 1) !== 0) ||
       (!!node.intelamt && node.intelamt.state === 2 && (conn & 6) !== 0 && (hasRights(rights,64) || hasRights(rights,262144)));

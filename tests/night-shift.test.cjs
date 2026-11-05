@@ -58,6 +58,32 @@ test('quick power and command actions mirror MeshCentral rights and open its nat
   assert.doesNotMatch(actions,/meshserver\.send|poweraction|runcommands/);
 });
 
+test('native action shortcuts remain disabled without rights and supported node type',()=>{
+  class FakeElement {
+    constructor(tag){this.tagName=tag;this.children=[];this.events={};this.attributes={};this.disabled=false;this.hidden=false;this.parentNode=null;this.textContent='';}
+    append(...children){children.forEach(child=>{child.parentNode=this;this.children.push(child);});}
+    insertBefore(child,reference){child.parentNode=this;const index=this.children.indexOf(reference);this.children.splice(index<0?this.children.length:index,0,child);}
+    setAttribute(k,v){this.attributes[k]=v;}
+    addEventListener(type,fn){(this.events[type] ||= []).push(fn);}
+    click(){(this.events.click||[]).forEach(fn=>fn({target:this}));}
+  }
+  const ids=new Map();
+  const host=new FakeElement('div');host.id='p10';ids.set('p10',host);
+  const anchor=new FakeElement('div');anchor.id='p10info';anchor.parentNode=host;ids.set('p10info',anchor);
+  const calls=[];
+  const window={currentNode:{_id:'node/a',mtype:3,conn:1,agent:{id:1}},GetNodeRights:()=>131072,
+    deviceActionFunction:()=>calls.push('power'),runDeviceCmd:()=>calls.push('command')};
+  const document={readyState:'complete',getElementById:id=>ids.get(id)||null,createElement:tag=>new FakeElement(tag),addEventListener(){}};
+  vm.runInNewContext(actions,{window,document,console},{timeout:1000});
+  const row=host.children[0].children[2],power=row.children[0],commands=row.children[1];
+  assert.equal(commands.disabled,true,'non-agent device type cannot run configured commands');
+  assert.equal(power.disabled,true,'command right alone does not grant power actions');
+  window.currentNode.mtype=2;window.GetNodeRights=()=>131072;window.__NightShiftActions.refresh();
+  assert.equal(commands.disabled,false);commands.click();assert.deepEqual(calls,['command']);
+  window.GetNodeRights=()=>262144;window.__NightShiftActions.refresh();
+  assert.equal(power.disabled,false);power.click();assert.deepEqual(calls,['command','power']);
+});
+
 test('connection alerts are opt-in, device-scoped, deduplicated and quiet-hours aware',()=>{
   assert.match(alerts,/putstore\(key\(activeNode\)/);
   assert.match(alerts,/Notification\.requestPermission/);
