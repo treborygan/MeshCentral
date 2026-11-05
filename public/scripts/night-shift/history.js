@@ -14,15 +14,19 @@
   function addSearch(pageId, titleId, key, label) {
     var host = $(titleId), page = $(pageId);
     if (!host || !page || fields[key]) return;
-    var wrap = create('label', 'ns-history-search');
-    wrap.append(create('span', '', label));
+    var wrap = create('div', 'ns-history-search');
+    var searchLabel = create('label','');
+    searchLabel.append(create('span', '', label));
     var input = create('input', 'form-control form-control-sm');
     input.type = 'search'; input.autocomplete = 'off'; input.setAttribute('aria-label', label);
     input.setAttribute('placeholder', 'Search loaded records');
+    var clear = create('button','ns-history-clear','Clear'); clear.type = 'button';
+    clear.setAttribute('aria-label','Clear ' + label.toLocaleLowerCase());
+    clear.addEventListener('click',function () { input.value = ''; filter(key); input.focus(); });
     var status = create('span','ns-history-result-status','');
     status.setAttribute('role','status'); status.setAttribute('aria-live','polite'); status.setAttribute('aria-atomic','true');
     input.addEventListener('input', function () { filter(key); });
-    wrap.append(input); host.append(wrap,status); fields[key] = {input:input,status:status,label:label.toLocaleLowerCase()};
+    searchLabel.append(input); wrap.append(searchLabel,clear); host.append(wrap,status); fields[key] = {input:input,clear:clear,status:status,label:label.toLocaleLowerCase()};
   }
   function matches(element, query) {
     return !query || (element.textContent || '').toLocaleLowerCase().includes(query);
@@ -66,6 +70,7 @@
   function filter(key) {
     var field = fields[key]; if (!field) return;
     var query = field.input.value.trim().toLocaleLowerCase();
+    field.clear.hidden = !query;
     var counts = key === 'events' ? filterEvents(query) : filterRecordings(query);
     var noun = key === 'events' ? 'events' : 'recordings';
     field.status.textContent = query

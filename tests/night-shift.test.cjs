@@ -219,6 +219,8 @@ test('history search counts matches and preserves date headings for matching rec
     setAttribute(name,value){this.attributes[name]=String(value);}
     addEventListener(name,fn){(this.events[name]||=[]).push(fn);}
     dispatch(name){(this.events[name]||[]).forEach(fn=>fn({target:this}));}
+    click(){this.dispatch('click');}
+    focus(){this.focused=true;}
     querySelectorAll(selector){
       if(selector==='table.p3eventsTable')return this.tables||[];
       if(selector==='tr'||selector==='tbody tr')return this.rows||this.children.filter(node=>node.tagName==='TR');
@@ -237,18 +239,30 @@ test('history search counts matches and preserves date headings for matching rec
   ['p3','p3title','p52','p52title'].forEach(id=>{const el=new Element('div');el.id=id;});
   const document={readyState:'complete',createElement:tag=>new Element(tag),getElementById:id=>ids.get(id)||null,addEventListener(){}};
   vm.runInNewContext(history,{window:{addEventListener(){}},document,console,MutationObserver:class{observe(){}}},{timeout:1000});
-  const eventsInput=ids.get('p3title').children[0].children[1],recordingsInput=ids.get('p52title').children[0].children[1];
+  const eventsWrap=ids.get('p3title').children[0],recordingsWrap=ids.get('p52title').children[0];
+  const eventsInput=eventsWrap.children[0].children[1],recordingsInput=recordingsWrap.children[0].children[1];
+  const clearEvents=eventsWrap.children[1],clearRecordings=recordingsWrap.children[1];
   const eventStatus=ids.get('p3title').children[1],recordingStatus=ids.get('p52title').children[1];
   assert.equal(eventStatus.textContent,'2 loaded events.');
   assert.equal(recordingStatus.textContent,'2 loaded recordings.');
+  assert.equal(clearEvents.hidden,true,'clear action is hidden while the search is empty');
   eventsInput.value='disk';eventsInput.dispatch('input');
   assert.equal(eventTable.rows[1].hidden,false);assert.equal(eventTable.rows[3].hidden,true);assert.equal(eventStatus.textContent,'Showing 1 of 2 loaded events.');
+  assert.equal(clearEvents.hidden,false,'clear action appears when a search is active');
+  clearEvents.click();
+  assert.equal(eventsInput.value,'','clear action resets the search text');
+  assert.equal(eventsInput.focused,true,'clear action returns keyboard focus to its search field');
+  assert.equal(eventTable.rows[3].hidden,false,'clear action restores every loaded event');
+  assert.equal(eventStatus.textContent,'2 loaded events.');
   recordingsInput.value='alpha';recordingsInput.dispatch('input');
   assert.equal(tbody.rows[0].hidden,false,'The date heading stays visible while its group has a match');
   assert.equal(tbody.rows[2].hidden,true);assert.equal(recordingStatus.textContent,'Showing 1 of 2 loaded recordings.');
   recordingsInput.value='no match';recordingsInput.dispatch('input');
   assert.equal(tbody.rows[0].hidden,true,'The date heading hides with an empty group');
   assert.equal(recordingStatus.textContent,'No matching recordings in loaded records.');
+  clearRecordings.click();
+  assert.equal(tbody.rows[0].hidden,false,'clearing recordings search restores date headings');
+  assert.equal(tbody.rows[2].hidden,false,'clearing recordings search restores all loaded rows');
 });
 
 test('file workspace filters the current folder and uses native selection actions',()=>{
