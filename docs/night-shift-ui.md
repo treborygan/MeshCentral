@@ -102,7 +102,9 @@ References:
 - Install/rollback: `scripts/Install-NightShift.ps1`; see [deployment](night-shift-deployment.md).
 
 
-## 2026-11-04 live Android screenshot findings (blocking)
+## Historical findings — 2026-11-04 live Android screenshots
+
+This section records the first rollout and the follow-up mobile viewport patch. It predates the structural implementation tracked in [the roadmap](night-shift-roadmap.md); do not read its status statements as the current source state.
 
 Owner-provided Android Chrome screenshots of `rdp.treborygan.dev` demonstrate that the first rollout **does not match Night Shift Concept B**:
 
@@ -117,7 +119,7 @@ Owner-provided Android Chrome screenshots of `rdp.treborygan.dev` demonstrate th
 
 The follow-up branch `fix/night-shift-mobile-layout` adds a device-width viewport at runtime (without disabling zoom), makes JS and CSS use the same 900px breakpoint, updates mobile list/account styling, and adds regression checks. **It has not been deployed or tested on the actual phone.**
 
-### Remaining design gap (not solved by the viewport patch)
+### Design gap at the time (not solved by the viewport patch)
 
 A CSS overlay alone cannot guarantee faithful implementation of the Night Shift prototype. The next work must restructure the *actual* MeshCentral interface rather than recolor it:
 
@@ -129,4 +131,4 @@ A CSS overlay alone cannot guarantee faithful implementation of the Night Shift 
 6. **Visual acceptance must compare the actual authenticated pages against `MeshCentral_UI_Concepts.html` / Concept B reference.** Do not call the work complete based solely on handler mocks or the stylesheet loading.
 7. Keep a one-step reversible fallback to upstream UI, independent Cloudflare/PCRN access and no changes to config/database/agents.
 
-This is a structural UI redesign task, not a completed feature of the original CSS-only PR.
+The later `feature/night-shift-structural` branch implements a structural shell and responsive adaptations in the existing MeshCentral pages. Current module coverage and source checks are recorded in [the roadmap](night-shift-roadmap.md). The implementation still has not passed authenticated screenshot comparison against the approved Concept B, complete remote-session acceptance, or physical Android/iOS acceptance. The only screenshots checked into `docs/night-shift-acceptance/` are unauthenticated PRN login captures; they cannot establish those gates. The Concept B file named above was not found in the repository or connected Drive, and the browser-control host is unavailable for authenticated capture.
