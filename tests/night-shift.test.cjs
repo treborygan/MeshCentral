@@ -131,6 +131,38 @@ test('upload queue display follows native queued files and native progress state
   assert.doesNotMatch(files,/fetch\(|XMLHttpRequest|WebSocket\(/);
 });
 
+test('upload history observes native acknowledgments and retries through the native uploader',()=>{
+  const ids=new Map(), calls=[];
+  class Element {
+    constructor(tag){this.tagName=tag.toUpperCase();this.children=[];this.attributes={};this.events={};this.classList={add(){}};this.hidden=false;this.disabled=false;this.textContent='';this.value='';}
+    set id(value){this._id=value;ids.set(value,this);} get id(){return this._id||'';}
+    append(...nodes){this.children.push(...nodes);}
+    replaceChildren(...nodes){this.children=nodes;}
+    remove(){this.removed=true;}
+    setAttribute(name,value){this.attributes[name]=String(value);}
+    addEventListener(name,fn){(this.events[name]||=[]).push(fn);}
+    click(){(this.events.click||[]).forEach(fn=>fn({target:this}));}
+    querySelectorAll(){return [];}
+    insertAdjacentElement(){ }
+  }
+  ['p13','p13title','p13filetable','p13files','p13UploadButton'].forEach(id=>{const el=new Element('div');el.id=id;});
+  ids.get('p13UploadButton').disabled=false;
+  const nativeCalls=[];const file={name:'inventory.csv',size:12};
+  const window={uploadFile:{xfiles:[file],xfilePtr:0},p13gotUploadData(message){nativeCalls.push(message.action);},p13doUploadFiles(items){calls.push(items);}};
+  const document={readyState:'complete',createElement:tag=>new Element(tag),getElementById:id=>ids.get(id)||null,querySelector(){return null;},addEventListener(){}};
+  const context={window,document,console,MutationObserver:class{observe(){}},addEventListener(){}};
+  vm.runInNewContext(files,context,{timeout:1000});
+  window.p13gotUploadData({action:'uploadstart'});
+  window.p13gotUploadData({action:'uploaderror'});
+  const history=ids.get('p13filetable').children.find(node=>node.className==='ns-transfer-history');
+  const item=history.children[1].children[0];
+  assert.equal(item.children[1].textContent,'Failed');
+  item.children[2].click();
+  assert.equal(calls.length,1,'Retry invokes the native upload function once');
+  assert.equal(calls[0][0],file,'Retry reuses the selected File object through the native upload function');
+  assert.deepEqual(nativeCalls,['uploadstart','uploaderror'],'Native acknowledgment handling still runs');
+});
+
 test('quick power and command actions mirror MeshCentral rights and open its native audit flow',()=>{
   assert.match(actions,/GetNodeRights\(node\)/);
   assert.match(actions,/window\.deviceActionFunction\(\)/);
