@@ -140,6 +140,8 @@ Commit `1b11bcf6` adds a feature-detected CSS/JS overlay adapter for PRN's older
 
 Follow-up commit `1d556c52` refreshes the dock after legacy capability detection, limited to the authenticated app container. All 63 Node tests and installer rollback fixtures passed. The latest deployed JavaScript hash is `50C19FD5…433B3565` and is verified identical in source, installed and served assets. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-192742-e9af5f`. Authenticated browser and real-session/device acceptance remain open.
 
+Commit `8884594b` adds a visible Classic UI explanation and an explicit button to open MeshCentral's native mode selector. It was installed via the web-only override installer, with source/installed/served hashes matching and rollback snapshot `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-193437-54e090`. This provides a route to the Night Shift layout without changing site or account configuration. Actual authenticated rendering remains unverified because the browser bridge is unavailable.
+
 
 ## Continuation recheck — 2026-11-05
 
