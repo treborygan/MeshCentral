@@ -2548,12 +2548,21 @@
     notify(node,dedupeKey,label,enabled.checked,now);
   }
   function notify(node,dedupeKey,label,allowed,now,quietPreferences) {
-    if (!allowed || quietNow(now,quietPreferences) || (lastNotices[dedupeKey] && now.getTime() - lastNotices[dedupeKey] < 300000)) return;
-    lastNotices[dedupeKey] = now.getTime();
+    if (!allowed || quietNow(now,quietPreferences)) return;
+    var nowTime = now.getTime();
+    pruneNoticeHistory(nowTime);
+    if (lastNotices[dedupeKey] && nowTime - lastNotices[dedupeKey] < 300000) return;
+    lastNotices[dedupeKey] = nowTime;
     if (status) status.textContent = label + (window.Notification && window.Notification.permission === 'granted' ? '' : '. Browser notifications are not enabled; in-page alerts require this page to remain open.');
     if (window.Notification && window.Notification.permission === 'granted') {
       try { new window.Notification('MeshCentral connection changed',{body:label,tag:dedupeKey}); } catch (e) { }
     }
+  }
+  function pruneNoticeHistory(nowTime) {
+    Object.keys(lastNotices).forEach(function (key) {
+      var sentAt = lastNotices[key];
+      if (!isFinite(sentAt) || nowTime < sentAt || nowTime - sentAt >= 300000) delete lastNotices[key];
+    });
   }
   function sample(event) {
     var value = event && event.detail, node = window.currentNode;

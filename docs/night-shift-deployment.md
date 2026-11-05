@@ -234,3 +234,7 @@ Moved the native multi-desktop session strip into the shared `column_l` shell, a
 ## Keyboard navigation for workspace sessions — 2026-11-05
 
 The global session strip now uses horizontal toolbar semantics and roving focus: Tab enters at the active session, Left/Right move across session and disconnect controls, and Home/End reach the first/last control. Native button activation still calls MeshCentral's device-switch/disconnect handlers. The structural-shell keyboard regression and full 55-test suite passed; generated-bundle consistency, JavaScript syntax and whitespace checks passed. Source only; no PRN install was made.
+
+## Alert deduplication memory cleanup — 2026-11-05
+
+Allowed health/connection notices now prune deduplication keys older than five minutes and discard future or invalid timestamps, bounding retained notice history during long-lived sessions with frequent fleet changes. Quiet-hour and opt-in checks remain ahead of cleanup and notification creation; no polling or server calls were added. The focused pruning regression and all 56 tests passed; bundle consistency, JavaScript syntax and whitespace checks passed. Source only; PRN package provenance remains blocked.

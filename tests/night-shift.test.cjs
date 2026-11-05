@@ -506,6 +506,16 @@ test('connection alerts are opt-in, device-scoped, deduplicated and quiet-hours 
   assert.doesNotMatch(alerts,/setInterval|meshserver\.send|poweraction|runcommands/);
 });
 
+test('alert deduplication history expires old keys and recovers from clock changes',()=>{
+  const helper=alerts.match(/function pruneNoticeHistory\(nowTime\) \{[\s\S]*?\n  \}/);
+  assert.ok(helper,'notification history has an expiry helper');
+  const lastNotices={expired:1,recent:700000,future:900001,invalid:'bad'};
+  const prune=vm.runInNewContext('('+helper[0]+')',{lastNotices,Object,isFinite});
+  prune(900000);
+  assert.deepEqual(Object.keys(lastNotices),['recent'],'only timestamps within the five-minute dedupe interval remain');
+  assert.match(alerts,/pruneNoticeHistory\(nowTime\)/,'each allowed notification prunes expired dedupe keys');
+});
+
 test('configurable alert thresholds clamp to valid percentages and recover invalid preferences',()=>{
   const helper=alerts.match(/function normalizeThreshold\(value, fallback\) \{[\s\S]*?\n  \}/);
   assert.ok(helper,'alert threshold normalizer exists');
