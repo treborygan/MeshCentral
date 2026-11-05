@@ -26,7 +26,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [x] Event-driven client diagnostics for browser connectivity, MeshCentral control channel, Agent/AMT route, native remote-session transport/state and display canvas, with a shortcut to native connection controls. Cloudflare Access/tunnel health is explicitly shown as not observable after page load.
 - [ ] Per-device connection profiles for method, monitor, scaling, quality, keyboard layout and fullscreen preferences; never store secrets or session content.
 - [x] Account-scoped recent-device list, limited to eight IDs/timestamps; opening an entry returns through native MeshCentral navigation and permissions.
-- [ ] Quick launch and safe reconnection to existing sessions.
+- [x] Quick launch from Recent/Favorites and safe reconnection by routing through native `gotoDevice()` and exposing MeshCentral's existing Connect controls; tabs never auto-connect or bypass permissions.
 - [ ] Improved clipboard, shortcuts, international layouts and mobile input controls, accepted against real sessions.
 - [ ] Verify connection-state transitions and permission-preserving unavailable/error states.
 
