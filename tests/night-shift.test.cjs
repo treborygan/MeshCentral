@@ -1250,6 +1250,9 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.deepEqual(monitorSelections,[1],'Saved monitor preference uses MeshCentral native display selection');
   assert.deepEqual(compressionUpdates,[{encoding:4,quality:70,scaling:768,framerate:50}],'Quality and scaling apply through native MeshCentral compression settings');
   assert.equal(window.desktop.m.remoteKeyMap,true,'Keyboard map applies through the native Agent desktop object');
+  window.desktop={State:3,contype:1};
+  profilePanel.children[2].children.find(button=>button.textContent==='Save profile').click();
+  assert.match(profilePanel.children[3].textContent,/No profile settings could be applied/i,'Agent session without a native desktop object is not reported as successfully configured');
   profilePanel.children[2].children.find(button=>button.textContent==='Apply fullscreen').click();
   assert.equal(fullscreenToggles,1,'Fullscreen preference invokes MeshCentral native viewer control on direct user action');
   window.currentNode=window.nodes[1];window.desktop=null;window.__NightShiftProfiles.refresh();

@@ -212,9 +212,9 @@
     }
     var monitorPending = profile.monitor !== 'auto' && desktop.m && typeof desktop.m.SetDisplay === 'function' && !hasMonitor;
     if ((monitorApplied || qualityApplied || keyboardApplied || desktop.contype === 4) && !monitorPending) appliedDesktop = desktop;
-    status.textContent = desktop.contype === 1
+    status.textContent = qualityApplied || keyboardApplied
       ? 'Profile applied to the active Agent session.'
-      : (monitorApplied ? 'Monitor preference applied. This transport does not expose the remaining profile settings.' : 'This transport does not expose quality, scaling or keyboard-map controls; native session settings remain available.');
+      : (monitorApplied ? 'Monitor preference applied. This transport does not expose the remaining profile settings.' : 'No profile settings could be applied to this active session; native session settings remain available.');
     if (profile.fullscreen) status.textContent += ' Use Apply fullscreen to enter viewer fullscreen.';
     return monitorApplied || qualityApplied || keyboardApplied;
   }
