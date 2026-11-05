@@ -11,7 +11,7 @@
 
 ## Deployment evidence and source provenance
 
-A Git blob audit on 2026-11-05 compared the recorded installed CSS/JS hashes for source labels `1f5a3b98`, `d4fe3b0b`, `dc482d22`, `a078b248`, `f5433273`, `72323daa`, `d73e9d63`, `b41af737`, `e44bc2e7` and `c2aa0e58` with the actual blobs at those commits. None of those commit/file hashes match the corresponding installed hashes in the deployment records. The historical entries retain the source labels, rollback manifests and reported installed/served checks, but they do not prove exact source commit provenance. The latest live byte checks are in [the current provenance recheck](#prn-override-source-provenance-recheck--2026-11-05).
+This Windows checkout uses `core.autocrlf=true`, so raw SHA-256 values of installed CRLF files differ from canonical LF Git blobs. The initial raw-hash comparison did not account for that conversion. Rechecking the rollback snapshots after normalizing CRLF to LF matched both tracked CSS/JS blobs for all recorded rollout revisions: `989ae013`, `132b706f`, `cd2e4a0c`, `f8d8673`, `b41af737`, `e44bc2e7`, `1f5a3b98`, `d4fe3b0b`, `dc482d22`, `a078b248`, `f5433273`, `72323daa`, `d73e9d63` and `c2aa0e58`. The current PRN files independently match `c2aa0e58` after the same normalization. Historical raw hashes remain useful for identifying installed/served files; normalized hashes establish their tracked content. Current live evidence is in [the PRN provenance recheck](#prn-override-source-provenance-recheck--2026-11-05).
 
 ## Install on PCRN (Windows PowerShell)
 
@@ -102,17 +102,17 @@ Hard-refresh after rollback. Restore both override files independently; if a tar
 
 ## Server statistics and tracing — 2026-11-05
 
-- Deployment was recorded as source commit `c2aa0e58` (`feat(ui): improve server stats and tracing`); a later byte-level audit found that attribution is not supported by the tracked Git content (see the provenance recheck below).
+- Deployment was recorded as source commit `c2aa0e58` (`feat(ui): improve server stats and tracing`); normalized installed content matches the tracked Git blobs (see the provenance recheck below).
 - PRN root and both override endpoints returned HTTP 200 before the standard installer ran. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-121204-54ab5b`.
 - Snapshot manifest records prior CSS SHA-256 `FE86DF1084427D5989DF0F8D6177874413FBFE444920E18D2D81DA3CB92B47B7` and JS SHA-256 `BBDABBD8DD94A53287A58711F845D0857AC8174D78742BE2D666D699371810D7`.
-- The deployment log recorded post-install CSS/JS hashes `A335029697C85E6129DF65C6354D8CFF5F6D967F2F6E1B163D7E4BFDB9772420` and `529EADCEBD20957EFF01EEFCA3E14A2CC4C75B324B310CA447625B1F0ECE9DB8`; root and asset endpoints returned HTTP 200. The later Git blob audit found those hashes do not match commit `c2aa0e58`.
+- The deployment log recorded post-install CSS/JS hashes `A335029697C85E6129DF65C6354D8CFF5F6D967F2F6E1B163D7E4BFDB9772420` and `529EADCEBD20957EFF01EEFCA3E14A2CC4C75B324B310CA447625B1F0ECE9DB8`; root and asset endpoints returned HTTP 200. Those raw hashes differ from Git's LF blobs because of Windows newline conversion; normalized asset contents match commit `c2aa0e58`.
 - Admin-authenticated chart and trace workflow acceptance remains outstanding.
 
 ## PRN override source-provenance recheck — 2026-11-05
 
-The installed and served Night Shift overrides are intact, but their exact source revision is unresolved. Installed files and local HTTP response bodies match SHA-256 `A335029697C85E6129DF65C6354D8CFF5F6D967F2F6E1B163D7E4BFDB9772420` (CSS) and `529EADCEBD20957EFF01EEFCA3E14A2CC4C75B324B310CA447625B1F0ECE9DB8` (JavaScript). Both endpoints returned HTTP 200.
+The installed and served Night Shift overrides are intact. Installed files and local HTTP response bodies match raw SHA-256 `A335029697C85E6129DF65C6354D8CFF5F6D967F2F6E1B163D7E4BFDB9772420` (CSS) and `529EADCEBD20957EFF01EEFCA3E14A2CC4C75B324B310CA447625B1F0ECE9DB8` (JavaScript). Both endpoints returned HTTP 200.
 
-The Git blobs at recorded commit `c2aa0e58` hash to `322F1A3125EA86DEE219025AD9157955A2171590FD9941FECE427B53872B440E` (CSS) and `D514964062A129FF500ECA46E137956D5DE39D0BE7EE5431440886E79F287EFA` (JavaScript), which do not match the installed files. A scan of reachable source history in the current checkout found no commit whose CSS or JavaScript blob matches the installed hashes. The installation record therefore verifies the live bytes and rollback snapshot, but not an exact source revision. No live files were changed during this recheck.
+At commit `c2aa0e58`, the canonical Git blob SHA-256 values are `322F1A3125EA86DEE219025AD9157955A2171590FD9941FECE427B53872B440E` (CSS) and `D514964062A129FF500ECA46E137956D5DE39D0BE7EE5431440886E79F287EFA` (JavaScript). Normalizing installed/served content from CRLF to LF produces those exact hashes. This verifies the current installed content against the tracked source commit; raw hashes differ because of line-ending conversion. No live files were changed during this recheck.
 
 ## Structural UI branch rollout — 2026-11-04
 
@@ -120,7 +120,7 @@ The 2026-11-04 rollout record states that the structural Night Shift revision wa
 
 - Installed only `public/styles/custom.css` and `public/scripts/custom.js` into `C:\ProgramData\MeshCentral\meshcentral-web\public`, using `scripts/Install-NightShift.ps1 -ReplaceExisting`.
 - Incremental rollback backup: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261104-193015-a778de`. The manifest records and preserves both prior overrides.
-- The rollout record states that both installed assets matched source commit `989ae01333c0fc66fa19bc5de77152228345736`; the commit-to-asset comparison was not captured in a reproducible hash manifest. PCRN returned HTTP 200 for local `/styles/custom.css` and `/scripts/custom.js`; the root page returned HTTP 200 and referenced the customized assets. An unauthenticated public request returned HTTP 302 to Cloudflare Access.
+- The next rollback snapshot (`20261104-201809-38aed5`) contains the deployed files; CRLF-normalized contents match source commit `989ae01333c0fc66fa19bc5de77152228345736`. PCRN returned HTTP 200 for local `/styles/custom.css` and `/scripts/custom.js`; the root page returned HTTP 200 and referenced the customized assets. An unauthenticated public request returned HTTP 302 to Cloudflare Access.
 - `node --check public/scripts/custom.js` passed. `node --test tests/night-shift.test.cjs` passed 11/11 checks.
 - MeshCentral, MeshCentralCloudflared and Mesh Agent remained running. No service restart, configuration, database, agent, tunnel, or network route was changed.
 
@@ -195,7 +195,7 @@ Source commit `b41af737` adds a keyboard-first skip link before the native shell
 
 Before installing, MeshCentral 1.3.1, the existing root/data directory, running services and loopback responses for `/`, `/styles/custom.css` and `/scripts/custom.js` were confirmed. The installer dry-run passed. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-113452-badd98`; its manifest records the previous CSS hash `4665E4A69543AC0121CB5565B753F387C3EE80C03E1141617F5E3BD2096B55EA` and JS hash `60604C6816612F9C885D9E39C9AFAB86BE47B5E7E8090348C4830AE7F46DEB0C`.
 
-The rollout record listed installed/local-response SHA-256 values CSS `3A5E7DC408C55F3AE09C0F7D0D558D27CE104F9AB70FA497C302366FB1B341EE` and JS `DC668C469F2F6302292EC6DBAAB692464540F4E1DAA30D7E158D11174D97D5A0`. A later Git blob audit found these do not match commit `b41af737`; the recorded commit-to-asset attribution is unresolved. MeshCentral, MeshCentralCloudflared and Mesh Agent remained running; no restart, configuration, database, agent, tunnel or route change was made. Authenticated keyboard and visual acceptance remains open.
+The rollout record listed installed/local-response SHA-256 values CSS `3A5E7DC408C55F3AE09C0F7D0D558D27CE104F9AB70FA497C302366FB1B341EE` and JS `DC668C469F2F6302292EC6DBAAB692464540F4E1DAA30D7E158D11174D97D5A0`. The next rollback snapshot (`20261105-113912-6273b4`) contains these deployed files; CRLF-normalized contents match the `b41af737` Git blobs. MeshCentral, MeshCentralCloudflared and Mesh Agent remained running; no restart, configuration, database, agent, tunnel or route change was made. Authenticated keyboard and visual acceptance remains open.
 
 ## Remote-viewer toolbar keyboard update — 2026-11-05
 
