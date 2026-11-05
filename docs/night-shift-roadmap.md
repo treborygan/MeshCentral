@@ -46,7 +46,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [ ] Searchable activity/session history and native recording access. (Local search filters only loaded native Events and recordings, reports live match counts, and preserves date headings for matching recording groups. Each search has an accessible clear action that restores all loaded rows and returns focus; expanded history workflows and live acceptance remain pending.)
 - [ ] Permission-gated quick actions and reusable audited commands. (Device Details shortcuts now expose native power actions and the native configured-command picker when MeshCentral rights and connection state allow; live acceptance remains pending.)
 - [x] Wake-on-LAN/Intel AMT power controls where supported are exposed through MeshCentral's rights-checked native action dialog; authenticated device acceptance remains pending.
-- [x] Clear unavailable states for native Desktop, Terminal, Files and AMT tabs in Device Details; current capability display follows MeshCentral's permission and device-support visibility gates. Authenticated role/agent acceptance remains pending.
+- [x] Clear unavailable states for native Desktop, Terminal, Files and AMT tabs in Device Details; the summary follows MeshCentral's permission and device-support visibility gates and opens available tools through native `go()` navigation. Authenticated role/agent acceptance remains pending.
 
 ## Phase 4 — advanced functionality
 

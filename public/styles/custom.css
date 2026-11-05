@@ -1418,6 +1418,10 @@ body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
 .ns-capability-status{font-size:.8rem}
 .ns-capability-status.is-available{color:var(--ns-accent,#66d6ac)}
 .ns-capability-status.is-unavailable{color:var(--ns-muted,#a9bac3)}
+.ns-capability-open{flex:0 0 auto;min-height:34px;padding:.35rem .65rem;border:1px solid var(--ns-line,#526571);border-radius:7px;background:transparent;color:var(--ns-text,#eef5f5);font-size:.78rem}
+.ns-capability-open:hover:not(:disabled){border-color:var(--ns-accent,#66d6ac);color:var(--ns-accent,#66d6ac)}
+.ns-capability-open:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
+.ns-capability-open[hidden]{display:none!important}
 .ns-capability-note{margin:.7rem 0 0;color:var(--ns-muted,#a9bac3);font-size:.78rem}
 .ns-viewer-info-toggle{position:fixed;top:calc(1rem + env(safe-area-inset-top));right:1rem;z-index:905;padding:.5rem .8rem;border:1px solid var(--ns-accent,#66d6ac);border-radius:10px;background:rgba(19,30,41,.94);color:var(--ns-text,#eef5f5);box-shadow:0 8px 24px #0005}
 .ns-viewer-controls{position:fixed;right:1rem;bottom:1rem;z-index:904;display:flex;gap:.45rem;padding:.45rem;border:1px solid var(--ns-line,#344652);border-radius:12px;background:rgba(19,30,41,.96);box-shadow:0 10px 28px #0007;opacity:1;transform:translateY(0);transition:opacity .18s,transform .18s}

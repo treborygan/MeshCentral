@@ -537,6 +537,7 @@ test('device capability summary reads native tab availability without replacing 
   assert.match(capabilities,/MainDevFiles/);
   assert.match(capabilities,/MainDevAmt/);
   assert.match(capabilities,/Unavailable/);
+  assert.match(capabilities,/window\.go\(item\[2\],event\)/);
   assert.doesNotMatch(capabilities,/dispatchEvent|\.click\(|gotoDevice|meshserver\.send/);
 });
 
@@ -547,19 +548,26 @@ test('capability summary updates from the native tab visibility state',()=>{
     insertBefore(child){this.children.unshift(child);}
     setAttribute(k,v){this.attributes[k]=v;}
     getAttribute(k){return this.attributes[k] ?? null;}
+    addEventListener(name,fn){(this.events||={})[name]=fn;}
+    click(){if(this.events&&this.events.click)this.events.click({which:1,button:0,shiftKey:false,preventDefault(){}});}
     getClientRects(){return this.style.display==='none'||this.hidden?[]:[{}];}
   }
   const ids=new Map(), p10=new FakeElement(), host=new FakeElement();ids.set('p10',p10);ids.set('p10info',host);
   for(const id of ['MainDevDesktop','MainDevTerminal','MainDevFiles','MainDevAmt']){const el=new FakeElement();ids.set(id,el);}
   ids.get('MainDevTerminal').style.display='none';ids.get('MainDevAmt').style.display='none';
   const document={readyState:'complete',getElementById:id=>ids.get(id)||null,createElement:()=>new FakeElement(),addEventListener(){}};
-  const window={};
+  const routes=[],window={go:(view,event)=>routes.push([view,event.which])};
   vm.runInNewContext(capabilities,{window,document,console,getComputedStyle:el=>el.style},{timeout:1000});
   const panel=host.children[0], rows=panel.children[1].children;
   assert.equal(rows[0].children[1].textContent,'Available');
+  assert.equal(rows[0].children[2].hidden,false,'Available native tools expose an Open action');
+  rows[0].children[2].click();
+  assert.deepEqual(routes,[[11,1]],'Open delegates to MeshCentral native go() navigation');
   assert.equal(rows[1].children[1].textContent,'Unavailable');
+  assert.equal(rows[1].children[2].hidden,true,'Unavailable native tools do not expose an action');
   ids.get('MainDevFiles').style.display='none';window.__NightShiftCapabilities.refresh();
   assert.equal(rows[2].children[1].textContent,'Unavailable');
+  assert.equal(rows[2].children[2].disabled,true,'Availability changes disable the native navigation action');
 });
 
 test('remote viewer information drawer preserves native details navigation',()=>{

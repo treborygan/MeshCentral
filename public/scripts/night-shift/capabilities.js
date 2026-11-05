@@ -4,10 +4,10 @@
   if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftCapabilities) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, rows = {};
+  var panel, rows = {}, openButtons = {};
   var items = [
-    ['MainDevDesktop','Remote desktop'],['MainDevTerminal','Terminal'],
-    ['MainDevFiles','Device files'],['MainDevAmt','Intel AMT']
+    ['MainDevDesktop','Remote desktop',11],['MainDevTerminal','Terminal',12],
+    ['MainDevFiles','Device files',13],['MainDevAmt','Intel AMT',14]
   ];
   function create(tag, cls, text) {
     var node = document.createElement(tag);
@@ -32,7 +32,14 @@
         var row = create('div','ns-capability-row');
         row.append(create('span','ns-capability-name',item[1]));
         rows[item[0]] = create('strong','ns-capability-status','Checking');
-        rows[item[0]].dataset.capability = item[0]; row.append(rows[item[0]]); list.append(row);
+        rows[item[0]].dataset.capability = item[0]; row.append(rows[item[0]]);
+        var open = create('button','ns-capability-open','Open');
+        open.type = 'button'; open.setAttribute('aria-label','Open ' + item[1]);
+        open.addEventListener('click',function (event) {
+          if (!available(item[0]) || typeof window.go !== 'function') return;
+          window.go(item[2],event);
+        });
+        openButtons[item[0]] = open; row.append(open); list.append(row);
       });
       panel.append(list,create('p','ns-capability-note','Availability reflects the native MeshCentral tab for this device and account.'));
       host.insertBefore(panel,host.firstChild);
@@ -41,6 +48,8 @@
       var state = available(item[0]);
       rows[item[0]].textContent = state ? 'Available' : 'Unavailable';
       rows[item[0]].className = state ? 'ns-capability-status is-available' : 'ns-capability-status is-unavailable';
+      openButtons[item[0]].hidden = !state;
+      openButtons[item[0]].disabled = !state || typeof window.go !== 'function';
     });
   }
   function boot() {
