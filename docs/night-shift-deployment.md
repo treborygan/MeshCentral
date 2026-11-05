@@ -264,3 +264,7 @@ Rechecked the PRN security gate read-only on 2026-11-05: the installed package a
 ## Native Agent status in health summary — 2026-11-05
 
 Added a separate health field that labels MeshAgent connected/disconnected from MeshCentral's native `conn` Agent bit and shows the cached agent version when present. Nodes with AMT connectivity but no agent metadata are identified as AMT-available; missing evidence stays Unavailable. This adds no request or permission change. Focused helper regression and broad checks are recorded with the source commit; browser acceptance remains unavailable.
+
+## Upstream stable package availability — 2026-11-05
+
+Fetched official upstream `Ylianst/MeshCentral` master at `2e7ec138`; it remains package version 1.3.1 and contains the reviewed security-fix probes. It differs from the fork's `origin/master` base `c897d5e5` only by an unrelated two-line agent IPC UTF-8 sizing change. Upstream Git tags and npm `latest`/`stable` currently stop at 1.3.1, whose verified tarball fails the PRN file-share and forced-2FA probes. The [official installation guide](https://docs.meshcentral.com/install/quickstart/) documents npm installation; a [MeshCentral maintainer response](https://github.com/Ylianst/MeshCentral/issues/8176) describes direct GitHub installation as latest development code intended for developers. It is not a suitable production replacement for PRN. Keep the package gate open until a stable upstream release contains the fixes and passes the provenance audit; no package/configuration/service changes were made.
