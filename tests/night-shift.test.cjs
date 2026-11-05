@@ -509,7 +509,7 @@ function createMobileHarness(isMobile = true) {
     _mobileModifiers:{ctrl:false,shift:false,alt:false},
     go: page => calls.push(['go', page]),
     deskToggleTrackpad: () => calls.push(['trackpad']),
-    toggleMobileKeyboard: () => calls.push(['keyboard']),
+    toggleMobileKeyboard: () => {window._mobileKbdEnabled=!window._mobileKbdEnabled;calls.push(['keyboard']);},
     deskMobileToggleZoom: () => calls.push(['zoom']),
     deskToggleRightClickMode: () => calls.push(['right-click']),
     toggleMobileModifier: mod => { window._mobileModifiers[mod]=!window._mobileModifiers[mod];calls.push(['modifier',mod]); },
@@ -609,10 +609,11 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   assert.equal(h.byId.get('ns-trackpad').getAttribute('aria-label'),'Disable trackpad mode');
   assert.equal(h.byId.get('ns-rightclick').textContent,'Right-click on');
   assert.equal(h.byId.get('ns-rightclick').getAttribute('aria-pressed'),'true');
+  const keyboard=h.byId.get('ns-keyboard');
+  assert.equal(keyboard.disabled,true,'on-screen keyboard remains unavailable before a native session connects');
 
   h.byId.get('ns-rdp-connect').click();
   h.byId.get('ns-trackpad').click();
-  h.byId.get('ns-keyboard').click();
   h.byId.get('ns-zoom').click();
   h.byId.get('ns-rightclick').click();
   h.byId.get('DeskScreens').click();
@@ -620,12 +621,24 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   fullscreen.click();
 
   assert.equal(h.rdpConnect.clickCount, 1, 'RDP is delegated to MeshCentral\'s existing connect handler');
-  assert.deepEqual(h.calls.map(call => call[0]), ['trackpad', 'keyboard', 'zoom', 'right-click', 'fullscreen']);
+  assert.deepEqual(h.calls.map(call => call[0]), ['trackpad', 'zoom', 'right-click', 'fullscreen']);
   assert.equal(h.calls.find(call => call[0] === 'fullscreen')[1].shiftKey, false, 'fullscreen receives the native event shape');
   assert.equal(h.byId.get('DeskScreens').clickCount, 1, 'monitor picker remains the native MeshCentral control');
 
   h.disconnect.hidden=false;h.disconnect.isVisible=true;
   h.window.__nightShiftUI.refresh();
+  assert.equal(keyboard.disabled,false,'on-screen keyboard is available when native input is enabled');
+  keyboard.click();
+  assert.equal(keyboard.textContent,'Keyboard on','dock follows native on-screen keyboard state');
+  assert.equal(keyboard.getAttribute('aria-pressed'),'true','keyboard toggle exposes pressed state');
+  h.byId.get('DeskControl').checked=false;
+  h.window.__nightShiftUI.refresh();
+  assert.equal(keyboard.disabled,true,'on-screen keyboard is unavailable while native remote input is disabled');
+  assert.equal(h.byId.get('ns-type-text').disabled,true,'text input shortcuts follow the native input permission');
+  assert.equal(h.byId.get('ns-clipboard-out').disabled,false,'clipboard controls retain their independent native availability');
+  h.byId.get('DeskControl').checked=true;
+  h.window.__nightShiftUI.refresh();
+  assert.equal(keyboard.disabled,false,'on-screen keyboard returns when native input is restored');
   for (const id of ['ns-clipboard-out','ns-clipboard-in','ns-type-text','ns-cad','ns-escape','ns-send-key']) {
     assert.ok(h.byId.get(id), 'Touch dock exposes ' + id);
     assert.equal(h.byId.get(id).disabled,false,id + ' is available during a connected session');

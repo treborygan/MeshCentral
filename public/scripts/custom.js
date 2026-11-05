@@ -236,7 +236,7 @@
     add(primary,'RDP','ns-positive',()=>act(()=>nativeClick('connectbutton1r'),'RDP connection unavailable'),'ns-rdp-connect');
     add(primary,'Disconnect','ns-danger',()=>act(()=>nativeClick('disconnectbutton1'),'No connected session'),'ns-disconnect');
     add(primary,'Trackpad','',()=>act(()=>nativeFunction('deskToggleTrackpad'),'Trackpad unavailable'),'ns-trackpad');
-    add(primary,'Keyboard','',()=>act(()=>nativeFunction('toggleMobileKeyboard'),'Keyboard unavailable'),'ns-keyboard');
+    add(primary,'Keyboard','',()=>act(()=>{const ok=nativeFunction('toggleMobileKeyboard');if(ok)scheduleUpdate();return ok;},'Keyboard unavailable'),'ns-keyboard');
     add(primary,'Right click','',()=>act(()=>nativeFunction('deskToggleRightClickMode'),'Right-click mode unavailable'),'ns-rightclick');
     add(secondary,'Fit / 1:1','',()=>act(()=>nativeFunction('deskMobileToggleZoom'),'Zoom unavailable'),'ns-zoom');
     add(secondary,'Special keys','',()=>{
@@ -296,10 +296,10 @@
         t.setAttribute('aria-label',active?'Disable trackpad mode':'Enable trackpad mode');
         t.setAttribute('aria-pressed',active?'true':'false');
       }
-      const k=$('ns-keyboard');if(k)k.disabled=!connected||typeof window.toggleMobileKeyboard!=='function';
-      const z=$('ns-zoom');if(z)z.disabled=!connected||typeof window.deskMobileToggleZoom!=='function';
-      const inputAllowed=connected&&usable($('DeskWD'));
       const control=$('DeskControl'),nativeModifiers=window._mobileModifiers||{};
+      const inputAllowed=connected&&usable($('DeskWD'))&&!!control&&!control.disabled&&control.checked===true;
+      const k=$('ns-keyboard');if(k){const keyboardOn=window._mobileKbdEnabled===true;k.disabled=!inputAllowed||typeof window.toggleMobileKeyboard!=='function';k.textContent=keyboardOn?'Keyboard on':'Keyboard off';k.setAttribute('aria-pressed',keyboardOn?'true':'false');k.setAttribute('aria-label',keyboardOn?'Hide on-screen keyboard':'Show on-screen keyboard');}
+      const z=$('ns-zoom');if(z)z.disabled=!connected||typeof window.deskMobileToggleZoom!=='function';
       if(!connected)modifiersOpen=false;
       modifierToggle.hidden=typeof window.toggleMobileModifier!=='function';
       modifierToggle.disabled=!connected||!control||control.disabled||control.checked!==true;
