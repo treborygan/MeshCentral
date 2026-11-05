@@ -21,6 +21,7 @@ Included:
 - Existing mobile touch controls, command search, login2 theming and viewport corrections inherited from previous PRs.
 - The mobile remote dock also exposes explicit native clipboard-to/from-device actions, Unicode text entry, Ctrl+Alt+Delete, Escape, and the selected special-key shortcut. Input actions track MeshCentral's native input permission control; clipboard buttons are hidden when the native feature control is unavailable. Physical-device, browser clipboard permission and per-transport acceptance remain pending.
 - The Device Details page includes a source-only health summary from MeshCentral's cached native details: connection state, last boot, OS description, and Windows volume capacity/free space. It reads only volume name, size and free-space fields; BitLocker fields are not copied or displayed. CPU/memory remains MeshCentral's native graph, opened by an explicit button; no parallel telemetry polling is added. Authenticated live acceptance is pending.
+- Events and user recordings pages have local search fields that filter the native rendered rows. Search does not fetch more data, change access, or replace the native recording player/download controls. It covers the currently loaded page only.
 
 The actual browser must supply MeshCentral's expected IDs. Components are created only after authenticated markup exists. When the corresponding native section or permission-gated control is absent, enhanced actions are withheld. Live session and rendered inventory state are derived from existing DOM and never asserted from mocks.
 

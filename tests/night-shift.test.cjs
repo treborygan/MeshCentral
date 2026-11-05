@@ -12,6 +12,7 @@ const css = read('public/styles/custom.css');
 const js = read('public/scripts/custom.js');
 const installer = read('scripts/Install-NightShift.ps1');
 const health = read('public/scripts/night-shift/health.js');
+const history = read('public/scripts/night-shift/history.js');
 
 test('custom script bundle matches its modular source components',()=>{
   const result=spawnSync(process.execPath,['scripts/build-night-shift.js','--check'],{cwd:root,encoding:'utf8'});
@@ -24,6 +25,13 @@ test('device health uses cached native details and delegates CPU graph to MeshCe
   assert.match(health,/native\.click\(\)/);
   assert.doesNotMatch(health,/setInterval|send\(\s*\{\s*action:\s*['"]msg['"]|recoveryPassword|encryptionMethod|bitlocker/i);
   assert.match(health,/sizeremaining/);
+});
+
+test('history search filters only native rendered events and recordings',()=>{
+  assert.match(history,/p3events/);
+  assert.match(history,/p52recordings/);
+  assert.match(history,/Search loaded records/);
+  assert.doesNotMatch(history,/meshserver\.send|downloadFile|openRecodringPlayer|localStorage|sessionStorage/);
 });
 
 function createMobileHarness(isMobile = true) {
