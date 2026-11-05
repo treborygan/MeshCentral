@@ -72,6 +72,14 @@ Hard-refresh after rollback. Restore both override files independently; if a tar
 - After installation, source, installed and served CSS SHA-256 all match `482F923E5955B6F75DCCAD481475FC04D80D25FBEE9D861D06539D479B1131BE`; JS hashes match `8F246999A5A22C9D73790EA62F86897496BAD0379C8D9F0A5653BC1042229B24`. Root returned HTTP 200.
 - Authenticated modal workflows and visual acceptance remain outstanding.
 
+## Keyboard-accessible event history — 2026-11-05
+
+- Installed source commit: `f5433273` (`feat(a11y): enable keyboard event history`).
+- The verified PRN root and asset endpoints returned HTTP 200 before the standard installer ran. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-120416-fe8e83`.
+- Snapshot manifest records the prior CSS SHA-256 `482F923E5955B6F75DCCAD481475FC04D80D25FBEE9D861D06539D479B1131BE` and JS SHA-256 `8F246999A5A22C9D73790EA62F86897496BAD0379C8D9F0A5653BC1042229B24`.
+- Post-install source, installed and served CSS SHA-256 all match `4C47D0632825439D2CB2F9C6014CCB2530886F036F7869AAE8367DDFAD790436`; JS hashes all match `BBDABBD8DD94A53287A58711F845D0857AC8174D78742BE2D666D699371810D7`. Root and assets returned HTTP 200.
+- Keyboard activation is covered in the Node harness; authenticated screen-reader and browser acceptance remain open.
+
 ## Structural UI branch rollout — 2026-11-04
 
 The structural Night Shift revision was installed on PCRN from PR #3 source commit `989ae01333c0fc66fa19bc5de77152228345736`. The PR remains a draft; its latest source revision at the time of installation is recorded here so deployment evidence is not mistaken for release acceptance.
