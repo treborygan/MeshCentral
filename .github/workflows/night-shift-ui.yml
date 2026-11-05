@@ -1,6 +1,7 @@
 name: Night Shift UI checks
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - "public/styles/custom.css"
