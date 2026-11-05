@@ -1325,7 +1325,7 @@
   if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftSessions) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, queued = false;
+  var panel, announcement, queued = false, previousSignature = null;
   var stateNames = ['Disconnected','Connecting','Setting up','Connected','Connected'];
 
   function sessionState(session) {
@@ -1376,6 +1376,10 @@
     panel = create('nav','ns-session-tabs');
     panel.id = 'ns-session-tabs';
     panel.setAttribute('aria-label','Open remote sessions');
+    announcement = create('span','ns-session-announcement');
+    announcement.setAttribute('role','status');
+    announcement.setAttribute('aria-live','polite');
+    announcement.setAttribute('aria-atomic','true');
     var parent = area.parentNode || area.parentElement;
     var before = $('ns-session-diagnostics') || area;
     parent.insertBefore(panel,before);
@@ -1395,7 +1399,18 @@
     var open = sessions();
     panel.replaceChildren();
     panel.hidden = open.length === 0;
-    if (!open.length) return;
+    var signature = open.map(function (entry) {
+      return [entry.id,entry.current ? 'current' : 'background',sessionState(entry.session)].join(':');
+    }).join('|');
+    if (previousSignature !== null && signature !== previousSignature) {
+      var currentEntry = open.find(function (entry) { return entry.current; });
+      var countText = open.length + (open.length === 1 ? ' remote session' : ' remote sessions');
+      announcement.textContent = currentEntry
+        ? countText + '. ' + (currentEntry.node.name || currentEntry.node.host || 'Remote device') + ': ' + (stateNames[sessionState(currentEntry.session)] || 'state unavailable') + '.'
+        : countText + '.';
+    }
+    previousSignature = signature;
+    if (!open.length) { panel.append(announcement); return; }
     var heading = create('span','ns-session-tabs-heading','Sessions');
       panel.append(heading);
     open.forEach(function (entry) {
@@ -1425,6 +1440,7 @@
         panel.append(close);
       }
     });
+    panel.append(announcement);
   }
   function schedule() {
     if (queued) return;

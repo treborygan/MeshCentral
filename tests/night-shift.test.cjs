@@ -1323,6 +1323,13 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(archiveTab.getAttribute('aria-current'),null,'Background sessions are not marked current');
   const currentSessionTab=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab')&&node.getAttribute('aria-current')==='true');
   assert.ok(currentSessionTab,'The active native session is exposed as the current navigation item');
+  const sessionAnnouncement=sessionTabs.children.find(node=>node.getAttribute('role')==='status');
+  assert.ok(sessionAnnouncement,'Session changes have a dedicated status announcement');
+  assert.equal(sessionAnnouncement.getAttribute('aria-live'),'polite');
+  assert.match(sessionAnnouncement.textContent,/2 remote sessions\./,'Newly opened sessions are announced after the initial render');
+  window.multiDesktop['node//offline'].State=3;
+  window.__NightShiftSessions.refresh();
+  assert.match(sessionAnnouncement.textContent,/2 remote sessions\. .+: Connected\./,'Native session state changes are announced accessibly');
   archiveTab.click();
   assert.equal(opened.at(-1),'node//offline','Switching a tab delegates to native gotoDevice permissions and routing');
   const closeArchive=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close'));
