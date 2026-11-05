@@ -27,6 +27,7 @@ test('native clipboard permission failures provide mobile feedback without repla
   const template=read('views/default3.handlebars');
   assert.match(mobileControls,/notifyClipboardError:function\(\)\{message\('Clipboard access was blocked\./);
   assert.match(template,/navigator\.clipboard\.writeText\(text\)\.then\(function \(\) \{ \}\)\.catch\(function \(err\) \{ console\.log\(err\); if \(window\.__nightShiftUI\) window\.__nightShiftUI\.notifyClipboardError\(\); \}\)/);
+  assert.match(template,/navigator\.clipboard\.writeText\(message\.data\)\.then\(function \(\) \{ \}\)\.catch\(function \(err\) \{ console\.log\(err\); if \(window\.__nightShiftUI\) window\.__nightShiftUI\.notifyClipboardError\(\); \}\)/);
   assert.match(template,/navigator\.clipboard\.readText\(\)\.then\(function \(text\)/);
   assert.match(template,/if \(window\.__nightShiftUI\) window\.__nightShiftUI\.notifyClipboardError\(\);/);
 });

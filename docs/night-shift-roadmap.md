@@ -31,7 +31,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [x] Account- and device-scoped connection profiles store method, monitor, scaling, quality, native/remote keyboard map and fullscreen preference only. Apply/Connect uses native connection and display APIs; unsupported RDP/AMT settings remain on native controls, and fullscreen is applied from the explicit user gesture.
 - [x] Account-scoped recent-device list, limited to eight IDs/timestamps; opening an entry returns through native MeshCentral navigation and permissions.
 - [x] Quick launch from Recent/Favorites and safe reconnection by routing through native `gotoDevice()` and exposing MeshCentral's existing Connect controls; tabs never auto-connect or bypass permissions.
-- [x] Touch dock exposes local/remote clipboard transfer, text entry, common shortcuts and selected special-key sending through native MeshCentral handlers. Clipboard permission rejections now show an accessible retry hint without replacing native transport. The keyboard map preference is per device and uses native/remote mapping modes.
+- [x] Touch dock exposes local/remote clipboard transfer, text entry, common shortcuts and selected special-key sending through native MeshCentral handlers. Clipboard permission rejections on both desktop-direct and native message-channel paths show an accessible retry hint without replacing native transport. The keyboard map preference is per device and uses native/remote mapping modes.
 - [x] Touch dock labels trackpad and right-click mode from the live native session state, with pressed state and action-specific accessible labels.
 - [x] Touch dock exposes an expandable Ctrl/Shift/Alt sticky-modifier tray and native Release all cleanup (available even when input is disabled); connection/input permission changes and native soft-keyboard input refresh availability and pressed indicators.
 - [ ] Verify clipboard permissions, international input layouts, shortcuts and mobile controls against real Agent, RDP and AMT sessions.
@@ -59,7 +59,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [x] Keep authentication, permissions, consent, guest sharing, recording, 2FA, native transports and Cloudflare boundaries in MeshCentral.
 - [x] Use the persistent `custom.css`/`custom.js` extension points and backup-manifest installer; rollback path is documented.
 - [x] Split JavaScript into focused mobile-controls, shell, devices, diagnostics, sessions, profiles, health, history, files, actions, alerts, PWA, capabilities and viewer components; regenerate the single deployable `custom.js` bundle and include bundle validation in the CI workflow.
-- [x] Current automated source checks: `node scripts/build-night-shift.js --check`, `node --check public/scripts/custom.js` and `node --test tests/night-shift.test.cjs` (37 tests).
+- [x] Current automated source checks: `node scripts/build-night-shift.js --check`, `node --check public/scripts/custom.js` and `node --test tests/night-shift.test.cjs` (38 tests).
 - [x] Review current upstream security-fix ancestry and compatibility: the PR branch includes the reviewed 1.3.1 fixes; source changes remain limited to web overrides.
 - [ ] Verify the exact installed PRN source revision and confirm those upstream fixes are present before release.
 - [ ] Complete authenticated workflows for admin and restricted roles, Agent desktop, browser RDP, terminal, files, reconnect, guest, recordings, AMT and plugins.

@@ -3795,7 +3795,7 @@
                                     if ((navigator.clipboard != null) && (message.data != deskLastClipboardReceived) && document.hasFocus()) {
                                         deskLastClipboardReceived = message.data;
                                         deskLastClipboardSent = message.data; // prevent echo back to remote
-                                        navigator.clipboard.writeText(message.data).then(function () { }).catch(function (err) { });
+                                        navigator.clipboard.writeText(message.data).then(function () { }).catch(function (err) { console.log(err); if (window.__nightShiftUI) window.__nightShiftUI.notifyClipboardError(); });
                                     }
                                 }
                             } else if ((message.type === 'setclip') && (xxdialogTag === 'clipboard') && (currentNode != null) && (currentNode._id == message.nodeid)) {
