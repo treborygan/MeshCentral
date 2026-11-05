@@ -5,7 +5,7 @@
   if (window.__NightShiftFiles) return;
   var $ = function (id) { return document.getElementById(id); };
   var search, inspector, detail, actions = [];
-  var uploadObserver, transferQueue, transferStatus, transferList, historyPanel, historyList, historyAnnouncement, lastQueueIndex = null;
+  var uploadObserver, transferQueue, transferStatus, transferList, historyPanel, historyList, historyAnnouncement, clearHistoryButton, lastQueueIndex = null;
   var transferHistory = [], uploadTrackingInstalled = false, downloadTrackingInstalled = false;
   function create(tag, cls, text) {
     var node = document.createElement(tag);
@@ -142,6 +142,11 @@
     if (!historyAnnouncement || !entry) return;
     historyAnnouncement.textContent = (entry.type === 'upload' ? 'Upload' : 'Download') + ' ' + entry.name + ': ' + entry.state + '.';
   }
+  function clearTransferHistory() {
+    transferHistory = [];
+    renderHistory();
+    if (historyAnnouncement) historyAnnouncement.textContent = 'Transfer history cleared.';
+  }
   function recordUpload(file,state) {
     if (!file) return;
     var entry = transferHistory.find(function (item) { return item.file === file; });
@@ -217,6 +222,10 @@
       historyPanel = create('section','ns-transfer-history');
       historyPanel.setAttribute('aria-label','Recent transfers');
       historyPanel.append(create('h3','','Recent transfers'));
+      clearHistoryButton = create('button','ns-transfer-clear','Clear history');
+      clearHistoryButton.type = 'button'; clearHistoryButton.setAttribute('aria-label','Clear recent transfer history');
+      clearHistoryButton.addEventListener('click',clearTransferHistory);
+      historyPanel.append(clearHistoryButton);
       historyAnnouncement = create('p','ns-transfer-announcement');
       historyAnnouncement.setAttribute('role','status'); historyAnnouncement.setAttribute('aria-live','polite'); historyAnnouncement.setAttribute('aria-atomic','true');
       historyList = create('ol','ns-transfer-history-list');

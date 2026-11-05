@@ -278,7 +278,10 @@ test('upload queue display follows native queued files and native progress state
   assert.match(files,/historyAnnouncement\.setAttribute\('role','status'\)/);
   assert.match(files,/historyAnnouncement\.setAttribute\('aria-live','polite'\)/);
   assert.match(files,/announceTransfer\(entry\)/);
+  assert.match(files,/aria-label','Clear recent transfer history'/);
+  assert.match(files,/historyAnnouncement\.textContent = 'Transfer history cleared\.'/);
   assert.match(css,/\.ns-transfer-announcement\{position:absolute;width:1px;height:1px/);
+  assert.match(css,/\.ns-transfer-clear:focus-visible/);
   assert.doesNotMatch(files,/fetch\(|XMLHttpRequest|WebSocket\(/);
 });
 
@@ -307,7 +310,9 @@ test('upload history observes native acknowledgments and retries through the nat
   window.p13gotUploadData({action:'uploadstart'});
   window.p13gotUploadData({action:'uploaderror'});
   const history=ids.get('p13filetable').children.find(node=>node.className==='ns-transfer-history');
-  const announcement=history.children[1], list=history.children[2];
+  const clear=history.children[1], announcement=history.children[2], list=history.children[3];
+  assert.equal(clear.textContent,'Clear history');
+  assert.equal(clear.attributes['aria-label'],'Clear recent transfer history');
   assert.equal(announcement.attributes.role,'status');
   assert.equal(announcement.attributes['aria-live'],'polite');
   assert.equal(announcement.textContent,'Upload inventory.csv: Failed.','native upload acknowledgments announce their resulting state');
@@ -334,6 +339,10 @@ test('upload history observes native acknowledgments and retries through the nat
   const failedRetry=list.children.find(row=>row.children[0].textContent==='inventory.csv');
   assert.equal(failedRetry.children[1].textContent,'Failed to start','native upload startup exceptions remain retryable and visible');
   assert.equal(announcement.textContent,'Upload inventory.csv: Failed to start.');
+  clear.click();
+  assert.equal(list.children.length,1,'clearing replaces rows with the empty history message');
+  assert.equal(list.children[0].textContent,'Transfers started in this page will appear here.');
+  assert.equal(announcement.textContent,'Transfer history cleared.','clearing the local history is announced');
 });
 
 test('quick power and command actions mirror MeshCentral rights and open its native audit flow',()=>{
