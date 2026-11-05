@@ -19,6 +19,7 @@ const alerts = read('public/scripts/night-shift/alerts.js');
 const pwa = read('public/scripts/night-shift/pwa.js');
 const capabilities = read('public/scripts/night-shift/capabilities.js');
 const viewer = read('public/scripts/night-shift/viewer.js');
+const devicesSource = read('public/scripts/night-shift/devices.js');
 const mobileControls = read('public/scripts/night-shift/mobile-controls.js');
 const shell = read('public/scripts/night-shift/shell.js');
 
@@ -36,6 +37,16 @@ test('contextual breadcrumbs route through native MeshCentral navigation',()=>{
   assert.match(shell,/navigate\(entries\[0\]\)/);
   assert.match(shell,/deviceAction\(\{ id: 'MainDevInfo' \}\)/);
   assert.match(shell,/window\.currentNode/);
+});
+
+test('device inventory refreshes from native changes without polling and explains empty results',()=>{
+  assert.match(devicesSource,/new MutationObserver\(scheduleUpdate\)/);
+  assert.match(devicesSource,/viewSelect\.addEventListener\('change',scheduleUpdate\)/);
+  assert.match(devicesSource,/visibilitychange',scheduleUpdate/);
+  assert.doesNotMatch(devicesSource,/setInterval|1800\)/);
+  assert.match(devicesSource,/No managed devices are available to this account/);
+  assert.match(devicesSource,/No favorites yet/);
+  assert.match(devicesSource,/Clear filters/);
 });
 
 test('custom script bundle matches its modular source components',()=>{
@@ -770,7 +781,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(inventory.children[2].children.length,1,'Recent filter exposes recently opened authorized devices');
   window.userinfo={_id:'user/domain/other'};
   recentTab.click();
-  assert.equal(inventory.children[2].children[0].textContent,'No recent devices yet. Open a device to add it here.','A second account cannot see the first account\'s recents');
+  assert.equal(inventory.children[2].children[0].children[0].textContent,'No recent devices yet. Open a device to add it here.','A second account cannot see the first account\'s recents');
   assert.equal(recentStorage.has('nightShiftRecentDevices:user/domain/other'),false,'Reading another account does not copy history');
   window.userinfo={_id:'user/domain/qa'};
   page.hidden=true;remotePage.hidden=false;

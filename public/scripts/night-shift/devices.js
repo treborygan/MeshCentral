@@ -13,7 +13,7 @@
     if (text !== undefined) el.textContent = text;
     return el;
   };
-  var mode = 'cards', layout = 'cards', sort = 'reachable', tag = '', state = 'all', term = '', list, grid, toggle, filter, stats, tabs, tagFilter, sortSelect, layoutSelect, lastSignature = '';
+  var mode = 'cards', layout = 'cards', sort = 'reachable', tag = '', state = 'all', term = '', list, grid, toggle, filter, stats, tabs, tagFilter, sortSelect, layoutSelect, lastSignature = '', updateQueued = false;
   var maxRendered = 150;
   function reachable(node) { return ((Number(node.conn) || 0) & 7) !== 0; }
   function nativeStars() {
@@ -302,14 +302,37 @@
       var rendered = view.slice(0,maxRendered);
       if (layout === 'table') grid.append(makeTable(rendered));
       else rendered.forEach(function (node) { grid.append(layout === 'compact' ? makeCompact(node) : makeCard(node)); });
-      if (!view.length) grid.append(create('div','ns-live-empty',state === 'recent'
-        ? 'No recent devices yet. Open a device to add it here.'
-        : 'No devices match the selected filters.'));
+      if (!view.length) {
+        var empty = create('div','ns-live-empty');
+        var message = all.length === 0 ? 'No managed devices are available to this account.' :
+          state === 'recent' ? 'No recent devices yet. Open a device to add it here.' :
+          state === 'favorites' && !all.some(isFavorite) ? 'No favorites yet. Mark devices with the star control to find them here.' :
+          'No devices match the selected filters.';
+        empty.append(create('p','',''+message));
+        if (all.length > 0 && state !== 'recent' && (term || tag || state !== 'all')) {
+          var clear = create('button','ns-live-empty-clear','Clear filters'); clear.type = 'button';
+          clear.addEventListener('click',function () {
+            term = ''; tag = ''; state = 'all';
+            if (filter) filter.value = '';
+            if (tagFilter) tagFilter.value = '';
+            renderFilterTabs(); update();
+          });
+          empty.append(clear);
+        }
+        grid.append(empty);
+      }
       stats.textContent = all.length + ' loaded · ' + Math.min(view.length,maxRendered) + ' shown · ' + onlineCount + ' reachable · ' +
         (all.length - onlineCount) + ' offline' +
         (view.length > maxRendered ? ' · First ' + maxRendered + ' matches' : '');
     }
     useCards(mode === 'cards');
+  }
+  function scheduleUpdate() {
+    if (updateQueued) return;
+    updateQueued = true;
+    var run = function () { updateQueued = false; update(); };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+    else setTimeout(run,0);
   }
   function boot() {
     var nativeList = $('xdevices');
@@ -350,11 +373,16 @@
     list.append(header,controls,grid);
     nativeList.parentNode.insertBefore(list,nativeList);
     update();
-    setInterval(function () {
-      if (document.visibilityState === 'visible') update();
-    },1800);
+    if (typeof MutationObserver === 'function') {
+      var observer = new MutationObserver(scheduleUpdate);
+      observer.observe(nativeList,{attributes:true,attributeFilter:['class','style','hidden'],childList:true,characterData:true,subtree:true});
+    }
+    var viewSelect = $('viewselect');
+    if (viewSelect) viewSelect.addEventListener('change',scheduleUpdate);
+    document.addEventListener('visibilitychange',scheduleUpdate);
+    if (window.addEventListener) window.addEventListener('pageshow',scheduleUpdate);
   }
-  window.__nightShiftDevices = {version:'2.0.0',refresh:update};
+  window.__nightShiftDevices = {version:'2.1.0',refresh:update,schedule:scheduleUpdate};
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
 })();

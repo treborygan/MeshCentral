@@ -1173,6 +1173,11 @@ body.ns-shell-ready.ns-cards-enabled #xdevices {display:none!important}
   border:1px dashed #344753;border-radius:13px;padding:30px;text-align:center;color:#a1b2bb;
   grid-column:1/-1;font-size:12px
 }
+.ns-live-empty{display:grid;justify-items:center;gap:10px}
+.ns-live-empty p{margin:0}
+.ns-live-empty-clear{min-height:38px;padding:8px 13px;border:1px solid #b6f078;border-radius:9px;background:transparent;color:#eaf4ed;font:inherit;font-size:12px}
+.ns-live-empty-clear:hover{background:#24343d}
+.ns-live-empty-clear:focus-visible{outline:2px solid #b6f078;outline-offset:2px}
 @media(max-width:900px) {
   .ns-live-inventory {padding:0 3px}
   .ns-live-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
