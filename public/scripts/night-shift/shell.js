@@ -33,7 +33,7 @@
     ['p3', 'Events'], ['p4', 'Users'], ['p5', 'Server files'],
     ['p6', 'Server'], ['p1', 'Devices']
   ];
-  var appbar, title, section, status, dashboard, deviceCount, onlineCount, offlineCount, dashboardNote, shortcuts, deviceTools, remoteState;
+  var appbar, title, breadcrumb, status, dashboard, deviceCount, onlineCount, offlineCount, dashboardNote, shortcuts, deviceTools, remoteState;
   var queued = false;
   function visible(node) {
     return !!(node && node.getClientRects && node.getClientRects().length &&
@@ -86,9 +86,10 @@
     if (!host || $('ns-appbar')) return;
     appbar = create('header', 'ns-appbar'); appbar.id = 'ns-appbar';
     var left = create('div', 'ns-appbar-heading');
-    var trail = create('div', 'ns-appbar-trail', 'MESHCENTRAL / LIVE WORKSPACE');
+    breadcrumb = create('nav', 'ns-appbar-trail');
+    breadcrumb.setAttribute('aria-label', 'Breadcrumb');
     title = create('h1', 'ns-appbar-title', 'Devices');
-    left.append(trail, title);
+    left.append(breadcrumb, title);
     var right = create('div', 'ns-appbar-actions');
     status = create('span', 'ns-appbar-state', 'Native MeshCentral');
     right.append(status);
@@ -192,6 +193,23 @@
     if (!appbar || !document.body) return;
     var route = currentRoute();
     if (title && title.textContent !== route) title.textContent = route;
+    if (breadcrumb) {
+      var crumbNodes = [];
+      var home = button('Workspace', 'ns-breadcrumb-link', function () { navigate(entries[0]); }, 'Open Devices');
+      crumbNodes.push(home);
+      var node = window.currentNode;
+      if (node && node._id && route !== 'Workspace' && route !== 'Devices') {
+        crumbNodes.push(create('span', 'ns-breadcrumb-separator', '›'));
+        var device = button(String(node.name || node.rname || 'Device'), 'ns-breadcrumb-link', function () { deviceAction({ id: 'MainDevInfo' }); }, 'Open device details');
+        device.disabled = !allowed($('MainDevInfo'));
+        crumbNodes.push(device);
+      }
+      if (route !== 'Devices') {
+        crumbNodes.push(create('span', 'ns-breadcrumb-separator', '›'));
+        crumbNodes.push(create('span', 'ns-breadcrumb-current', route));
+      }
+      breadcrumb.replaceChildren.apply(breadcrumb, crumbNodes);
+    }
     var remote = route === 'Remote desktop';
     document.body.classList.toggle('ns-session-active', remote);
     if (status) status.textContent = remote ? 'Remote controls / live' : 'Native MeshCentral';

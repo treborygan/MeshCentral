@@ -777,7 +777,13 @@ body.ns-shell-ready #ns-appbar {
   color:var(--ns-foreground);
 }
 .ns-appbar-heading {min-width:0;display:flex;flex-direction:column;gap:5px}
-.ns-appbar-trail {font-size:10px;letter-spacing:.12em;font-weight:750;color:#91a5b0}
+.ns-appbar-trail {display:flex;align-items:center;gap:7px;min-width:0;font-size:10px;letter-spacing:.05em;font-weight:750;color:#91a5b0}
+.ns-breadcrumb-link{padding:0;border:0;background:none;color:#9aadb7;font:inherit;letter-spacing:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(36vw,220px)}
+.ns-breadcrumb-link:hover:not(:disabled){color:#c7ff98;text-decoration:underline}
+.ns-breadcrumb-link:disabled{opacity:.62}
+.ns-breadcrumb-link:focus-visible{outline:2px solid #b6f078;outline-offset:3px;border-radius:2px}
+.ns-breadcrumb-separator{color:#60727d}
+.ns-breadcrumb-current{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#d5e0de}
 .ns-appbar-title {font-size:23px!important;line-height:1.2;letter-spacing:-.035em;font-weight:760!important;margin:0!important;color:#f1f5f4!important}
 .ns-appbar-actions {display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .ns-appbar-state {font-size:11px;color:#94acb3;white-space:nowrap}

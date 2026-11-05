@@ -8,6 +8,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 
 - [x] Navy/green tokens, responsive shell and current Night Shift styling layers.
 - [x] Contextual appbar, native navigation search, permission-filtered More menu, and live-data dashboard.
+- [x] Expandable desktop navigation rail and contextual Workspace / device / route breadcrumbs; actions dispatch through native MeshCentral controls.
 - [x] Responsive live inventory with card/table/compact layouts, native device-tag chips and filtering, search, sorting, favorites, connection filters, native bulk-selection/group actions, and native-list fallback.
 - [x] Login2 activation, Android viewport correction, touch dock, keyboard focus and reduced-motion support.
 - [x] Carry the installed mobile-usability rules into source: contained masthead, compact account control, viewport-bound menu, and non-overflowing appbar/cards/navigation.

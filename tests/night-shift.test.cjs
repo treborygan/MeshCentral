@@ -20,6 +20,7 @@ const pwa = read('public/scripts/night-shift/pwa.js');
 const capabilities = read('public/scripts/night-shift/capabilities.js');
 const viewer = read('public/scripts/night-shift/viewer.js');
 const mobileControls = read('public/scripts/night-shift/mobile-controls.js');
+const shell = read('public/scripts/night-shift/shell.js');
 
 test('desktop navigation rail expands accessibly without replacing native routes',()=>{
   assert.match(mobileControls,/function installRailToggle\(\)/);
@@ -28,6 +29,13 @@ test('desktop navigation rail expands accessibly without replacing native routes
   assert.match(mobileControls,/ns-rail-expanded/);
   assert.match(css,/fullscreen:not\(\.menu_stack\):not\(\.arg_hide\):not\(\.fulldesk\) #container\{grid-template-columns:90px minmax\(0,1fr\)\}/);
   assert.match(css,/body\.ns-theme\.ns-rail-expanded\.fullscreen[^\n]*#container\{grid-template-columns:168px minmax\(0,1fr\)\}/);
+});
+
+test('contextual breadcrumbs route through native MeshCentral navigation',()=>{
+  assert.match(shell,/setAttribute\('aria-label', 'Breadcrumb'\)/);
+  assert.match(shell,/navigate\(entries\[0\]\)/);
+  assert.match(shell,/deviceAction\(\{ id: 'MainDevInfo' \}\)/);
+  assert.match(shell,/window\.currentNode/);
 });
 
 test('custom script bundle matches its modular source components',()=>{
