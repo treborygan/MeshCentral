@@ -238,3 +238,7 @@ The global session strip now uses horizontal toolbar semantics and roving focus:
 ## Alert deduplication memory cleanup — 2026-11-05
 
 Allowed health/connection notices now prune deduplication keys older than five minutes and discard future or invalid timestamps, bounding retained notice history during long-lived sessions with frequent fleet changes. Quiet-hour and opt-in checks remain ahead of cleanup and notification creation; no polling or server calls were added. The focused pruning regression and all 56 tests passed; bundle consistency, JavaScript syntax and whitespace checks passed. Source only; PRN package provenance remains blocked.
+
+## Persistent alert permission guidance — 2026-11-05
+
+Separated browser-notification permission guidance from latest alert announcements. The permission region remains visible and refreshes when alert settings/device state update; the polite alert region reports individual health or connection notices without erasing whether notifications are denied, enabled or unavailable. The alert-focused tests and full 56-test suite passed; generated-bundle consistency, JavaScript syntax and whitespace checks passed. Source only; no PRN install was made.

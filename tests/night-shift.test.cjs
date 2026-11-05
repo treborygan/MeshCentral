@@ -545,6 +545,9 @@ test('alert settings explain denied and unavailable browser notifications',()=>{
   assert.match(alerts,/enabled\.addEventListener\('change',saveToggle\)/);
   assert.match(alerts,/metricEnabled\.addEventListener\('change',saveToggle\)/);
   assert.match(alerts,/storageEnabled\.addEventListener\('change',saveToggle\)/);
+  assert.match(alerts,/permissionStatus\.textContent = notificationStatus\(\)/,'notification guidance refreshes independently of the latest alert');
+  assert.match(alerts,/status\.textContent = label;/,'alert announcements do not replace persistent permission guidance');
+  assert.match(alerts,/permissionStatus = create\('p','ns-alert-permission-status',notificationStatus\(\)\)/);
 });
 
 test('fleet connection alerts observe native device updates only for opted-in devices',()=>{

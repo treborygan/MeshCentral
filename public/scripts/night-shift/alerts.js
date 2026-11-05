@@ -4,7 +4,7 @@
   if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftAlerts) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, enabled, metricEnabled, storageEnabled, cpuLimit, memoryLimit, storageLimit, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotices = {}, overThreshold = {}, fleetStates = Object.create(null), fleetHookInstalled = false;
+  var panel, enabled, metricEnabled, storageEnabled, cpuLimit, memoryLimit, storageLimit, quietStart, quietEnd, permissionStatus, status, activeNode = null, lastState = null, lastNotices = {}, overThreshold = {}, fleetStates = Object.create(null), fleetHookInstalled = false;
   function create(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -40,11 +40,11 @@
     if ((enabled.checked || metricEnabled.checked || storageEnabled.checked) && window.Notification && window.Notification.permission === 'default' && typeof window.Notification.requestPermission === 'function') {
       try {
         Promise.resolve(window.Notification.requestPermission()).then(function (permission) {
-          save(); if (status) status.textContent = notificationStatus(permission);
-        }).catch(function () { save(); if (status) status.textContent = notificationStatus(); });
-      } catch (e) { save(); if (status) status.textContent = notificationStatus(); }
+          save(); if (permissionStatus) permissionStatus.textContent = notificationStatus(permission);
+        }).catch(function () { save(); if (permissionStatus) permissionStatus.textContent = notificationStatus(); });
+      } catch (e) { save(); if (permissionStatus) permissionStatus.textContent = notificationStatus(); }
     } else {
-      save(); if (status) status.textContent = notificationStatus();
+      save(); if (permissionStatus) permissionStatus.textContent = notificationStatus();
     }
   }
   function addTimeControl(host, label, id) {
@@ -81,7 +81,9 @@
     quietStart = addTimeControl(times,'Quiet hours start','ns-alert-quiet-start');
     quietEnd = addTimeControl(times,'Quiet hours end','ns-alert-quiet-end');
     panel.append(times);
-    status = create('p','ns-alert-status',notificationStatus());
+    permissionStatus = create('p','ns-alert-permission-status',notificationStatus());
+    permissionStatus.setAttribute('role','status'); permissionStatus.setAttribute('aria-live','polite'); permissionStatus.setAttribute('aria-atomic','true'); panel.append(permissionStatus);
+    status = create('p','ns-alert-status','');
     status.setAttribute('role','status'); status.setAttribute('aria-live','polite'); status.setAttribute('aria-atomic','true'); panel.append(status);
     if (anchor && anchor.parentNode === host) host.insertBefore(panel,anchor.nextSibling);
     else host.append(panel);
@@ -130,7 +132,7 @@
     pruneNoticeHistory(nowTime);
     if (lastNotices[dedupeKey] && nowTime - lastNotices[dedupeKey] < 300000) return;
     lastNotices[dedupeKey] = nowTime;
-    if (status) status.textContent = label + (window.Notification && window.Notification.permission === 'granted' ? '' : '. Browser notifications are not enabled; in-page alerts require this page to remain open.');
+    if (status) status.textContent = label;
     if (window.Notification && window.Notification.permission === 'granted') {
       try { new window.Notification('MeshCentral connection changed',{body:label,tag:dedupeKey}); } catch (e) { }
     }
@@ -167,6 +169,7 @@
   }
   function update() {
     build(); if (!panel) return;
+    if (permissionStatus) permissionStatus.textContent = notificationStatus();
     var node = window.currentNode;
     if (!node || !node._id) { panel.hidden = true; activeNode = null; lastState = null; return; }
     panel.hidden = false;
