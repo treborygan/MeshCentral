@@ -1485,9 +1485,10 @@
     panel.append(create('h3', 'ns-health-title', 'Device health'));
     var grid = create('div', 'ns-health-grid');
     row(grid, 'agent', 'Agent status'); row(grid, 'uptime', 'Last boot');
+    row(grid, 'cpu', 'CPU'); row(grid, 'memory', 'Memory');
     row(grid, 'storage', 'Windows volume storage'); row(grid, 'system', 'System information');
     panel.append(grid);
-    var note = create('p', 'ns-health-note', 'CPU and memory use MeshCentral’s native live graph.');
+    var note = create('p', 'ns-health-note', 'CPU and memory samples are available while MeshCentral’s native live graph is open.');
     var action = create('button', 'ns-health-action', 'Open CPU and memory graph');
     action.type = 'button';
     action.addEventListener('click', function () {
@@ -1530,9 +1531,33 @@
     var os = node.osdesc || (hardware && hardware.windows && hardware.windows.osinfo && hardware.windows.osinfo.Description);
     values.system.textContent = typeof os === 'string' && os ? os : 'Unavailable';
   }
+  function acceptSample(sample) {
+    if (!sample || sample.nodeid !== (window.currentNode && window.currentNode._id)) return;
+    values.cpu.textContent = typeof sample.cpu === 'number' && isFinite(sample.cpu) ? sample.cpu.toFixed(1) + '%' : 'Unavailable';
+    values.memory.textContent = typeof sample.memory === 'number' && isFinite(sample.memory) ? sample.memory.toFixed(1) + '%' : 'Unavailable';
+  }
+  function installChartHook() {
+    var chart = window.deviceDetailsStatsChart;
+    if (!chart || typeof chart.update !== 'function' || chart.__nightShiftHealthHook) return;
+    var nativeUpdate = chart.update;
+    chart.update = function () {
+      var result = nativeUpdate.apply(this, arguments);
+      var samples = window.deviceDetailsStatsData;
+      var last = samples && samples.length ? samples[samples.length - 1] : null;
+      if (last && isFinite(last[0]) && isFinite(last[1]) && isFinite(last[2])) {
+        var sample = {nodeid:window.currentNode && window.currentNode._id,time:last[0],cpu:last[1],memory:last[2]};
+        acceptSample(sample);
+        if (window.dispatchEvent && typeof CustomEvent === 'function') window.dispatchEvent(new CustomEvent('ns-native-health-sample',{detail:sample}));
+      }
+      return result;
+    };
+    chart.__nightShiftHealthHook = true;
+  }
   function boot() {
     if (!$('p17')) return;
     update();
+    var graphControl = document.querySelector('#devListToolbarViewIcons3 [title="Show device CPU and memory usage."]');
+    if (graphControl) graphControl.addEventListener('click',function () { setTimeout(installChartHook,0); },true);
     if (typeof MutationObserver === 'function') {
       var observer = new MutationObserver(update);
       var target = $('p17info2');
@@ -1786,7 +1811,7 @@
   'use strict';
   if (window.__NightShiftAlerts) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, enabled, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotice = null;
+  var panel, enabled, metricEnabled, cpuLimit, memoryLimit, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotice = null, overThreshold = {};
   function create(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -1799,7 +1824,7 @@
   }
   function save() {
     if (!activeNode || typeof window.putstore !== 'function') return;
-    window.putstore(key(activeNode), JSON.stringify({enabled:enabled.checked,quietStart:quietStart.value,quietEnd:quietEnd.value}));
+    window.putstore(key(activeNode), JSON.stringify({e:enabled.checked?1:0,m:metricEnabled.checked?1:0,c:cpuLimit.value,r:memoryLimit.value,s:quietStart.value,t:quietEnd.value}));
   }
   function addTimeControl(host, label, id) {
     var wrap = create('label','ns-alert-time'); wrap.append(create('span','',label));
@@ -1819,6 +1844,21 @@
       } else save();
     });
     toggle.append(enabled,create('span','','Notify when this device connection changes')); panel.append(toggle);
+    var metricToggle = create('label','ns-alert-toggle'); metricEnabled = create('input',''); metricEnabled.type = 'checkbox';
+    metricEnabled.addEventListener('change',function () {
+      if (metricEnabled.checked && window.Notification && window.Notification.permission === 'default') window.Notification.requestPermission().then(save);
+      else save();
+    });
+    metricToggle.append(metricEnabled,create('span','','Notify when CPU or memory crosses its threshold')); panel.append(metricToggle);
+    var thresholds = create('div','ns-alert-times');
+    function numberControl(label,id,value) {
+      var wrap = create('label','ns-alert-time'); wrap.append(create('span','',label));
+      var input = create('input','form-control form-control-sm'); input.id = id; input.type = 'number'; input.min = '1'; input.max = '100'; input.step = '1'; input.value = value;
+      input.addEventListener('change',save); wrap.append(input); thresholds.append(wrap); return input;
+    }
+    cpuLimit = numberControl('CPU threshold (%)','ns-alert-cpu-limit','85');
+    memoryLimit = numberControl('Memory threshold (%)','ns-alert-memory-limit','90');
+    panel.append(thresholds);
     var times = create('div','ns-alert-times');
     quietStart = addTimeControl(times,'Quiet hours start','ns-alert-quiet-start');
     quietEnd = addTimeControl(times,'Quiet hours end','ns-alert-quiet-end');
@@ -1831,9 +1871,11 @@
   function hydrate(node) {
     if (!enabled) return;
     var prefs = load(node);
-    enabled.checked = prefs.enabled === true;
-    quietStart.value = typeof prefs.quietStart === 'string' ? prefs.quietStart : '';
-    quietEnd.value = typeof prefs.quietEnd === 'string' ? prefs.quietEnd : '';
+    enabled.checked = prefs.e === 1;
+    metricEnabled.checked = prefs.m === 1;
+    cpuLimit.value = prefs.c || '85'; memoryLimit.value = prefs.r || '90';
+    quietStart.value = typeof prefs.s === 'string' ? prefs.s : '';
+    quietEnd.value = typeof prefs.t === 'string' ? prefs.t : '';
   }
   function quietNow(date) {
     var start = quietStart && quietStart.value, end = quietEnd && quietEnd.value;
@@ -1856,20 +1898,35 @@
   }
   function announce(node, current) {
     var now = new Date(), dedupeKey = node._id + '|' + current;
-    if (!enabled.checked || quietNow(now) || (lastNotice && lastNotice.key === dedupeKey && now.getTime() - lastNotice.time < 300000)) return;
     var label = (node.name || node.rname || 'Device') + ' connection: ' + current.split('+').join(' / ');
+    notify(node,dedupeKey,label,enabled.checked,now);
+  }
+  function notify(node,dedupeKey,label,allowed,now) {
+    if (!allowed || quietNow(now) || (lastNotice && lastNotice.key === dedupeKey && now.getTime() - lastNotice.time < 300000)) return;
     lastNotice = {key:dedupeKey,time:now.getTime()};
     status.textContent = label;
     if (window.Notification && window.Notification.permission === 'granted') {
       try { new window.Notification('MeshCentral connection changed',{body:label,tag:dedupeKey}); } catch (e) { }
     }
   }
+  function sample(event) {
+    var value = event && event.detail, node = window.currentNode;
+    if (!metricEnabled || !metricEnabled.checked || !value || !node || value.nodeid !== node._id) return;
+    var cpu = typeof value.cpu === 'number' && value.cpu >= Number(cpuLimit.value);
+    var memory = typeof value.memory === 'number' && value.memory >= Number(memoryLimit.value);
+    var now = new Date(), name = node.name || node.rname || 'Device';
+    [['cpu',cpu,value.cpu],['memory',memory,value.memory]].forEach(function (item) {
+      var metricKey = node._id + '|metric|' + item[0];
+      if (item[1] && !overThreshold[metricKey]) notify(node,metricKey,name + ' ' + item[0] + ' is ' + item[2].toFixed(1) + '%',true,now);
+      overThreshold[metricKey] = item[1];
+    });
+  }
   function update() {
     build(); if (!panel) return;
     var node = window.currentNode;
     if (!node || !node._id) { panel.hidden = true; activeNode = null; lastState = null; return; }
     panel.hidden = false;
-    if (activeNode !== node._id) { activeNode = node._id; lastState = null; hydrate(node); }
+    if (activeNode !== node._id) { activeNode = node._id; lastState = null; overThreshold = {}; hydrate(node); }
     var current = state(node);
     if (lastState !== null && current !== lastState) announce(node,current);
     lastState = current;
@@ -1884,6 +1941,7 @@
       });
     }
     if (document.addEventListener) document.addEventListener('visibilitychange',update);
+    if (window.addEventListener) window.addEventListener('ns-native-health-sample',sample);
   }
   window.__NightShiftAlerts = {refresh:update};
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();

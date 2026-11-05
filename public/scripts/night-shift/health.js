@@ -24,9 +24,10 @@
     panel.append(create('h3', 'ns-health-title', 'Device health'));
     var grid = create('div', 'ns-health-grid');
     row(grid, 'agent', 'Agent status'); row(grid, 'uptime', 'Last boot');
+    row(grid, 'cpu', 'CPU'); row(grid, 'memory', 'Memory');
     row(grid, 'storage', 'Windows volume storage'); row(grid, 'system', 'System information');
     panel.append(grid);
-    var note = create('p', 'ns-health-note', 'CPU and memory use MeshCentral’s native live graph.');
+    var note = create('p', 'ns-health-note', 'CPU and memory samples are available while MeshCentral’s native live graph is open.');
     var action = create('button', 'ns-health-action', 'Open CPU and memory graph');
     action.type = 'button';
     action.addEventListener('click', function () {
@@ -69,9 +70,33 @@
     var os = node.osdesc || (hardware && hardware.windows && hardware.windows.osinfo && hardware.windows.osinfo.Description);
     values.system.textContent = typeof os === 'string' && os ? os : 'Unavailable';
   }
+  function acceptSample(sample) {
+    if (!sample || sample.nodeid !== (window.currentNode && window.currentNode._id)) return;
+    values.cpu.textContent = typeof sample.cpu === 'number' && isFinite(sample.cpu) ? sample.cpu.toFixed(1) + '%' : 'Unavailable';
+    values.memory.textContent = typeof sample.memory === 'number' && isFinite(sample.memory) ? sample.memory.toFixed(1) + '%' : 'Unavailable';
+  }
+  function installChartHook() {
+    var chart = window.deviceDetailsStatsChart;
+    if (!chart || typeof chart.update !== 'function' || chart.__nightShiftHealthHook) return;
+    var nativeUpdate = chart.update;
+    chart.update = function () {
+      var result = nativeUpdate.apply(this, arguments);
+      var samples = window.deviceDetailsStatsData;
+      var last = samples && samples.length ? samples[samples.length - 1] : null;
+      if (last && isFinite(last[0]) && isFinite(last[1]) && isFinite(last[2])) {
+        var sample = {nodeid:window.currentNode && window.currentNode._id,time:last[0],cpu:last[1],memory:last[2]};
+        acceptSample(sample);
+        if (window.dispatchEvent && typeof CustomEvent === 'function') window.dispatchEvent(new CustomEvent('ns-native-health-sample',{detail:sample}));
+      }
+      return result;
+    };
+    chart.__nightShiftHealthHook = true;
+  }
   function boot() {
     if (!$('p17')) return;
     update();
+    var graphControl = document.querySelector('#devListToolbarViewIcons3 [title="Show device CPU and memory usage."]');
+    if (graphControl) graphControl.addEventListener('click',function () { setTimeout(installChartHook,0); },true);
     if (typeof MutationObserver === 'function') {
       var observer = new MutationObserver(update);
       var target = $('p17info2');
