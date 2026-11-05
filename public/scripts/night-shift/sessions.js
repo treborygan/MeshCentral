@@ -48,8 +48,8 @@
     return item;
   }
   function build() {
-    var area = $('deskarea0');
-    if (!area || !(area.parentNode || area.parentElement)) return;
+    var parent = $('column_l');
+    if (!parent) return;
     panel = $('ns-session-tabs');
     if (panel) return;
     panel = create('nav','ns-session-tabs');
@@ -60,8 +60,8 @@
     announcement.setAttribute('aria-live','polite');
     announcement.setAttribute('aria-atomic','true');
     panel.append(announcement);
-    var parent = area.parentNode || area.parentElement;
-    var before = $('ns-session-diagnostics') || area;
+    var before = $('p1');
+    if (!before || before.parentNode !== parent) before = null;
     parent.insertBefore(panel,before);
   }
   function switchTo(id) {

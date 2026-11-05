@@ -226,3 +226,7 @@ The existing native-session strip now includes a visually hidden polite status r
 ## Persistent session announcement region — 2026-11-05
 
 The session strip now keeps its `role=status` live region attached while replacing session controls. This avoids tearing down the live-region node during native state refreshes, which can suppress or duplicate screen-reader announcements. The focused structural-shell regression and all 55 Night Shift tests passed; generated-bundle consistency, JavaScript syntax and whitespace checks passed. Source only; PRN install remains gated by the package security audit.
+
+## Workspace-persistent remote sessions — 2026-11-05
+
+Moved the native multi-desktop session strip into the shared `column_l` shell, ahead of individual native pages. Open sessions can now be switched to from elsewhere in the workspace; switching and disconnect still invoke MeshCentral's native permission-aware handlers. The profile editor remains anchored inside the Remote Desktop page and no transport/session state is added or persisted. The structural-shell integration regression and full 55-test suite passed; bundle, syntax and whitespace checks passed. Source only; no PRN install was made.

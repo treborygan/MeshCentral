@@ -118,7 +118,7 @@
     status.setAttribute('role','status');
     panel.append(status);
     var parent = area.parentNode || area.parentElement;
-    var before = $('ns-session-tabs') || $('ns-session-diagnostics') || area;
+    var before = $('ns-session-diagnostics') || area;
     parent.insertBefore(panel,before);
   }
   function updateMonitorOptions(profile) {
