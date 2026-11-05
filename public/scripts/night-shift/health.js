@@ -26,7 +26,7 @@
     var grid = create('div', 'ns-health-grid');
     row(grid, 'connection', 'Connection routes'); row(grid, 'uptime', 'Uptime / last boot');
     row(grid, 'cpu', 'CPU'); row(grid, 'memory', 'Memory');
-    row(grid, 'storage', 'Windows volume storage'); row(grid, 'system', 'System information');
+    row(grid, 'storage', 'Windows volume storage'); row(grid, 'system', 'System information'); row(grid, 'agent', 'Agent status');
     panel.append(grid);
     var note = create('p', 'ns-health-note', 'CPU and memory samples are available while MeshCentral’s native live graph is open.');
     var action = create('button', 'ns-health-action', 'Open CPU and memory graph');
@@ -62,6 +62,15 @@
     });
     return routes.length ? routes.join(' · ') : 'Offline';
   }
+  function agentStatus(node) {
+    if (!node || typeof node.conn !== 'number' || !isFinite(node.conn)) return 'Unavailable';
+    var agent = node.agent && typeof node.agent === 'object' ? node.agent : null;
+    var version = agent && typeof agent.ver === 'string' && agent.ver ? ' · ' + agent.ver : '';
+    if ((node.conn & 1) !== 0) return 'Connected · MeshAgent' + version;
+    if (agent) return 'Disconnected · MeshAgent' + version;
+    if ((node.conn & 6) !== 0) return 'No MeshAgent · AMT available';
+    return 'Unavailable';
+  }
   function parseDmtfDate(value) {
     if (typeof value !== 'string') return null;
     var match = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\.\d{6}([+-])(\d{3})$/.exec(value);
@@ -88,6 +97,7 @@
       values.cpu.textContent = 'Unavailable'; values.memory.textContent = 'Unavailable';
     }
     values.connection.textContent = connectionRoutes(node.conn);
+    values.agent.textContent = agentStatus(node);
     var hardware = window.DeviceDetailsNodeId === node._id ? window.DeviceDetailsHardware : null;
     var boot = node.lastbootuptime instanceof Date ? node.lastbootuptime : null;
     if (!boot && hardware) {
@@ -176,6 +186,6 @@
     document.addEventListener('visibilitychange', update);
     window.addEventListener('resize', update, {passive:true});
   }
-  window.__NightShiftHealth = { refresh:update, formatUptime:uptime, connectionRoutes:connectionRoutes, parseDmtfDate:parseDmtfDate };
+  window.__NightShiftHealth = { refresh:update, formatUptime:uptime, connectionRoutes:connectionRoutes, agentStatus:agentStatus, parseDmtfDate:parseDmtfDate };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
 })();

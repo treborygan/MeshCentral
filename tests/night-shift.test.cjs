@@ -277,6 +277,17 @@ test('device health reports native connection routes without mislabeling AMT as 
   assert.equal(route(undefined),'Unavailable');
 });
 
+test('device health reports Agent connectivity only from native state and labels AMT-only nodes clearly',()=>{
+  const window={},document={readyState:'loading',addEventListener(){}};
+  vm.runInNewContext(health,{window,document,Date,isFinite},{timeout:1000});
+  const status=window.__NightShiftHealth.agentStatus;
+  assert.equal(status({conn:1,agent:{ver:'1.3.4'}}),'Connected · MeshAgent · 1.3.4');
+  assert.equal(status({conn:0,agent:{ver:'1.2.0'}}),'Disconnected · MeshAgent · 1.2.0');
+  assert.equal(status({conn:4,intelamt:{}}),'No MeshAgent · AMT available');
+  assert.equal(status({conn:0}),'Unavailable');
+  assert.equal(status({}),'Unavailable');
+});
+
 test('history search filters only native rendered events and recordings',()=>{
   assert.match(history,/p3events/);
   assert.match(history,/p52recordings/);
