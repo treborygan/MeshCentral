@@ -292,3 +292,19 @@ Post-install loopback verification used the existing `127.0.0.1:9455` listener w
 ## GitHub Actions disabled confirmation — 2026-11-05
 
 A direct `gh workflow run night-shift-ui.yml --ref feature/night-shift-structural --repo treborygan/MeshCentral` attempt returned HTTP 422: `Actions has been disabled for this repository.` This confirms the missing current-head executions are not caused by the workflow path filters. The current head has no GitHub check runs; repository-level Actions re-enablement is required before any workflow can execute. The workflow's manual-dispatch entry can be used after the repository setting is restored and that workflow exists on the default branch. No repository security setting was changed.
+
+## Landscape remote controls deployment — 2026-11-05
+
+Commit `1781be930d3c018b26c644eefe3574a76e30e4dd` was installed with `scripts/Install-NightShift.ps1` to `C:\ProgramData\MeshCentral`. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-162105-8d6b8b`. The installer changed only `public/styles/custom.css` and `public/scripts/custom.js`; it did not restart a service or modify server configuration, database, agents, tunnel or routes.
+
+Installed CSS SHA-256: `502839751482AC0E0773782B25F8A7CF7B6DFFA5BDC11EA2301FD8461FCBF6D7`. Installed JavaScript SHA-256: `2B39A1D7EBD64364DFEB9BBABC5DE34DA74E7DEF83CC70FAC69D889C8071BE4A`. Local GETs for `/`, `/styles/custom.css` and `/scripts/custom.js` returned 200; the login HTML referenced both overrides, and CRLF-normalized served, installed and committed assets matched. MeshCentral, Cloudflared and Mesh Agent remained running.
+
+Chrome 156 rendered the current unauthenticated live login at 390×844 and 1440×900. The page and both override assets returned 200, document width matched viewport width, and no browser console errors were observed. The remote-control interaction was separately checked in a synthetic native-view DOM at 852×394 and 398×862: landscape collapsed the secondary dock to 53px, More expanded it to 101px, portrait restored the full controls, focus remained visible across rotation and horizontal overflow stayed zero. These checks do not verify authenticated dashboard appearance, live Agent/RDP transport or a physical Android/iOS device.
+
+## GitHub Actions follow-up — 2026-11-05
+
+The current GitHub API reports repository Actions `enabled: true`, `allowed_actions: all`, and the Night Shift workflow state `active`. Sending the same settings in a PUT left them unchanged; workflow dispatch still fails with HTTP 422 `Actions has been disabled for this repository.` The workflow file is absent from `master` and exists on the feature branch only. GitHub documents a separate GitHub-controlled disabled state that repository settings cannot clear; support review may be needed if it persists ([GitHub Actions repository settings](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository)). The latest head has no CI run, and no expanded action permissions were granted.
+
+## Security provenance recheck — 2026-11-05
+
+The read-only PRN package audit still reports MeshCentral 1.3.1, verified npm tarball integrity, `MESHRIGHT_NOFILES` missing from `meshdevicefile.js`, and `force2factorPending` missing from `webserver.js`; `SECURITY_PROVENANCE_GATE=BLOCKED` (exit 2). npm latest remains 1.3.1 and official upstream master remains `2e7ec138cf45b09204bf036b500e5e2cf37aaba4` at 1.3.1. No server package was changed: the production deployment remains limited to the verified CSS/JS customization layer.

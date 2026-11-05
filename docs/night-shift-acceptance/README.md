@@ -1,11 +1,11 @@
 # Night Shift screenshot evidence
 
-These Playwright Chromium captures were taken from the running PRN listener at `http://127.0.0.1:9455/`:
+These Playwright Chromium captures were taken from an earlier PRN override at `http://127.0.0.1:9455/`:
 
 - `prn-login-mobile-390x844.png` — unauthenticated login surface at a 390×844 viewport.
 - `prn-login-desktop-1440x900.png` — unauthenticated login surface at a 1440×900 viewport.
 
-The listener serves the deployed PRN assets. Their CSS and JavaScript hashes differ from the current feature branch, so these images do not establish current-branch, authenticated dashboard, or remote-session acceptance. No credentials were entered.
+These committed images are historical and do not establish current-branch acceptance. On 2026-11-05, the deployed commit `1781be93` was separately rendered in Chrome 156 at 390×844 and 1440×900; the login route and both current override assets returned 200, there was no horizontal overflow or browser console error, and no credentials were entered. Those latest captures are kept outside the repository. This remains unauthenticated login evidence and does not establish authenticated dashboard or remote-session acceptance.
 
 ## Approved visual reference
 
