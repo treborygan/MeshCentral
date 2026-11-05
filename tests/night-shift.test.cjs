@@ -63,6 +63,39 @@ test('mobile soft keyboard waits for committed input-method text before native U
   assert.deepEqual(sent,[[1,0x65e5],[2,0x65e5],[1,0x672c],[2,0x672c],[1,0x8a9e],[2,0x8a9e]],'only committed Unicode text is sent once through MeshCentral');
 });
 
+test('native sticky modifiers require supported key actions and release held keys safely',()=>{
+  const template=read('views/default3.handlebars');
+  const modifiers=template.match(/\/\/ Mobile sticky modifier keys \(CTRL\/SHIFT\/ALT\)[\s\S]*?\n        \/\/ Mobile soft-keyboard/);
+  assert.ok(modifiers,'native modifier helpers are present');
+  const sent=[],ui=[];
+  const context={
+    desktop:{m:{KeyAction:{DOWN:1,UP:2,EXDOWN:3,EXUP:4},SendKeyMsgKC:(action,code)=>sent.push([action,code])}},
+    Q:id=>id==='DeskControl'?{checked:true}:null,
+    _updateMobileModifierUI:()=>ui.push({...context._mobileModifiers})
+  };
+  vm.runInNewContext(modifiers[0].replace(/\n        \/\/ Mobile soft-keyboard$/,''),context);
+  assert.equal(context.mobileModifiersSupported(),true);
+  assert.equal(context.toggleMobileModifier('ctrl'),true);
+  assert.equal(context.toggleMobileModifier('shift'),true);
+  assert.deepEqual(sent,[[3,17],[1,16]],'Ctrl uses extended down while Shift uses regular down');
+  context._releaseMobileModifiers();
+  assert.deepEqual(sent,[[3,17],[1,16],[4,17],[2,16]],'release sends matching native key-up actions');
+  assert.deepEqual({...context._mobileModifiers},{ctrl:false,shift:false,alt:false});
+
+  const unsupported={
+    desktop:{m:{KeyAction:{DOWN:1,UP:2},SendKeyMsgKC:(action,code)=>sent.push([action,code])}},
+    Q:id=>id==='DeskControl'?{checked:true}:null,
+    _updateMobileModifierUI:()=>{}
+  };
+  vm.runInNewContext(modifiers[0].replace(/\n        \/\/ Mobile soft-keyboard$/,''),unsupported);
+  unsupported._mobileModifiers.alt=true;
+  assert.equal(unsupported.mobileModifiersSupported(),false,'missing extended key actions disables sticky modifiers');
+  assert.equal(unsupported.toggleMobileModifier('ctrl'),false,'unsupported transports receive no modifier events');
+  unsupported._releaseMobileModifiers();
+  assert.equal(unsupported._mobileModifiers.alt,false,'local held state clears even when native release is unsupported');
+  assert.deepEqual(sent,[[3,17],[1,16],[4,17],[2,16]],'unsupported release sends nothing to the transport');
+});
+
 test('desktop navigation rail expands accessibly without replacing native routes',()=>{
   assert.match(mobileControls,/function installRailToggle\(\)/);
   assert.match(mobileControls,/aria-controls', 'page_leftbar'/);
