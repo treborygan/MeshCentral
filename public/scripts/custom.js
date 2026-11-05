@@ -473,6 +473,7 @@
     // Its enhanced modifier marker therefore tells us its clipboard handlers
     // already provide feedback and prevents duplicate notifications.
     if (!enhancedModifiers) installClipboardFeedback();
+    if (document.getElementById && document.getElementById('container') && window.__nightShiftUI && typeof window.__nightShiftUI.refresh === 'function') window.__nightShiftUI.refresh();
   }
 
   function installModifierGuard() {

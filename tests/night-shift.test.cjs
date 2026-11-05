@@ -107,17 +107,17 @@ test('native sticky modifiers require supported key actions and release held key
 });
 
 test('deployed overlay safely adapts legacy MeshCentral mobile handlers',async()=>{
-  const listeners={},timers=[],calls=[],notifications=[];
+  const listeners={},timers=[],calls=[],notifications=[];let refreshes=0;
   const clipboard={
     readText:()=>Promise.reject(new Error('denied')),
     writeText:()=>Promise.reject(new Error('denied'))
   };
   const held={ctrl:false,shift:false,alt:false};
   const context={
-    document:{readyState:'loading',addEventListener:(name,fn)=>{listeners[name]=fn;}},
+    document:{readyState:'loading',getElementById:id=>id==='container'?{}:null,addEventListener:(name,fn)=>{listeners[name]=fn;}},
     window:{
       navigator:{clipboard},setTimeout:fn=>timers.push(fn),
-      __nightShiftUI:{notifyClipboardError:()=>notifications.push('blocked')},
+      __nightShiftUI:{notifyClipboardError:()=>notifications.push('blocked'),refresh:()=>refreshes++},
       desktop:{m:{KeyAction:{DOWN:1,UP:2,EXDOWN:3,EXUP:4},SendKeyMsgKC:(action,code)=>calls.push([action,code])}},
       _mobileModifiers:held,Q:()=>({checked:true}),
       _updateMobileModifierUI:()=>{},
@@ -128,6 +128,7 @@ test('deployed overlay safely adapts legacy MeshCentral mobile handlers',async()
   };
   vm.runInNewContext(nativeCompat,context);
   listeners.DOMContentLoaded();
+  assert.equal(refreshes,1,'the dock rerenders after transport capability detection');
   assert.equal(context.window.mobileModifiersSupported(),true);
   assert.equal(context.window.toggleMobileModifier('ctrl'),true);
   assert.equal(context.window.toggleMobileModifier('invalid'),false);
