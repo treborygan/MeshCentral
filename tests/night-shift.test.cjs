@@ -174,6 +174,76 @@ test('deployed overlay safely adapts legacy MeshCentral mobile handlers',async()
   assert.deepEqual(Object.keys(modernListeners),['DOMContentLoaded'],'enhanced IME handlers do not receive duplicate listeners');
 });
 
+test('legacy mobile touch gestures release remote drags on cancel, multitouch and permission loss',()=>{
+  const calls=[],canvasListeners={},observers=[];let control={checked:true};
+  const canvas={addEventListener:(name,fn)=>{canvasListeners[name]=fn;}};
+  const parent={scrollLeft:12,scrollTop:14};
+  const desk={style:{cursor:'text'}};
+  const listeners={};
+  const dm={
+    mousemove:event=>calls.push(['mousemove',event.addx,event.addy]),
+    sendKeepAlive:()=>calls.push(['keepalive']),
+    mouseup:event=>calls.push(['mouseup',event.x,event.y,event.button]),
+    mousedown:event=>calls.push(['mousedown',event.x,event.y,event.button]),
+    mousedblclick:event=>calls.push(['double',event.x,event.y,event.button])
+  };
+  const window={
+    desktop:{m:dm},xxdialogMode:false,dtouchDragActive:false,trackpadDragActive:false,
+    dtouchLastX:8,dtouchLastY:9,dtouchLongPressed:true,trackpadLongPressed:true,
+    dtouchLongPressTimer:77,trackpadTapTimer:88,trackpadLastX:5,trackpadLastY:6,trackpadDown:true,
+    dtouchMoved:false,trackpadTapMoved:false,dtouchLastTapTime:0,dtouchLastTapX:0,dtouchLastTapY:0,
+    dtouchStartX:0,dtouchStartY:0,
+    Q:id=>id==='DeskControl'?control:id==='DeskParent'?parent:id==='Desk'?desk:null,
+    setSessionActivity:()=>{},
+    dtouchGetModule:()=>dm,dtouchMakeEvent:(x,y,button)=>({x,y,button}),trackpadMakeEvent:button=>({x:20,y:21,button}),
+    trackpadStopEdgeScroll:()=>calls.push(['stop-edge']),clearTimeout:id=>calls.push(['clear',id]),
+    dtouchstart(){calls.push(['native-start']);},dtouchend(){calls.push(['native-end']);},
+    dmousemove:function(){calls.push(['legacy-move']);},
+    dtouchSendClick(){calls.push(['native-click']);},
+    navigator:{},__nightShiftUI:{refresh(){}},
+    MutationObserver:class{constructor(fn){this.fn=fn;observers.push(this);}observe(){}}
+  };
+  window.dmousemove.toString=()=>"function dmousemove(e) { Q('Desk').style.cursor = ''; }";
+  const document={
+    readyState:'complete',getElementById:id=>id==='container'?{}:id==='DeskParent'?parent:id==='Desk'?canvas:null,
+    querySelector:selector=>selector==='link[href*="style-bootstrap"]'?{}:null,addEventListener:(name,fn)=>{listeners[name]=fn;}
+  };
+  vm.runInNewContext(nativeCompat,{window,document,Object,Promise,Date});
+  assert.equal(typeof window.dtouchcancel,'function','legacy templates gain the missing native touch-cancel handler');
+  assert.equal(typeof canvasListeners.touchcancel,'function','the existing Desk canvas releases drags on browser touch cancellation');
+
+  window.dtouchDragActive=true;
+  window.dtouchstart({});
+  assert.deepEqual(calls.slice(0,3),[['mouseup',8,9,0],['stop-edge'],['native-start']], 'a second touch releases a held remote drag before native start handling');
+
+  calls.length=0;
+  window.trackpadDragActive=true;
+  window.dtouchLongPressTimer=77;window.trackpadTapTimer=88;
+  canvasListeners.touchcancel({type:'touchcancel'});
+  assert.ok(calls.some(call=>call[0]==='mouseup'&&call[1]===20&&call[2]===21),'touchcancel releases a held trackpad drag');
+  assert.deepEqual(calls.filter(call=>call[0]==='clear'),[['clear',77],['clear',88]]);
+  assert.equal(window.trackpadLastX,null);assert.equal(window.trackpadDown,false);
+
+  calls.length=0;control.checked=false;window.dtouchDragActive=true;
+  window.dtouchend({preventDefault(){}});
+  assert.ok(calls.some(call=>call[0]==='mouseup'&&call[1]===8&&call[2]===9),'disabling remote input cannot leave a pressed mouse button');
+  assert.equal(calls.some(call=>call[0]==='native-end'),false,'the stale legacy end handler cannot send a click after permission is disabled');
+
+  calls.length=0;control.checked=true;window.dtouchLastTapTime=Date.now()-100;window.dtouchLastTapX=100;window.dtouchLastTapY=100;window.dtouchStartX=102;window.dtouchStartY=101;
+  window.dtouchSendClick(100,100,0);
+  assert.deepEqual(calls,[['mousedown',100,100,0],['double',100,100,0],['mouseup',100,100,0]],'legacy double taps use MeshCentral native double-click transport');
+
+  calls.length=0;const mouseEvent={};window.dmousemove(mouseEvent);
+  assert.equal(desk.style.cursor,'text','legacy mouse movement preserves the remote cursor shape');
+  assert.deepEqual([mouseEvent.addx,mouseEvent.addy],[12,14]);
+  assert.deepEqual(calls,[['mousemove',12,14]],'cursor compatibility retains MeshCentral mouse transport');
+
+  const replacementListeners={};
+  document.getElementById=id=>id==='container'?{}:id==='DeskParent'?parent:id==='Desk'?{addEventListener:(name,fn)=>{replacementListeners[name]=fn;}}:null;
+  observers[0].fn();
+  assert.equal(typeof replacementListeners.touchcancel,'function','replacement canvases also receive the cancellation handler');
+});
+
 test('desktop navigation rail expands accessibly without replacing native routes',()=>{
   assert.match(mobileControls,/function installRailToggle\(\)/);
   assert.match(mobileControls,/aria-controls', 'page_leftbar'/);
