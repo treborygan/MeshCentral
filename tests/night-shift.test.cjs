@@ -64,6 +64,8 @@ test('mobile dock state follows native page and control changes without polling'
   assert.match(mobileControls,/target\.id==='deskarea0'/);
   assert.match(mobileControls,/else scheduleUpdate\(\)/);
   assert.doesNotMatch(mobileControls,/setInterval/);
+  assert.match(mobileControls,/Disable trackpad mode/);
+  assert.match(mobileControls,/Disable right-click mode/);
 });
 
 test('custom script bundle matches its modular source components',()=>{
@@ -470,6 +472,15 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   assert.equal(dock.hidden, false, 'dock is visible while the desktop view is open');
   assert.equal(h.byId.get('ns-agent-connect').hidden, false, 'native agent connect remains available');
   assert.equal(h.byId.get('ns-rdp-connect').hidden, false, 'native browser RDP connect remains available');
+  assert.equal(h.byId.get('ns-trackpad').textContent,'Trackpad off');
+  assert.equal(h.byId.get('ns-rightclick').textContent,'Right-click off');
+
+  h.window.trackpadMode=true;h.window.desktop={m:{SwapMouse:true}};h.window.__nightShiftUI.refresh();
+  assert.equal(h.byId.get('ns-trackpad').textContent,'Trackpad on');
+  assert.equal(h.byId.get('ns-trackpad').getAttribute('aria-pressed'),'true');
+  assert.equal(h.byId.get('ns-trackpad').getAttribute('aria-label'),'Disable trackpad mode');
+  assert.equal(h.byId.get('ns-rightclick').textContent,'Right-click on');
+  assert.equal(h.byId.get('ns-rightclick').getAttribute('aria-pressed'),'true');
 
   h.byId.get('ns-rdp-connect').click();
   h.byId.get('ns-trackpad').click();

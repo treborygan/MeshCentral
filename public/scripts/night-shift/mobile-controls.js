@@ -269,7 +269,13 @@
       if(r)r.hidden=connected||!usable($('connectbutton1r'));
       if(d)d.hidden=!connected;
       const t=$('ns-trackpad');
-      if(t){t.disabled=!connected||typeof window.deskToggleTrackpad!=='function';t.setAttribute('aria-pressed',window.trackpadMode?'true':'false');}
+      if(t){
+        const active=window.trackpadMode===true;
+        t.disabled=!connected||typeof window.deskToggleTrackpad!=='function';
+        t.textContent=active?'Trackpad on':'Trackpad off';
+        t.setAttribute('aria-label',active?'Disable trackpad mode':'Enable trackpad mode');
+        t.setAttribute('aria-pressed',active?'true':'false');
+      }
       const k=$('ns-keyboard');if(k)k.disabled=!connected||typeof window.toggleMobileKeyboard!=='function';
       const z=$('ns-zoom');if(z)z.disabled=!connected||typeof window.deskMobileToggleZoom!=='function';
       const inputAllowed=connected&&usable($('DeskWD'));
@@ -279,7 +285,13 @@
       const clipboardOut=$('ns-clipboard-out'),clipboardIn=$('ns-clipboard-in');
       if(clipboardOut){clipboardOut.disabled=!connected;clipboardOut.hidden=!usable($('DeskClipboardOutButton'));}
       if(clipboardIn){clipboardIn.disabled=!connected;clipboardIn.hidden=!usable($('DeskClipboardInButton'));}
-      const right=$('ns-rightclick');if(right){right.disabled=!connected||typeof window.deskToggleRightClickMode!=='function';right.setAttribute('aria-pressed',window.desktop&&window.desktop.m&&window.desktop.m.SwapMouse?'true':'false');}
+      const right=$('ns-rightclick');if(right){
+        const active=!!(window.desktop&&window.desktop.m&&window.desktop.m.SwapMouse);
+        right.disabled=!connected||typeof window.deskToggleRightClickMode!=='function';
+        right.textContent=active?'Right-click on':'Right-click off';
+        right.setAttribute('aria-label',active?'Disable right-click mode':'Enable right-click mode');
+        right.setAttribute('aria-pressed',active?'true':'false');
+      }
       const monitors=$('ns-monitors');if(monitors)monitors.hidden=!usable($('DeskScreens'));
     }
     labelRail();
