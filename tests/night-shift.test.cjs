@@ -103,6 +103,10 @@ test('history search filters only native rendered events and recordings',()=>{
   assert.match(history,/p3events/);
   assert.match(history,/p52recordings/);
   assert.match(history,/Search loaded records/);
+  assert.match(history,/aria-live','polite'/);
+  assert.match(history,/Showing ' \+ counts\.visible \+ ' of '/);
+  assert.match(history,/groupHeaders\.forEach/);
+  assert.match(history,/item\.header\.hidden = !item\.visible/);
   assert.doesNotMatch(history,/meshserver\.send|downloadFile|openRecodringPlayer|localStorage|sessionStorage/);
 });
 

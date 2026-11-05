@@ -1723,14 +1723,16 @@
     var input = create('input', 'form-control form-control-sm');
     input.type = 'search'; input.autocomplete = 'off'; input.setAttribute('aria-label', label);
     input.setAttribute('placeholder', 'Search loaded records');
+    var status = create('span','ns-history-result-status','');
+    status.setAttribute('role','status'); status.setAttribute('aria-live','polite'); status.setAttribute('aria-atomic','true');
     input.addEventListener('input', function () { filter(key); });
-    wrap.append(input); host.append(wrap); fields[key] = input;
+    wrap.append(input); host.append(wrap,status); fields[key] = {input:input,status:status,label:label.toLocaleLowerCase()};
   }
   function matches(element, query) {
     return !query || (element.textContent || '').toLocaleLowerCase().includes(query);
   }
   function filterEvents(query) {
-    var root = $('p3events'); if (!root) return;
+    var root = $('p3events'), total = 0, visible = 0; if (!root) return {total:0,visible:0};
     var tables = root.querySelectorAll('table.p3eventsTable');
     tables.forEach(function (table) {
       var rows = table.querySelectorAll('tr');
@@ -1738,23 +1740,41 @@
         if (row.querySelector('td[colspan]')) return;
         var eventRow = row.querySelectorAll('td').length >= 3;
         if (!eventRow) return;
-        var show = matches(row, query); row.hidden = !show;
+        total++;
+        var show = matches(row, query); if (show) visible++;
+        row.hidden = !show;
         var spacer = row.nextElementSibling;
         if (spacer && spacer.querySelectorAll('td').length === 0) spacer.hidden = !show;
       });
     });
+    return {total:total,visible:visible};
   }
   function filterRecordings(query) {
-    var root = $('p52recordings'); if (!root) return;
-    root.querySelectorAll('tbody tr').forEach(function (row) {
-      if (row.querySelectorAll('td').length < 2) return;
-      row.hidden = !matches(row, query);
+    var root = $('p52recordings'), total = 0, visible = 0; if (!root) return {total:0,visible:0};
+    root.querySelectorAll('tbody').forEach(function (body) {
+      var group = null, groupHeaders = [];
+      body.querySelectorAll('tr').forEach(function (row) {
+        if (row.querySelector('td[colspan]')) {
+          group = {header:row,visible:false}; groupHeaders.push(group); return;
+        }
+        if (row.querySelectorAll('td').length < 2) return;
+        total++;
+        var show = matches(row, query); if (show) visible++;
+        row.hidden = !show;
+        if (group && show) group.visible = true;
+      });
+      groupHeaders.forEach(function (item) { item.header.hidden = !item.visible; });
     });
+    return {total:total,visible:visible};
   }
   function filter(key) {
-    var input = fields[key]; if (!input) return;
-    var query = input.value.trim().toLocaleLowerCase();
-    if (key === 'events') filterEvents(query); else filterRecordings(query);
+    var field = fields[key]; if (!field) return;
+    var query = field.input.value.trim().toLocaleLowerCase();
+    var counts = key === 'events' ? filterEvents(query) : filterRecordings(query);
+    var noun = key === 'events' ? 'events' : 'recordings';
+    field.status.textContent = query
+      ? (counts.visible ? 'Showing ' + counts.visible + ' of ' + counts.total + ' loaded ' + noun + '.' : 'No matching ' + noun + ' in loaded records.')
+      : counts.total + ' loaded ' + noun + '.';
   }
   function install() {
     addSearch('p3', 'p3title', 'events', 'Search events');
