@@ -148,3 +148,9 @@ Commit `8884594b` adds a visible Classic UI explanation and an explicit button t
 The visible Chrome retry reached the PCRN Remote Desktop sign-in page. After the user signed in, refreshing prompted a form-resubmission confirmation; continuing left the page blank and Chrome unresponsive. No clean authenticated browser state or developer console trace was obtained, so this is an unresolved live acceptance issue rather than a confirmed regression.
 
 The current PR #3 branch head c5a5e039 has no associated Actions run. Repository permissions return nabled: true and the Night Shift workflow is active on master, but gh workflow run returns HTTP 422, Actions has been disabled for this repository; repeating the settings update did not restore dispatch. GitHub's documented separate disabled state requires Support review. No request was sent. The final CI gate remains external.
+
+## Actions and legacy mobile gesture follow-up — 2026-11-05
+
+GitHub Actions now runs successfully on PR #3 head `f57de8bb67244e03538d870adf86831b997ff4ce`. The Night Shift UI checks and CodeQL PR run passed, as did the push-triggered UI and CodeQL runs; CodeQL analysis and SARIF upload completed. The previous disabled-dispatch condition is no longer blocking current-head verification.
+
+The same head adds a feature-detected adapter for the older installed MeshCentral 1.3.1 touch handlers. The web-only deployment releases remote drags on touchcancel, multitouch and permission loss, preserves native double-click and cursor-shape behavior, and leaves the installed backend/template untouched. Deployment hashes, backup and rollback command are recorded in [the deployment log](night-shift-deployment.md). Authenticated Chrome and real-device RDP acceptance remain open.

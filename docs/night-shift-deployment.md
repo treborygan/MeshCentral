@@ -407,3 +407,15 @@ Commit `8884594b` was deployed to PRN with the existing override installer. Roll
 The authenticated browser bridge remains unavailable, so the notice is verified by source tests and deployment bytes, but its appearance on the signed-in account has not been observed. Hard-refresh `rdp.treborygan.dev`; on Classic UI use the notice's **Choose Modern UI** button and select Modern in MeshCentral's native selector to activate the full redesign.
 
 Rollback command: `pwsh -NoProfile -File scripts/Install-NightShift.ps1 -MeshRoot C:\ProgramData\MeshCentral -RollbackFrom C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-193437-54e090`.
+
+## Legacy mobile gesture compatibility deployment — 2026-11-05
+
+Commit `f57de8bb67244e03538d870adf86831b997ff4ce` adds a narrow compatibility adapter for the older PRN MeshCentral 1.3.1 mobile touch handlers. It releases stuck remote drags on touch cancellation, second-finger gestures and permission loss; preserves native double-click input and agent cursor shapes while continuing to delegate movement to MeshCentral handlers. It activates only in the authenticated Modern app and does not replace templates or backend handlers.
+
+Source verification: 64/64 Night Shift Node tests passed; bundle freshness, JavaScript syntax, `git diff --check`, Windows installer rollback fixtures and the pinned upstream reproducible security build passed. The pinned build remains a candidate and was not installed.
+
+Installed through the existing web-only installer. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-195230-156ced`; the manifest records only `styles\custom.css` and `scripts\custom.js`, including the previous JS hash `F3A6F73B4BA1C43F53C7BF65A41823683FF346DD4277151A2F96BC3EB9F9F927`. CSS SHA-256 is `502839751482AC0E0773782B25F8A7CF7B6DFFA5BDC11EA2301FD8461FCBF6D7`; JavaScript SHA-256 is `A99DCB8143F9A43E06FD16172A8F18729E5EA5F4CECD85A82E6C3A6CBB138E47`. Installed and loopback-served asset hashes match; `/` and both assets return HTTP 200. MeshCentral, Mesh Agent, Cloudflared and MeshCentralCloudflared remain running. Configuration, database, agents, tunnel and routes were not changed.
+
+GitHub Actions recovered for current head `f57de8bb67244e03538d870adf86831b997ff4ce`: Night Shift UI checks and PR CodeQL both completed successfully; the push-triggered Night Shift UI and CodeQL runs also completed successfully, including CodeQL analysis. PR #3 remains open/draft. Authenticated browser and live RDP/mobile device acceptance remain open because the browser-control bridge is unavailable.
+
+Rollback command: `pwsh -NoProfile -File scripts/Install-NightShift.ps1 -MeshRoot C:\ProgramData\MeshCentral -RollbackFrom C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-195230-156ced`.
