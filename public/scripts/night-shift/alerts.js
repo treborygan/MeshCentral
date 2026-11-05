@@ -28,6 +28,9 @@
     if (state === 'granted') return 'Browser notifications are enabled. Alerts run while this page is open and native updates arrive.';
     return 'Enable an alert to request browser notifications. Alerts run while this page is open and native updates arrive.';
   }
+  function setPermissionStatus(value) {
+    if (permissionStatus && permissionStatus.textContent !== value) permissionStatus.textContent = value;
+  }
   function save() {
     if (!activeNode || typeof window.putstore !== 'function') return;
     cpuLimit.value = normalizeThreshold(cpuLimit.value,85);
@@ -40,11 +43,11 @@
     if ((enabled.checked || metricEnabled.checked || storageEnabled.checked) && window.Notification && window.Notification.permission === 'default' && typeof window.Notification.requestPermission === 'function') {
       try {
         Promise.resolve(window.Notification.requestPermission()).then(function (permission) {
-          save(); if (permissionStatus) permissionStatus.textContent = notificationStatus(permission);
-        }).catch(function () { save(); if (permissionStatus) permissionStatus.textContent = notificationStatus(); });
-      } catch (e) { save(); if (permissionStatus) permissionStatus.textContent = notificationStatus(); }
+          save(); setPermissionStatus(notificationStatus(permission));
+        }).catch(function () { save(); setPermissionStatus(notificationStatus()); });
+      } catch (e) { save(); setPermissionStatus(notificationStatus()); }
     } else {
-      save(); if (permissionStatus) permissionStatus.textContent = notificationStatus();
+      save(); setPermissionStatus(notificationStatus());
     }
   }
   function addTimeControl(host, label, id) {
@@ -136,7 +139,7 @@
     if (window.Notification && window.Notification.permission === 'granted') {
       try { new window.Notification('MeshCentral connection changed',{body:label,tag:dedupeKey}); }
       catch (e) {
-        if (permissionStatus) permissionStatus.textContent = 'The browser could not display this notification. In-page alerts remain available while this page is open.';
+        setPermissionStatus('The browser could not display this notification. In-page alerts remain available while this page is open.');
       }
     }
   }
@@ -172,10 +175,10 @@
   }
   function update() {
     build(); if (!panel) return;
-    if (permissionStatus) permissionStatus.textContent = notificationStatus();
+    setPermissionStatus(notificationStatus());
     var node = window.currentNode;
-    if (!node || !node._id) { panel.hidden = true; activeNode = null; lastState = null; return; }
-    panel.hidden = false;
+    if (!node || !node._id) { if (!panel.hidden) panel.hidden = true; activeNode = null; lastState = null; return; }
+    if (panel.hidden) panel.hidden = false;
     if (activeNode !== node._id) { activeNode = node._id; lastState = null; overThreshold = {}; hydrate(node); }
     var current = state(node);
     if (lastState !== null && current !== lastState) announce(node,current);

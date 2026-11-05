@@ -783,19 +783,34 @@ test('alert settings explain denied and unavailable browser notifications',()=>{
   assert.match(alerts,/enabled\.addEventListener\('change',saveToggle\)/);
   assert.match(alerts,/metricEnabled\.addEventListener\('change',saveToggle\)/);
   assert.match(alerts,/storageEnabled\.addEventListener\('change',saveToggle\)/);
-  assert.match(alerts,/permissionStatus\.textContent = notificationStatus\(\)/,'notification guidance refreshes independently of the latest alert');
+  assert.match(alerts,/setPermissionStatus\(notificationStatus\(\)\)/,'notification guidance refreshes independently of the latest alert');
   assert.match(alerts,/status\.textContent = label;/,'alert announcements do not replace persistent permission guidance');
   assert.match(alerts,/permissionStatus = create\('p','ns-alert-permission-status',notificationStatus\(\)\)/);
   assert.match(alerts,/window\.addEventListener\('focus',update\)/,'permission guidance refreshes when returning from browser site settings');
+});
+
+test('alerts observer writes only changed permission text to avoid a self-triggering mutation loop',()=>{
+  const helper=alerts.match(/function setPermissionStatus\(value\) \{[\s\S]*?\n  \}/);
+  assert.ok(helper,'alert permission guidance has an idempotent writer');
+  let writes=0;
+  const permissionStatus={_text:'',get textContent(){return this._text;},set textContent(value){writes++;this._text=value;}};
+  const setStatus=vm.runInNewContext('('+helper[0]+')',{permissionStatus});
+  setStatus('Browser notifications are enabled.');
+  setStatus('Browser notifications are enabled.');
+  assert.equal(writes,1,'an observer callback that repeats the same status creates no second DOM mutation');
+  assert.match(alerts,/if \(!panel\.hidden\) panel\.hidden = true/,'hidden-state updates are idempotent');
+  assert.match(alerts,/if \(panel\.hidden\) panel\.hidden = false/,'visible-state updates are idempotent');
 });
 
 test('alert delivery failures retain the in-page notice and explain browser fallback',()=>{
   const helper=alerts.match(/function notify\(node,dedupeKey,label,allowed,now,quietPreferences\) \{[\s\S]*?\n  \}/);
   assert.ok(helper,'alert delivery helper exists');
   const permissionStatus={textContent:''},status={textContent:''};
+  const setHelper=alerts.match(/function setPermissionStatus\(value\) \{[\s\S]*?\n  \}/);
+  const setPermissionStatus=vm.runInNewContext('('+setHelper[0]+')',{permissionStatus});
   function Notification(){throw new Error('OS notifications unavailable');}
   Notification.permission='granted';
-  const context={window:{Notification},lastNotices:{},status,permissionStatus,quietNow:()=>false,pruneNoticeHistory:()=>{}};
+  const context={window:{Notification},lastNotices:{},status,permissionStatus,setPermissionStatus,quietNow:()=>false,pruneNoticeHistory:()=>{}};
   const notify=vm.runInNewContext('('+helper[0]+')',context);
   notify({_id:'node/a'},'node/a|offline','Archive connection: offline',true,new Date(1000));
   assert.equal(status.textContent,'Archive connection: offline','the alert remains visible in-page when OS notification creation fails');

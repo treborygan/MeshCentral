@@ -433,3 +433,19 @@ After the observer change the authenticated page still appeared to hang. To prio
 ## Authenticated cache diagnosis — 2026-11-05
 
 The signed-in native Modern interface loaded and displayed device controls after browser cache was bypassed. The previously loaded public `custom.js` came from browser disk cache with `Cache-Control: public, max-age=14400`; the zone browser cache TTL is 14400 seconds. The origin now serves empty original customization files with `max-age=0`. A targeted Cloudflare purge was issued for only the custom JS and CSS URLs. Existing browser caches require a hard refresh or expiry. The redesign remains disabled pending a verified startup repair; no zone-wide cache setting was changed.
+
+## Modern UI hang repair and verified Night Shift reinstall — 2026-11-06
+
+The loading hang was reproduced after forcing fresh overrides in an authenticated browser. The alerts module inserted its panel inside `p10info`, observed that subtree, and rewrote the permission guidance on each observer callback. This could perpetually generate child-list mutations. The module now updates permission text and panel visibility only when values change. A focused regression check covers this observer feedback path; all 66 Night Shift tests pass, the generated bundle is current, JavaScript syntax validation passes, and `git diff --check` passes.
+
+Night Shift was reinstalled with `scripts/Install-NightShift.ps1`. Backup/rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261106-002856-a19b55`. Authenticated Modern UI at `https://rdp.treborygan.dev/?sitestyle=3` was hard-reloaded and rendered the Night Shift app bar, workspace overview, live native device inventory, shortcuts and mobile bottom navigation. The browser showed the native MeshCentral warning that both devices are currently offline, so live RDP input/transport could not be exercised. MeshCentral, Mesh Agent and MeshCentralCloudflared remained running; local asset routes return HTTP 200 and the installed JavaScript SHA-256 matches the source (`D2716B8F86BE8A42B5F20C91CFFF48A267F656847361A023CE098DA762D8801D`).
+
+A host/path-scoped Cloudflare cache response rule prevents stale browser/CDN copies for only `rdp.treborygan.dev/scripts/custom.js` and `/styles/custom.css`; targeted purge was issued for those asset URLs. Rule set `8e7f225e156e4b549740eed7d674aa98` (`no-store`) does not change DNS, Access, tunnel or origin. Unauthenticated external asset requests still correctly redirect to Cloudflare Access; authenticated browser rendering is the verification source. Existing browser copies may require a hard refresh.
+
+Rollback command:
+
+```powershell
+.\scripts\Install-NightShift.ps1 -MeshRoot 'C:\ProgramData\MeshCentral' -RollbackFrom 'C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261106-002856-a19b55'
+```
+
+Real device touch gestures, mobile keyboard input, zoom and live RDP remain unverified because the managed nodes were offline. Do not describe desktop or synthetic test coverage as physical-device acceptance.
