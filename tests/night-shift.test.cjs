@@ -13,6 +13,7 @@ const js = read('public/scripts/custom.js');
 const installer = read('scripts/Install-NightShift.ps1');
 const health = read('public/scripts/night-shift/health.js');
 const history = read('public/scripts/night-shift/history.js');
+const files = read('public/scripts/night-shift/files.js');
 
 test('custom script bundle matches its modular source components',()=>{
   const result=spawnSync(process.execPath,['scripts/build-night-shift.js','--check'],{cwd:root,encoding:'utf8'});
@@ -32,6 +33,13 @@ test('history search filters only native rendered events and recordings',()=>{
   assert.match(history,/p52recordings/);
   assert.match(history,/Search loaded records/);
   assert.doesNotMatch(history,/meshserver\.send|downloadFile|openRecodringPlayer|localStorage|sessionStorage/);
+});
+
+test('file workspace filters the current folder and uses native selection actions',()=>{
+  assert.match(files,/p13files/);
+  assert.match(files,/p13filetree/);
+  for (const id of ['p13DownloadButton','p13RenameFileButton','p13DeleteFileButton']) assert.ok(files.includes(id));
+  assert.doesNotMatch(files,/files\.send|fetch\s*\(|XMLHttpRequest|checksum|resume/);
 });
 
 function createMobileHarness(isMobile = true) {
