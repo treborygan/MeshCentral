@@ -437,7 +437,7 @@ function createMobileHarness(isMobile = true) {
     getElementById: id => byId.get(id) || null,
     querySelector: () => null,
     querySelectorAll: () => [],
-    addEventListener(name, fn) { documentEvents[name] = fn; }
+    addEventListener(name, fn) { (documentEvents[name] ||= []).push(fn); }
   };
   const addExisting = (id, visible = true) => {
     const el = new Element('button'); el.id = id; el.isVisible = visible; document.body.append(el); return el;
@@ -483,7 +483,7 @@ function createMobileHarness(isMobile = true) {
     MouseEvent: class { constructor(type, init = {}) { this.type = type; Object.assign(this, init); } }
   };
   vm.runInNewContext(js, context, { timeout: 1000 });
-  return { document, byId, calls, window, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement };
+  return { document, documentEvents, byId, calls, window, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement };
 }
 
 test('custom JavaScript parses and registers without requiring a live server', () => {
@@ -598,6 +598,12 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   h.byId.get('ns-mod-ctrl').click();
   assert.equal(h.byId.get('ns-mod-ctrl').getAttribute('aria-pressed'),'true','Pressed state mirrors the native held modifier');
   assert.deepEqual(h.calls.at(-1),['modifier','ctrl'],'Modifier down/up behavior delegates to MeshCentral native input handling');
+  h.window._mobileModifiers.ctrl=false;
+  h.documentEvents.input.forEach(fn=>fn({target:{id:'softKeyboard'}}));
+  assert.equal(h.byId.get('ns-mod-ctrl').getAttribute('aria-pressed'),'false','Native soft-keyboard input releases and refreshes the modifier state');
+  const deskControl=h.byId.get('DeskControl');deskControl.checked=false;
+  h.documentEvents.change.forEach(fn=>fn({target:deskControl}));
+  assert.equal(h.byId.get('ns-modifier-toggle').disabled,true,'The modifier tray follows native remote-input permission changes');
 });
 
 test('desktop viewport keeps the mobile navigation and remote dock out of view', () => {

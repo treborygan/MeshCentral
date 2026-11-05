@@ -357,6 +357,8 @@
         target=target.parentElement||target.parentNode;
       }
     },true);
+    document.addEventListener('change',event=>{if(event.target&&event.target.id==='DeskControl')scheduleUpdate();});
+    document.addEventListener('input',event=>{if(event.target&&event.target.id==='softKeyboard')scheduleUpdate();});
     addEventListener('resize',scheduleUpdate,{passive:true});
     addEventListener('orientationchange',scheduleUpdate,{passive:true});
     document.addEventListener('visibilitychange',scheduleUpdate);
