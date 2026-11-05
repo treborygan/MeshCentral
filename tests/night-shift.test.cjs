@@ -230,6 +230,62 @@ test('remote viewer information drawer preserves native details navigation',()=>
   assert.doesNotMatch(viewer,/new\s+WebSocket|meshserver\.send|gotoDevice/);
 });
 
+test('floating desktop viewer controls use only visible native controls and auto-hide',()=>{
+  assert.match(viewer,/ns-viewer-controls/);
+  assert.match(viewer,/pointermove/);
+  assert.match(viewer,/setTimeout\(hideControls,2800\)/);
+  assert.match(viewer,/nativeAction\(item\[2\]\)/);
+  assert.match(viewer,/native\.click\(\)/);
+  assert.match(viewer,/window\.deskToggleFull\(\{shiftKey:false\}\)/);
+  assert.match(viewer,/controls\.hidden = !visible\(\$\('p11'\)\)/);
+  assert.match(viewer,/connectbutton1r/);
+  assert.match(viewer,/disconnectbutton1/);
+  assert.match(css,/\.ns-viewer-controls\.is-idle/);
+  assert.match(css,/@media\(max-width:700px\)\{\.ns-viewer-controls\{display:none!important\}/);
+});
+
+test('viewer toolbar stays within the active viewer and delegates fullscreen',()=>{
+  const ids=new Map();
+  class Element {
+    constructor(tag){this.tagName=tag.toUpperCase();this.children=[];this.events={};this.attributes={};this.style={};this.hidden=false;this.className='';this.parentNode=null;}
+    set id(value){this._id=value;ids.set(value,this);}
+    get id(){return this._id||'';}
+    append(...nodes){nodes.forEach(node=>{node.parentNode=this;this.children.push(node);});}
+    setAttribute(key,value){this.attributes[key]=String(value);}
+    getAttribute(key){return this.attributes[key]??null;}
+    addEventListener(type,handler){(this.events[type]||=[]).push(handler);}
+    click(){this.clickCount=(this.clickCount||0)+1;(this.events.click||[]).forEach(handler=>handler({type:'click'}));}
+    focus(){this.focused=true;}
+    getClientRects(){return this.hidden?[]:[{}];}
+    querySelector(){return ids.get('native-fullscreen')||null;}
+    contains(node){return this.children.includes(node);}
+    matches(){return false;}
+    get classList(){return {add(){},remove(){}};}
+  }
+  const body=new Element('body'), p11=new Element('div');p11.id='p11';
+  const title=new Element('div');title.id='p11title';
+  const full=new Element('button');full.id='native-fullscreen';full.hidden=true;
+  const connect=new Element('button');connect.id='connectbutton1';
+  const rdp=new Element('button');rdp.id='connectbutton1r';
+  const disconnect=new Element('button');disconnect.id='disconnectbutton1';disconnect.hidden=true;
+  const mainInfo=new Element('button');mainInfo.id='MainDevInfo';mainInfo.hidden=true;
+  const window={currentNode:null,desktop:null,meshes:{},addEventListener(){},deskToggleFullCalls:0,deskToggleFull(){this.deskToggleFullCalls++;}};
+  const document={body,readyState:'complete',activeElement:null,getElementById:id=>ids.get(id)||null,createElement:tag=>new Element(tag),addEventListener(){}};
+  [p11,title,full,connect,rdp,disconnect,mainInfo].forEach(node=>body.append(node));
+  const callbacks=[];
+  vm.runInNewContext(viewer,{window,document,console,getComputedStyle:()=>({visibility:'visible'}),MutationObserver:class{observe(){}},setTimeout:callback=>{callbacks.push(callback);return callbacks.length;},clearTimeout(){}},{timeout:1000});
+  const controls=ids.get('ns-viewer-controls');
+  assert.ok(controls);
+  assert.equal(controls.hidden,false,'Toolbar is shown only for the active remote viewer');
+  const actions=controls.children;
+  actions.find(button=>button.textContent==='Connect').click();
+  assert.equal(connect.clickCount,1,'Connect delegates to the visible native Agent control');
+  actions.find(button=>button.textContent==='Full screen').click();
+  assert.equal(window.deskToggleFullCalls,1,'Fullscreen delegates to MeshCentral even when its title-bar icon is hidden');
+  p11.hidden=true;window.__NightShiftViewer.refresh();
+  assert.equal(controls.hidden,true,'Toolbar hides when the native viewer is inactive');
+});
+
 function createMobileHarness(isMobile = true) {
   const byId = new Map();
   const documentEvents = {};

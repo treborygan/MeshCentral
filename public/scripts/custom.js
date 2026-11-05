@@ -2234,7 +2234,7 @@
   'use strict';
   if (window.__NightShiftViewer) return;
   var $ = function (id) { return document.getElementById(id); };
-  var toggle, drawer, closeButton, detailsButton, fields = {};
+  var toggle, drawer, closeButton, detailsButton, controls, fields = {}, controlButtons = {}, hideTimer = null;
   var items = [['device','Device'],['group','Device group'],['connection','Connection route'],['session','Remote session'],['agent','Agent'],['os','Operating system']];
   function create(tag, cls, text) {
     var node = document.createElement(tag);
@@ -2269,9 +2269,14 @@
     if (!drawer) return;
     var active = visible($('p11'));
     toggle.hidden = !active;
-    if (!active) { close(); return; }
+    if (controls) controls.hidden = !active;
+    if (!active) {
+      close();
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+      return;
+    }
     var node = window.currentNode;
-    if (!node) { items.forEach(function (item) { set(item[0],'Unavailable'); }); return; }
+    if (!node) { items.forEach(function (item) { set(item[0],'Unavailable'); }); syncControls(); return; }
     var group = window.meshes && window.meshes[node.meshid];
     set('device',node.name || node.rname || 'Unnamed device');
     set('group',group && group.name || (node.meshid ? 'Group unavailable' : 'No device group'));
@@ -2282,6 +2287,66 @@
     var native = $('MainDevInfo');
     detailsButton.disabled = !visible(native);
     detailsButton.setAttribute('aria-disabled',detailsButton.disabled ? 'true' : 'false');
+    syncControls();
+  }
+  function nativeAction(id) {
+    var target = $(id);
+    if (!visible(target) || target.disabled || target.getAttribute('aria-disabled') === 'true') return false;
+    target.click(); return true;
+  }
+  function syncControls() {
+    if (!controls) return;
+    controls.hidden = !visible($('p11'));
+    if (controls.hidden) return;
+    [['connect','connectbutton1'],['rdp','connectbutton1r'],['disconnect','disconnectbutton1']].forEach(function (pair) {
+      var native = $(pair[1]), button = controlButtons[pair[0]];
+      button.hidden = !visible(native) || !!native.disabled || native.getAttribute('aria-disabled') === 'true';
+    });
+    var title = $('p11title');
+    var fullscreen = title && title.querySelector('#devListToolbarViewIcons [title^="Full Screen"]');
+    controlButtons.fullscreen.hidden = !visible(fullscreen) && typeof window.deskToggleFull !== 'function';
+  }
+  function showControls() {
+    if (!controls || !visible($('p11'))) return;
+    controls.classList.remove('is-idle');
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(hideControls,2800);
+  }
+  function hideControls() {
+    hideTimer = null;
+    if (!controls || !visible($('p11'))) return;
+    var active = document.activeElement;
+    if (active && controls.contains && controls.contains(active)) return;
+    if (controls.matches && controls.matches(':hover')) return;
+    controls.classList.add('is-idle');
+  }
+  function buildControls() {
+    if (controls || !$('p11title')) return;
+    controls = create('div','ns-viewer-controls'); controls.id = 'ns-viewer-controls';
+    controls.setAttribute('role','toolbar'); controls.setAttribute('aria-label','Remote session controls');
+    [['connect','Connect','connectbutton1'],['rdp','RDP','connectbutton1r'],['disconnect','Disconnect','disconnectbutton1']].forEach(function (item) {
+      var button = create('button','ns-viewer-control',item[1]); button.type = 'button';
+      button.addEventListener('click',function () { nativeAction(item[2]); showControls(); });
+      controlButtons[item[0]] = button; controls.append(button);
+    });
+    var fullscreen = create('button','ns-viewer-control','Full screen'); fullscreen.type = 'button';
+    fullscreen.addEventListener('click',function () {
+      var title = $('p11title'), native = title && title.querySelector('#devListToolbarViewIcons [title^="Full Screen"]');
+      if (visible(native)) native.click();
+      else if (typeof window.deskToggleFull === 'function') window.deskToggleFull({shiftKey:false});
+      showControls();
+    });
+    controlButtons.fullscreen = fullscreen; controls.append(fullscreen);
+    controls.addEventListener('pointerenter',function () { if (hideTimer) clearTimeout(hideTimer); controls.classList.remove('is-idle'); });
+    controls.addEventListener('pointerleave',showControls);
+    controls.addEventListener('focusin',function () { if (hideTimer) clearTimeout(hideTimer); controls.classList.remove('is-idle'); });
+    controls.addEventListener('focusout',function () { setTimeout(showControls,0); });
+    document.body.append(controls);
+    document.addEventListener('pointermove',showControls,{passive:true});
+    document.addEventListener('keydown',function (event) {
+      if (visible($('p11')) && event.key !== 'Tab' && !(event.target && /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName))) showControls();
+    });
+    syncControls(); showControls();
   }
   function close() {
     if (!drawer || drawer.hidden) return;
@@ -2316,6 +2381,7 @@
       else { close(); toggle.focus(); }
     });
     document.body.append(toggle,drawer);
+    buildControls();
     document.addEventListener('keydown',function (event) {
       if (event.key === 'Escape' && !drawer.hidden) { close(); toggle.focus(); }
     });

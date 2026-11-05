@@ -14,7 +14,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [x] Carry the installed mobile-usability rules into source: contained masthead, compact account control, viewport-bound menu, and non-overflowing appbar/cards/navigation.
 - [x] Fix mobile masthead horizontal overflow and account-area clipping using viewport-contained, safe-area-aware sizing.
 - [ ] Match the approved Concept B across authenticated dashboard, inventory, groups, users, settings, administration, dialogs and detail screens; compare screenshots at phone, tablet and desktop sizes.
-- [ ] Complete and verify the remote-session-first viewer, floating/auto-hide controls, information drawer and fullscreen layouts. (A floating Info control and collapsible device/session drawer are implemented; live fullscreen and visual acceptance remain pending.)
+- [ ] Complete and verify the remote-session-first viewer, floating/auto-hide controls, information drawer and fullscreen layouts. (A floating desktop toolbar now auto-hides and delegates Connect, RDP, Disconnect and Full Screen to visible native controls; mobile retains its dock; a collapsible session information drawer is implemented. Live fullscreen and visual acceptance remain pending.)
 - [ ] Verify touch, trackpad, zoom, keyboard modifiers and monitor selection on real Android and iOS devices.
 - [ ] Verify keyboard-only navigation, contrast, focus visibility, feedback and loading/empty/error states across major screens.
 - [ ] Verify a clear, usable Classic UI fallback on the installed server.
