@@ -1329,7 +1329,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.match(sessionAnnouncement.textContent,/2 remote sessions\./,'Newly opened sessions are announced after the initial render');
   window.multiDesktop['node//offline'].State=3;
   window.__NightShiftSessions.refresh();
-  assert.match(sessionAnnouncement.textContent,/2 remote sessions\. .+: Connected\./,'Native session state changes are announced accessibly');
+  assert.match(sessionAnnouncement.textContent,/Archive: Connected\./,'A background session state change names the session that changed');
   archiveTab.click();
   assert.equal(opened.at(-1),'node//offline','Switching a tab delegates to native gotoDevice permissions and routing');
   const closeArchive=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close'));

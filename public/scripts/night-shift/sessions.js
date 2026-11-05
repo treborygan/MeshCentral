@@ -4,7 +4,7 @@
   if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftSessions) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, announcement, queued = false, previousSignature = null;
+  var panel, announcement, queued = false, previousSessions = null;
   var stateNames = ['Disconnected','Connecting','Setting up','Connected','Connected'];
 
   function sessionState(session) {
@@ -78,17 +78,29 @@
     var open = sessions();
     panel.replaceChildren();
     panel.hidden = open.length === 0;
-    var signature = open.map(function (entry) {
-      return [entry.id,entry.current ? 'current' : 'background',sessionState(entry.session)].join(':');
-    }).join('|');
-    if (previousSignature !== null && signature !== previousSignature) {
-      var currentEntry = open.find(function (entry) { return entry.current; });
+    var snapshot = Object.create(null);
+    open.forEach(function (entry) {
+      snapshot[entry.id] = {
+        current:entry.current,
+        state:sessionState(entry.session),
+        name:entry.node.name || entry.node.host || 'Remote device'
+      };
+    });
+    if (previousSessions !== null && JSON.stringify(snapshot) !== JSON.stringify(previousSessions)) {
+      var changes = [];
+      open.forEach(function (entry) {
+        var before = previousSessions[entry.id], after = snapshot[entry.id];
+        if (!before) changes.push(after.name + ' session opened.');
+        else if (before.state !== after.state) changes.push(after.name + ': ' + (stateNames[after.state] || 'state unavailable') + '.');
+        if (before && !before.current && after.current) changes.push(after.name + ' is now active.');
+      });
+      Object.keys(previousSessions).forEach(function (id) {
+        if (!snapshot[id]) changes.push(previousSessions[id].name + ' session closed.');
+      });
       var countText = open.length + (open.length === 1 ? ' remote session' : ' remote sessions');
-      announcement.textContent = currentEntry
-        ? countText + '. ' + (currentEntry.node.name || currentEntry.node.host || 'Remote device') + ': ' + (stateNames[sessionState(currentEntry.session)] || 'state unavailable') + '.'
-        : countText + '.';
+      announcement.textContent = countText + (changes.length ? '. ' + changes.join(' ') : '.');
     }
-    previousSignature = signature;
+    previousSessions = snapshot;
     if (!open.length) { panel.append(announcement); return; }
     var heading = create('span','ns-session-tabs-heading','Sessions');
       panel.append(heading);
