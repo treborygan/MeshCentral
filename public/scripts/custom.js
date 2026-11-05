@@ -572,6 +572,34 @@
     return window.stars && typeof window.stars === 'object' && typeof window.putstore === 'function'
       ? window.stars : null;
   }
+  function recentStorageKey() {
+    try {
+      var userId = window.userinfo && window.userinfo._id;
+      var storage = window.localStorage;
+      if (typeof userId !== 'string' || !userId || !storage ||
+        typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function') return null;
+      storage.getItem(''); // Confirm storage is readable before offering a nonfunctional filter.
+      return 'nightShiftRecentDevices:' + userId;
+    } catch (ex) { return null; }
+  }
+  function readRecentDevices() {
+    var key = recentStorageKey();
+    if (!key) return [];
+    try {
+      var items = JSON.parse(window.localStorage.getItem(key) || '[]');
+      if (!Array.isArray(items)) return [];
+      return items.filter(function (item) {
+        return item && typeof item.id === 'string' && Number.isFinite(item.openedAt);
+      }).slice(0, 8);
+    } catch (ex) { return []; }
+  }
+  function recordRecentDevice(node) {
+    var key = recentStorageKey();
+    if (!key) return;
+    var items = readRecentDevices().filter(function (item) { return item.id !== node._id; });
+    items.unshift({id:node._id,openedAt:Date.now()});
+    try { window.localStorage.setItem(key, JSON.stringify(items.slice(0, 8))); } catch (ex) { }
+  }
   function isFavorite(node) {
     var favorites = nativeStars();
     return !!(favorites && favorites[node._id] === 1);
@@ -599,6 +627,33 @@
     lastSignature = '';
     update();
   }
+  function renderFilterTabs() {
+    if (!tabs) return;
+    var options = [['all','All']];
+    if (recentStorageKey()) options.push(['recent','Recent']);
+    if (nativeStars()) options.push(['favorites','Favorites']);
+    options.push(['online','Reachable'],['offline','Offline']);
+    var changed = tabs.children.length !== options.length;
+    for (var i = 0; !changed && i < options.length; i++) {
+      if (tabs.children[i].dataset.filter !== options[i][0]) changed = true;
+    }
+    if (changed) {
+      tabs.replaceChildren();
+      options.forEach(function (entry) {
+        var button = create('button','ns-live-filter-tab',entry[1]);
+        button.type = 'button';
+        button.dataset.filter = entry[0];
+        button.addEventListener('click',function () { state = entry[0]; update(); });
+        tabs.append(button);
+      });
+      if (!options.some(function (entry) { return entry[0] === state; })) state = 'all';
+    }
+    for (var j = 0; j < tabs.children.length; j++) {
+      var active = tabs.children[j].dataset.filter === state;
+      tabs.children[j].classList.toggle('active',active);
+      tabs.children[j].setAttribute('aria-pressed',active ? 'true' : 'false');
+    }
+  }
   function inventory() {
     if (!Array.isArray(window.nodes)) return null;
     // node.v is MeshCentral's currently visible/filter-matched flag.
@@ -623,7 +678,10 @@
   }
   function open(node, event) {
     // No new navigation or access controls. The upstream handler is authoritative.
-    if (typeof window.gotoDevice === 'function') window.gotoDevice(node._id, 10, false, event);
+    if (typeof window.gotoDevice === 'function') {
+      recordRecentDevice(node);
+      window.gotoDevice(node._id, 10, false, event);
+    }
   }
   function makeCard(node) {
     var name = String(node.name || node.rname || 'Device');
@@ -661,14 +719,18 @@
   }
   function update() {
     if (!list) return;
+    renderFilterTabs();
     var native = inventory();
     if (native === null) { useCards(false); return; }
     var all = native.slice().sort(function (a,b) {
       var s = Number(reachable(b)) - Number(reachable(a));
       return s || String(a.name || '').localeCompare(String(b.name || ''));
     });
+    var recent = readRecentDevices(), recentPositions = Object.create(null);
+    recent.forEach(function (item,index) { recentPositions[item.id] = index; });
     var onlineCount = all.filter(reachable).length;
     var view = all.filter(function (node) {
+      if (state === 'recent' && typeof recentPositions[node._id] === 'undefined') return false;
       if (state === 'favorites' && !isFavorite(node)) return false;
       if (state === 'online' && !reachable(node)) return false;
       if (state === 'offline' && reachable(node)) return false;
@@ -678,14 +740,20 @@
         .filter(Boolean).join(' ').toLowerCase();
       return haystack.includes(term);
     });
+    if (state === 'recent') {
+      view.sort(function (a,b) { return recentPositions[a._id] - recentPositions[b._id]; });
+    }
     var favorites = nativeStars();
-    var signature = [mode,state,term,all.length,onlineCount,favorites ? Object.keys(favorites).length : -1,supportsView(),
+    var signature = [mode,state,term,all.length,onlineCount,favorites ? Object.keys(favorites).length : -1,
+      recent.map(function (item) { return item.id + ':' + item.openedAt; }).join(','),supportsView(),
       view.slice(0,maxRendered).map(function (n) { return [n._id,n.name,n.conn,n.meshid,n.osdesc,isFavorite(n) ? 1 : 0].join(':'); }).join('|')].join('::');
     if (signature !== lastSignature) {
       lastSignature = signature;
       grid.replaceChildren();
       view.slice(0,maxRendered).forEach(function (node) { grid.append(makeCard(node)); });
-      if (!view.length) grid.append(create('div','ns-live-empty','No devices match the selected filters.'));
+      if (!view.length) grid.append(create('div','ns-live-empty',state === 'recent'
+        ? 'No recent devices yet. Open a device to add it here.'
+        : 'No devices match the selected filters.'));
       stats.textContent = all.length + ' visible devices · ' + onlineCount + ' reachable · ' +
         (all.length - onlineCount) + ' offline' +
         (view.length > maxRendered ? ' · Showing first ' + maxRendered + ' matches' : '');
@@ -715,23 +783,7 @@
     filter.addEventListener('input',function () { term=filter.value.trim().toLowerCase();update(); });
     tabs = create('div','ns-live-tabs');tabs.setAttribute('role','group');
     tabs.setAttribute('aria-label','Filter devices by connection state');
-    var filterOptions = [['all','All'],['online','Reachable'],['offline','Offline']];
-    if (nativeStars()) filterOptions.splice(1,0,['favorites','Favorites']);
-    filterOptions.forEach(function (entry) {
-      var button=create('button','ns-live-filter-tab',entry[1]);button.type='button';
-      button.dataset.filter=entry[0];
-      button.addEventListener('click',function () {
-        state=entry[0];
-        for (var i=0;i<tabs.children.length;i++) {
-          tabs.children[i].classList.toggle('active',tabs.children[i]===button);
-          tabs.children[i].setAttribute('aria-pressed',tabs.children[i]===button?'true':'false');
-        }
-        update();
-      });
-      button.classList.toggle('active',entry[0]==='all');
-      button.setAttribute('aria-pressed',entry[0]==='all'?'true':'false');
-      tabs.append(button);
-    });
+    renderFilterTabs();
     controls.append(filter,tabs);
     grid=create('div','ns-live-grid');
     list.append(header,controls,grid);

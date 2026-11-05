@@ -314,11 +314,17 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const opened=[];
   const favoriteWrites=[];
   const updatedNativeDevices=[];
+  const recentStorage=new Map();
   const window={
     addEventListener(){},
     stars:{},
     putstore:(key,value)=>favoriteWrites.push({key,value}),
     updateDeviceViewDevice:id=>updatedNativeDevices.push(id),
+    userinfo:{_id:'user/domain/qa'},
+    localStorage:{
+      getItem:key=>recentStorage.get(key)??null,
+      setItem:(key,value)=>recentStorage.set(key,value)
+    },
     nodes:[
       {_id:'node//online',name:'Workstation',meshid:'mesh//one',conn:1,osdesc:'Windows',v:true},
       {_id:'node//offline',name:'Archive',meshid:'mesh//one',conn:0,osdesc:'Linux',v:true}
@@ -383,8 +389,27 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   window.__nightShiftDevices.refresh();
   const cappedFavorite=inventory.children[2].children[0].children.find(node=>node.classList.contains('ns-live-favorite'));
   assert.equal(cappedFavorite.disabled,true,'The card control respects MeshCentral\'s 200-favorite limit');
+  const recentKey='nightShiftRecentDevices:user/domain/qa';
+  recentStorage.set(recentKey,JSON.stringify(Array.from({length:8},(_,i)=>({id:'node//prior-'+i,openedAt:i+1}))));
   inventory.children[2].children[0].children.find(node=>node.classList.contains('ns-live-device')).click();
   assert.deepEqual(opened,['node//online'],'Clicking a live card delegates to upstream gotoDevice');
+  assert.ok(recentStorage.has(recentKey),'Recent devices use an account-scoped local preference key');
+  const recentData=JSON.parse(recentStorage.get(recentKey));
+  assert.equal(recentData.length,8,'Recent preference is bounded to eight devices');
+  assert.equal(recentData[0].id,'node//online','Opening a device moves it to the front of recent history');
+  assert.equal(recentData.filter(entry=>entry.id==='node//online').length,1,'Recent history deduplicates the opened device');
+  assert.deepEqual(Object.keys(recentData[0]).sort(),['id','openedAt'],'Recent preferences contain no device name or session content');
+  const recentTab=inventory.children[1].children[1].children.find(node=>node.dataset.filter==='recent');
+  assert.ok(recentTab,'The inventory offers a recent-devices filter');
+  recentTab.click();
+  assert.equal(inventory.children[2].children.length,1,'Recent filter exposes recently opened authorized devices');
+  window.userinfo={_id:'user/domain/other'};
+  recentTab.click();
+  assert.equal(inventory.children[2].children[0].textContent,'No recent devices yet. Open a device to add it here.','A second account cannot see the first account\'s recents');
+  assert.equal(recentStorage.has('nightShiftRecentDevices:user/domain/other'),false,'Reading another account does not copy history');
+  window.userinfo={_id:'user/domain/qa'};
+  const returnToAll=inventory.children[1].children[1].children.find(node=>node.dataset.filter==='all');
+  returnToAll.click();
   const toggle=inventory.children[0].children[1];
   toggle.click();
   assert.equal(inventory.hidden,false,'The original-list toggle stays visible when cards are off');

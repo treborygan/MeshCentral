@@ -25,7 +25,8 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [ ] Persistent tabs for multiple live device sessions with safe switching and reconnection.
 - [ ] Actionable diagnostics for browser, Cloudflare, relay, agent, RDP and remote-display failures where observable.
 - [ ] Per-device connection profiles for method, monitor, scaling, quality, keyboard layout and fullscreen preferences; never store secrets or session content.
-- [ ] Recent devices, quick launch and safe reconnection.
+- [x] Account-scoped recent-device list, limited to eight IDs/timestamps; opening an entry returns through native MeshCentral navigation and permissions.
+- [ ] Quick launch and safe reconnection to existing sessions.
 - [ ] Improved clipboard, shortcuts, international layouts and mobile input controls, accepted against real sessions.
 - [ ] Verify connection-state transitions and permission-preserving unavailable/error states.
 
@@ -59,7 +60,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 ## Current evidence and blockers
 
 - Source branch: `feature/night-shift-structural`, based on the MeshCentral 1.3.1 fork. PR #3 is open and draft.
-- PRN deployment notes record structural source commit `989ae01333c0fc66fa19bc5de77152228345736`, followed by authenticated navigation fix `132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f`. On 2026-11-05 the synchronized mobile rules and safe-area refinement were deployed from this worktree. Local HTTP served CSS/JS exactly matching source SHA-256, and the root returned HTTP 200 with both override names present. The current source-only favorites slice is not deployed; authenticated visual confirmation of the masthead update remains open.
+- PRN deployment notes record structural source commit `989ae01333c0fc66fa19bc5de77152228345736`, followed by authenticated navigation fix `132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f`. On 2026-11-05 the synchronized mobile rules and safe-area refinement were deployed from this worktree. Local HTTP served CSS/JS exactly matching source SHA-256, and the root returned HTTP 200 with both override names present. The native favorites and recent-device source slices are not deployed; authenticated visual confirmation of the masthead update remains open.
 - Authenticated read-only review passed navigation, search/status filtering, dashboard, Events, Files, Users, Server, and native-list fallback. It recorded a mobile masthead clipping defect. The correction is now deployed and byte-verified through the local HTTP listener; its visual effect has not yet been rechecked in an authenticated browser.
 - PRN Cloudflare Access and service state were preserved. Real Agent/RDP input, terminal commands, file mutation, Android/iOS gestures, role restrictions, AMT, recordings and plugin workflows remain unverified.
 - Current PRN target is `C:\ProgramData\MeshCentral` (data directory present, MeshCentral, Cloudflared and Mesh Agent services running, configured listener port 9455, local override endpoints HTTP 200). The installer created rollback `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-000507-28f309`; its manifest preserves the prior CSS/JS hashes. Source and served CSS hash: `D2965A0B9CA93D312D65A0583BBF44D81D6E67CBEE6923438AE3991F38F26E0D`; source and served JS hash: `7D50EED58E7B8C4C1C915EE120B0EF3DFA6245B11CF2E03D83BBA896EF275217`.
