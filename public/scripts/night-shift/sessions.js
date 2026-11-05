@@ -55,6 +55,24 @@
     panel = create('nav','ns-session-tabs');
     panel.id = 'ns-session-tabs';
     panel.setAttribute('aria-label','Open remote sessions');
+    panel.setAttribute('role','toolbar');
+    panel.setAttribute('aria-orientation','horizontal');
+    panel.addEventListener('keydown',function (event) {
+      var controls = Array.prototype.filter.call(panel.children,function (child) {
+        return child.classList && (child.classList.contains('ns-session-tab') || child.classList.contains('ns-session-tab-close')) && !child.disabled;
+      });
+      var currentIndex = controls.indexOf(event.target);
+      if (currentIndex < 0 || !controls.length) return;
+      var nextIndex = currentIndex;
+      if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % controls.length;
+      else if (event.key === 'ArrowLeft') nextIndex = (currentIndex + controls.length - 1) % controls.length;
+      else if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = controls.length - 1;
+      else return;
+      event.preventDefault();
+      controls.forEach(function (control,index) { control.tabIndex = index === nextIndex ? 0 : -1; });
+      controls[nextIndex].focus();
+    });
     announcement = create('span','ns-session-announcement');
     announcement.setAttribute('role','status');
     announcement.setAttribute('aria-live','polite');
@@ -82,7 +100,8 @@
     });
     panel.hidden = open.length === 0;
     var snapshot = Object.create(null);
-    open.forEach(function (entry) {
+    var activeEntry = open.find(function (entry) { return entry.current; });
+    open.forEach(function (entry,index) {
       snapshot[entry.id] = {
         current:entry.current,
         state:sessionState(entry.session),
@@ -116,6 +135,7 @@
       var tab = create('button','ns-session-tab');
       tab.type = 'button';
       tab.dataset.sessionId = entry.id;
+      tab.tabIndex = entry.current || (!activeEntry && index === 0) ? 0 : -1;
       if (entry.current) tab.setAttribute('aria-current','true');
       tab.setAttribute('aria-label',name + ', ' + (stateNames[state] || 'Session state unavailable'));
       tab.title = name + ' · ' + (stateNames[state] || 'State unavailable');
@@ -127,6 +147,7 @@
       if (!entry.current) {
         var close = create('button','ns-session-tab-close','×');
         close.type = 'button';
+        close.tabIndex = -1;
         close.setAttribute('aria-label','Disconnect ' + name);
         close.title = 'Disconnect ' + name;
         close.addEventListener('click',function (event) {

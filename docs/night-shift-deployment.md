@@ -230,3 +230,7 @@ The session strip now keeps its `role=status` live region attached while replaci
 ## Workspace-persistent remote sessions — 2026-11-05
 
 Moved the native multi-desktop session strip into the shared `column_l` shell, ahead of individual native pages. Open sessions can now be switched to from elsewhere in the workspace; switching and disconnect still invoke MeshCentral's native permission-aware handlers. The profile editor remains anchored inside the Remote Desktop page and no transport/session state is added or persisted. The structural-shell integration regression verifies the strip remains visible with Remote Desktop hidden, and the full 55-test suite passed; bundle, syntax and whitespace checks passed. Source only; no PRN install was made.
+
+## Keyboard navigation for workspace sessions — 2026-11-05
+
+The global session strip now uses horizontal toolbar semantics and roving focus: Tab enters at the active session, Left/Right move across session and disconnect controls, and Home/End reach the first/last control. Native button activation still calls MeshCentral's device-switch/disconnect handlers. The structural-shell keyboard regression and full 55-test suite passed; generated-bundle consistency, JavaScript syntax and whitespace checks passed. Source only; no PRN install was made.
