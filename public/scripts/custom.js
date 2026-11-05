@@ -1718,7 +1718,7 @@
     panel.setAttribute('aria-label', 'Device health summary');
     panel.append(create('h3', 'ns-health-title', 'Device health'));
     var grid = create('div', 'ns-health-grid');
-    row(grid, 'agent', 'Agent status'); row(grid, 'uptime', 'Uptime / last boot');
+    row(grid, 'connection', 'Connection routes'); row(grid, 'uptime', 'Uptime / last boot');
     row(grid, 'cpu', 'CPU'); row(grid, 'memory', 'Memory');
     row(grid, 'storage', 'Windows volume storage'); row(grid, 'system', 'System information');
     panel.append(grid);
@@ -1748,6 +1748,14 @@
       (hours ? hours + 'h ' : '') + (minutes ? minutes + 'm' : (hours ? '' : 'under 1m'));
     return duration + ' · booted ' + date.toLocaleString();
   }
+  function connectionRoutes(conn) {
+    if (typeof conn !== 'number' || !isFinite(conn)) return 'Unavailable';
+    var routes = [];
+    [[1,'Agent'],[2,'AMT CIRA'],[4,'Intel AMT'],[8,'Relay'],[16,'MQTT']].forEach(function (route) {
+      if ((conn & route[0]) !== 0) routes.push(route[1]);
+    });
+    return routes.length ? routes.join(' · ') : 'Offline';
+  }
   function parseDmtfDate(value) {
     if (typeof value !== 'string') return null;
     var match = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\.\d{6}([+-])(\d{3})$/.exec(value);
@@ -1767,8 +1775,7 @@
       lastNodeId = node._id;
       values.cpu.textContent = 'Unavailable'; values.memory.textContent = 'Unavailable';
     }
-    var connected = typeof node.conn === 'number' && (node.conn & 15) !== 0;
-    values.agent.textContent = connected ? 'Connected' : (typeof node.conn === 'number' ? 'Offline' : 'Unavailable');
+    values.connection.textContent = connectionRoutes(node.conn);
     var hardware = window.DeviceDetailsNodeId === node._id ? window.DeviceDetailsHardware : null;
     var boot = node.lastbootuptime instanceof Date ? node.lastbootuptime : null;
     if (!boot && hardware) {
@@ -1848,7 +1855,7 @@
     document.addEventListener('visibilitychange', update);
     window.addEventListener('resize', update, {passive:true});
   }
-  window.__NightShiftHealth = { refresh:update, formatUptime:uptime, parseDmtfDate:parseDmtfDate };
+  window.__NightShiftHealth = { refresh:update, formatUptime:uptime, connectionRoutes:connectionRoutes, parseDmtfDate:parseDmtfDate };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
 })();
 /* Search only the events and recordings MeshCentral has already rendered. */

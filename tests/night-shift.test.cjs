@@ -229,6 +229,21 @@ test('elapsed uptime formatting is deterministic and rejects future boot dates',
   assert.equal(window.__NightShiftHealth.parseDmtfDate('20260230120000.000000+000'),null,'invalid calendar dates are not displayed as uptime');
 });
 
+test('device health reports native connection routes without mislabeling AMT as agent status',()=>{
+  const window={};
+  const document={readyState:'loading',addEventListener(){}};
+  vm.runInNewContext(health,{window,document,Date,isFinite},{timeout:1000});
+  const route=window.__NightShiftHealth.connectionRoutes;
+  assert.equal(route(1),'Agent');
+  assert.equal(route(2),'AMT CIRA');
+  assert.equal(route(4),'Intel AMT');
+  assert.equal(route(8),'Relay');
+  assert.equal(route(16),'MQTT');
+  assert.equal(route(3),'Agent · AMT CIRA');
+  assert.equal(route(0),'Offline');
+  assert.equal(route(undefined),'Unavailable');
+});
+
 test('history search filters only native rendered events and recordings',()=>{
   assert.match(history,/p3events/);
   assert.match(history,/p52recordings/);
