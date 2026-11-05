@@ -246,3 +246,7 @@ Separated browser-notification permission guidance from latest alert announcemen
 ## Browser notification creation fallback — 2026-11-05
 
 When notification permission is granted but the browser/OS rejects construction of a notification, the latest alert remains in the in-page live region and the separate permission guidance region explains that delivery failure. This preserves a usable fallback without retry loops or changed notification permissions. The focused failure-path regression and full 57-test suite passed; generated-bundle consistency, JavaScript syntax and whitespace checks passed. Source only; PRN install remains gated.
+
+## Alert permission refresh on browser focus — 2026-11-05
+
+The alert permission-guidance region now refreshes on both document visibility changes and window focus, covering return from browser site-notification settings without replacing the latest alert announcement. Alert-focused tests and the full 57-test suite passed; bundle consistency, JavaScript syntax and whitespace checks passed. Source only; no PRN install was made.

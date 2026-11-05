@@ -215,6 +215,7 @@
       });
     }
     if (document.addEventListener) document.addEventListener('visibilitychange',update);
+    if (window.addEventListener) window.addEventListener('focus',update);
     if (window.addEventListener) window.addEventListener('ns-native-health-sample',sample);
     if (window.addEventListener) window.addEventListener('ns-native-storage-sample',storageSample);
   }

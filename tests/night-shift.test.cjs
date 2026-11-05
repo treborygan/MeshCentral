@@ -548,6 +548,7 @@ test('alert settings explain denied and unavailable browser notifications',()=>{
   assert.match(alerts,/permissionStatus\.textContent = notificationStatus\(\)/,'notification guidance refreshes independently of the latest alert');
   assert.match(alerts,/status\.textContent = label;/,'alert announcements do not replace persistent permission guidance');
   assert.match(alerts,/permissionStatus = create\('p','ns-alert-permission-status',notificationStatus\(\)\)/);
+  assert.match(alerts,/window\.addEventListener\('focus',update\)/,'permission guidance refreshes when returning from browser site settings');
 });
 
 test('alert delivery failures retain the in-page notice and explain browser fallback',()=>{
