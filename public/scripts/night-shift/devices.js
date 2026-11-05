@@ -301,7 +301,7 @@
       recent.map(function (item) { return item.id + ':' + item.openedAt; }).join(','),supportsView(),tagState,
       view.slice(0,renderLimit).map(function (n) {
         var group = window.meshes && window.meshes[n.meshid];
-        return [n._id,n.name,n.rname,n.conn,n.meshid,group && group.name,n.osdesc,n.osd,isFavorite(n) ? 1 : 0].join(':');
+        return [n._id,n.name,n.rname,n.conn,n.meshid,group && group.name,n.osdesc,n.osd,n.agent && n.agent.id,isFavorite(n) ? 1 : 0].join(':');
       }).join('|')].join('::');
     if (signature !== lastSignature) {
       lastSignature = signature;

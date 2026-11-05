@@ -1135,12 +1135,13 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(inventory.children[2].children.length,1,'Tag filter matches the native device tags');
   tagSelect.value='';
   tagSelect.dispatchEvent({type:'change'});
-  window.nodes[0].tags=['Production','Updated'];window.meshes['mesh//one'].name='Production zone';
+  window.nodes[0].tags=['Production','Updated'];window.meshes['mesh//one'].name='Production zone';window.nodes[0].agent={id:17};
   window.__nightShiftDevices.refresh();
   assert.ok(tagSelect.children.some(option=>option.value==='Updated'),'Updated native tags enter the tag filter without a device-list DOM mutation');
   const refreshedWorkstation=inventory.children[2].children.find(row=>row.children.some(child=>child.classList.contains('ns-live-device')&&child.children.some(part=>part.classList.contains('ns-live-device-name')&&part.textContent==='Workstation'))).children.find(child=>child.classList.contains('ns-live-device'));
   assert.ok(refreshedWorkstation.children.find(node=>node.classList.contains('ns-live-tags')).children.some(node=>node.textContent==='Updated'),'Card tag chips refresh when the native tag array changes in place');
   assert.ok(refreshedWorkstation.children.find(node=>node.classList.contains('ns-live-device-subtitle')).textContent==='Production zone','Group labels refresh when MeshCentral group metadata changes');
+  assert.equal(refreshedWorkstation.children[0].children[0].textContent,'▣','Agent installation changes refresh the device capability icon');
   sortSelect.value='name';
   sortSelect.dispatchEvent({type:'change'});
   const nameSortedCard=inventory.children[2].children[0].children.find(node=>node.classList.contains('ns-live-device'));
