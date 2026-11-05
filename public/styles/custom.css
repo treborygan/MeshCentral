@@ -866,6 +866,23 @@ body.ns-shell-ready #p1 {min-width:0}
   border-radius:11px 11px 0 0;
   color:#e5f2ea;
 }
+.ns-session-diagnostics {
+  margin:12px 0 0;
+  padding:14px 16px;
+  background:#111b25;
+  border:1px solid #2e414c;
+  border-radius:12px;
+  color:#e5f2ea;
+}
+.ns-diagnostics-title {margin:0 0 10px;font-size:12px;font-weight:760;color:#eaf4ed}
+.ns-diagnostics-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.ns-diagnostic-row {display:grid;gap:4px;min-width:0;padding:9px 11px;background:#17232d;border:1px solid #2b3a45;border-radius:9px}
+.ns-diagnostic-label {font-size:10px;color:#93a7b4}
+.ns-diagnostic-value {overflow-wrap:anywhere;font-size:11px;color:#e3f0e8}
+.ns-diagnostics-action {margin-top:10px;min-height:38px;padding:8px 12px;border:1px solid #718b58;border-radius:9px;background:#22352c;color:#d9ffa9;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
+.ns-diagnostics-action:hover {background:#2b4438}
+.ns-diagnostics-action:focus-visible {outline:2px solid #b6f078;outline-offset:2px}
+.ns-diagnostics-action[hidden] {display:none!important}
 .ns-session-dot {width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#91dbb0}
 .ns-session-label {font-size:11px;font-weight:750}
 .ns-session-protocol {font-size:10px;color:#97aab6}
@@ -908,6 +925,7 @@ body.ns-shell-ready.ns-native-expanded #MainMenuSpan {display:block}
   .ns-device-actions-row {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
   .ns-device-actions-row .ns-shell-action {min-width:0;text-align:center;padding:10px 4px;font-size:11px}
   .ns-session-protocol {display:none}
+  .ns-diagnostics-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
   body.ns-shell-ready.ns-session-active #ns-appbar {display:none}
   body.ns-shell-ready.ns-session-active #masthead {min-height:0}
 }
@@ -922,6 +940,9 @@ body.ns-shell-ready.ns-native-expanded #MainMenuSpan {display:block}
   .ns-kpi {min-height:115px}
   .ns-kpi-name,.ns-kpi-note {font-size:10px}
   .ns-session-strip {margin:3px 0 0;padding:8px 12px;min-height:34px}
+  .ns-session-diagnostics {padding:11px}
+  .ns-diagnostics-grid {gap:6px}
+  .ns-diagnostic-row {padding:8px}
 }
 @media (prefers-reduced-motion:reduce) {
   .ns-shell-action {transition:none}

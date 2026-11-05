@@ -14,6 +14,7 @@ Included:
 - Recent devices are stored per MeshCentral account in browser preferences as up to eight device IDs and timestamps, without names, credentials, tokens or session content. Recent entries render only when their devices appear in the current authorized inventory; opening one delegates to native `gotoDevice()` checks.
 - Quick device actions using native Desktop, Terminal and Files handlers. Advanced device tabs, plugins, permissions and original controls remain available.
 - Contextual remote-session strip with connection text derived from MeshCentral's existing Disconnect control. Original canvas, RDP, AMT, terminal, keyboard and other session implementations remain untouched.
+- Event-driven remote-session diagnostics report browser online state, MeshCentral socket state, native Agent/AMT route flags, session transport/state, and whether the native display canvas is mounted. A shortcut focuses the existing native Connect control. Updates use browser events and a scoped DOM observer rather than polling. Cloudflare Access/tunnel health is labeled as not observable after page load; this UI does not infer it from an authenticated session.
 - Navy/green Night Shift composition for desktop/tablet/phone, accessible labels, focus, reduced-motion styling and mobile session-first chrome.
 - Existing mobile touch controls, command search, login2 theming and viewport corrections inherited from previous PRs.
 
@@ -24,7 +25,7 @@ The actual browser must supply MeshCentral's expected IDs. Components are create
 - A full screenshot-matched replacement of the native list/group/user/server templates is **not yet proven**. These screens are restyled upstream views with additive components, not a complete independent application.
 - Core MeshCentral behavior is preserved by delegation, but end-to-end Agent desktop, browser RDP, terminal, file transfer, Android gestures, Intel AMT, guest sessions, recordings, plugins and restricted-role workflows still require real authenticated browser acceptance.
 - The dashboard counts authenticated device objects currently loaded into `window.nodes` and derives reachable/offline from `node.conn` (Agent, AMT, or relay flags). If node data are not yet available, the device count falls back to rendered native rows and status counts remain unavailable. Counts can be paginated and are **not guaranteed to represent the server-wide total**.
-- A synthetic DOM contract test verifies the UI shell, native navigation and populated device-row count; it does not validate a live browser or remote-control session.
+- Synthetic DOM contract tests verify the UI shell, native navigation, populated device-row count and diagnostic mapping; they do not validate a live browser or remote-control session.
 - PRN has received the structural layer from this branch (source commit `989ae01333c0fc66fa19bc5de77152228345736`) and the authenticated-navigation fix (`132b706f951a9ff8f2e3d7f3f3400ff7e7578f5f`). The production mobile-overflow patch was synchronized to source and deployed with safe-area refinements on 2026-11-05; installed/served hashes and rollback evidence are in `night-shift-deployment.md`. Native favorites, recent-device features and the Cards/Table/Compact inventory improvements are source-tested but not deployed. Latest authenticated visual recheck remains open.
 
 ## Deploying safely to PCRN

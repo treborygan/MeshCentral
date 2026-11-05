@@ -298,7 +298,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
       if(selector==='[data-detail]')return this.children.flatMap(child=>child.children).filter(child=>child.dataset.detail);
       return [];
     }
-    focus(){}
+    focus(){this.focused=true;}
   }
   const body=new MockElement('body');
   const document={
@@ -314,6 +314,13 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const devices=add('LeftMenuMyDevices');let devicesMouseup=0;devices.addEventListener('mouseup',()=>devicesMouseup++);
   const events=add('LeftMenuMyEvents');let eventsMouseup=0;events.addEventListener('mouseup',()=>eventsMouseup++);const page=add('p1',column);
   add('p10',column);
+  const remotePage=add('p11',column);remotePage.hidden=true;
+  const desktopArea=add('deskarea0',remotePage);
+  const nativeStatus=add('deskstatus',remotePage);
+  const nativeConnect=add('connectbutton1',remotePage);nativeConnect.disabled=false;
+  const nativeRdpConnect=add('connectbutton1r',remotePage);nativeRdpConnect.disabled=false;
+  const nativeDisconnect=add('disconnectbutton1',remotePage);nativeDisconnect.hidden=true;
+  add('Desk',desktopArea);
   const toolbar=add('devListToolbarSpan',page);
   const nativeGroupAction=add('GroupActionButton',toolbar);nativeGroupAction.disabled=true;
   const list=add('xdevices',page);
@@ -329,12 +336,16 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     putstore:(key,value)=>favoriteWrites.push({key,value}),
     updateDeviceViewDevice:id=>updatedNativeDevices.push(id),
     userinfo:{_id:'user/domain/qa'},
+    navigator:{onLine:true},
+    meshserver:{State:2},
+    currentNode:null,
+    desktop:null,
     localStorage:{
       getItem:key=>recentStorage.get(key)??null,
       setItem:(key,value)=>recentStorage.set(key,value)
     },
     nodes:[
-      {_id:'node//online',name:'Workstation',meshid:'mesh//one',conn:1,osdesc:'Windows',tags:['Production','Critical'],v:true},
+      {_id:'node//online',name:'Workstation',meshid:'mesh//one',conn:9,osdesc:'Windows',tags:['Production','Critical'],v:true},
       {_id:'node//offline',name:'Archive',meshid:'mesh//one',conn:0,osdesc:'Linux',tags:['Archive'],v:true}
     ],
     meshes:{'mesh//one':{name:'Production'}},
@@ -465,6 +476,31 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   recentTab.click();
   assert.equal(inventory.children[2].children[0].textContent,'No recent devices yet. Open a device to add it here.','A second account cannot see the first account\'s recents');
   assert.equal(recentStorage.has('nightShiftRecentDevices:user/domain/other'),false,'Reading another account does not copy history');
+  page.hidden=true;remotePage.hidden=false;
+  window.currentNode=window.nodes[0];
+  window.__NightShiftDiagnostics.refresh();
+  const diagnostics=ids.get('ns-session-diagnostics');
+  assert.ok(diagnostics,'Remote workspace exposes connection diagnostics');
+  const diagnostic=(kind)=>diagnostics.children.flatMap(node=>node.children).find(node=>node.dataset.kind===kind);
+  assert.ok(diagnostic('browser'),'Browser diagnostic row is present');
+  assert.equal(diagnostic('browser').children[1].textContent,'Online','Browser connectivity uses navigator.onLine');
+  assert.equal(diagnostic('control').children[1].textContent,'Connected','MeshCentral control-channel state uses the native socket');
+  assert.equal(diagnostic('device').children[1].textContent,'Agent via relay','Device route reports native agent and relay flags');
+  assert.equal(diagnostic('cloudflare').children[1].textContent,'Not observable after page load','The UI does not infer Cloudflare tunnel health from an authenticated page');
+  const showNativeControls=diagnostics.children.find(node=>node.classList.contains('ns-diagnostics-action'));
+  assert.ok(showNativeControls,'Unconnected sessions offer a shortcut to native connect controls');
+  showNativeControls.click();
+  assert.equal(nativeConnect.focused,true,'Connection shortcut focuses the available native Connect control');
+  window.desktop={State:3,contype:4,webRtcActive:false};
+  nativeStatus.textContent='Connected, RDP';
+  window.__NightShiftDiagnostics.refresh();
+  assert.equal(diagnostic('session').children[1].textContent,'Browser RDP · Connected','Session transport and state use native MeshCentral values');
+  assert.equal(diagnostic('display').children[1].textContent,'Canvas mounted','Remote-display diagnosis checks the native canvas without intercepting input');
+  assert.equal(showNativeControls.hidden,true,'Native connect shortcut is hidden while the session is active');
+  window.navigator.onLine=false;window.meshserver.State=0;
+  window.__NightShiftDiagnostics.refresh();
+  assert.equal(diagnostic('browser').children[1].textContent,'Offline','Offline browser state is distinguished from the MeshCentral channel');
+  assert.equal(diagnostic('control').children[1].textContent,'Disconnected','Disconnected MeshCentral control channel is reported separately');
   window.userinfo={_id:'user/domain/qa'};
   const returnToAll=inventory.children[1].children[1].children.find(node=>node.dataset.filter==='all');
   returnToAll.click();
