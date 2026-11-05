@@ -78,7 +78,7 @@
   }
   function webRtcStatus() {
     var session = window.webRtcDesktop;
-    if (!session) return lastWebRtcFailure ? 'ICE ' + lastWebRtcFailure + ' · link reset by MeshCentral' : 'Not active';
+    if (!session) return lastWebRtcFailure ? 'ICE ' + lastWebRtcFailure.state + ' · link reset by MeshCentral' : 'Not active';
     var peer = session.webrtc, channel = session.webchannel, parts = [];
     if (peer && typeof peer.iceConnectionState === 'string') parts.push('ICE ' + peer.iceConnectionState);
     if (channel && typeof channel.readyState === 'string') parts.push('data channel ' + channel.readyState);
@@ -97,6 +97,8 @@
     build();
     if (!panel || !rows.browser) return;
     var rtc = window.webRtcDesktop, peer = rtc && rtc.webrtc, channel = rtc && rtc.webchannel;
+    var nodeId = window.currentNode && window.currentNode._id;
+    if (lastWebRtcFailure && (lastWebRtcFailure.nodeId !== nodeId || lastWebRtcFailure.desktop !== window.desktop || (rtc && lastWebRtcFailure.session !== rtc))) lastWebRtcFailure = null;
     if (lastWebRtcFailure && peer && channel && channel.readyState === 'open' && (peer.iceConnectionState === 'connected' || peer.iceConnectionState === 'completed')) lastWebRtcFailure = null;
     var browser = window.navigator && typeof window.navigator.onLine === 'boolean'
       ? (window.navigator.onLine ? 'Online' : 'Offline') : 'Unknown';
@@ -119,7 +121,7 @@
       var next = 'Choose a native connection control to start a remote session.';
       if (browser === 'Offline') next = 'This browser is offline. Restore network access, then check the native connection status.';
       else if (typeof socket === 'number' && socket !== 2) next = 'The MeshCentral control channel is disconnected. Restore the page connection before reconnecting a device.';
-      else if (lastWebRtcFailure) next = 'WebRTC ICE ' + lastWebRtcFailure + '; MeshCentral reset the WebRTC path.' + (active ? ' The native desktop session remains active; if the display did not recover, use native Disconnect and reconnect controls.' : ' Start or retry the session with MeshCentral’s native controls.');
+      else if (lastWebRtcFailure) next = 'WebRTC ICE ' + lastWebRtcFailure.state + '; MeshCentral reset the WebRTC path.' + (active ? ' The native desktop session remains active; if the display did not recover, use native Disconnect and reconnect controls.' : ' Start or retry the session with MeshCentral’s native controls.');
       else if (route !== null && (route & 15) === 0) next = nativeControlAvailable('connectbutton1r')
         ? 'No Agent or AMT route is currently reported for this device. Browser RDP is available; use the native RDP Connect control or check the device agent.'
         : 'No Agent or AMT route is currently reported for this device, and Browser RDP is unavailable. Check the device status and use an enabled native connection method.';
@@ -154,7 +156,7 @@
       var ice = peer && peer.iceConnectionState;
       try { return native.apply(this,arguments); }
       finally {
-        lastWebRtcFailure = (ice === 'failed' || ice === 'disconnected') ? ice : null;
+        lastWebRtcFailure = (ice === 'failed' || ice === 'disconnected') ? {state:ice,nodeId:window.currentNode && window.currentNode._id,desktop:window.desktop,session:session} : null;
         schedule();
       }
     };
