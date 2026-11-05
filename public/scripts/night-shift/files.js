@@ -112,14 +112,15 @@
       var label = create('span','ns-transfer-history-name',entry.name);
       var state = create('span','ns-transfer-history-state',entry.state);
       row.append(label,state);
-      if (entry.type === 'upload' && entry.state === 'Failed' && entry.file) {
+      if (entry.type === 'upload' && (entry.state === 'Failed' || entry.state === 'Failed to start') && entry.file) {
         var retry = create('button','ns-transfer-retry','Retry');
         retry.type = 'button'; retry.setAttribute('aria-label','Retry upload of ' + entry.name);
         retry.addEventListener('click',function () {
           var upload = $('p13UploadButton');
           if (!upload || upload.disabled || typeof window.p13doUploadFiles !== 'function') return;
           entry.state = 'Queued'; renderHistory();
-          window.p13doUploadFiles([entry.file]);
+          try { window.p13doUploadFiles([entry.file]); }
+          catch (error) { entry.state = 'Failed to start'; renderHistory(); }
         });
         row.append(retry);
       } else if (entry.type === 'download' && entry.path) {
@@ -169,10 +170,12 @@
       try { decoded = decodeURIComponent(path); } catch (error) { /* Keep the native path as displayed text. */ }
       var name = String(decoded || '').split(/[\\/]/).pop() || 'Device file';
       var node = window.currentNode;
-      transferHistory.unshift({type:'download',name:name,path:path,nodeId:node && node._id,state:'Requested'});
+      var entry = {type:'download',name:name,path:path,nodeId:node && node._id,state:'Requested'};
+      transferHistory.unshift(entry);
       transferHistory = transferHistory.slice(0,20);
       renderHistory();
-      return nativeDownload.apply(this,arguments);
+      try { return nativeDownload.apply(this,arguments); }
+      catch (error) { entry.state = 'Failed to start'; renderHistory(); return false; }
     };
     downloadTrackingInstalled = true;
   }

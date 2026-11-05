@@ -238,8 +238,8 @@ test('upload history observes native acknowledgments and retries through the nat
   ['p13','p13title','p13filetable','p13files','p13UploadButton','p13DownloadButton'].forEach(id=>{const el=new Element('div');el.id=id;});
   ids.get('p13UploadButton').disabled=false;
   ids.get('p13DownloadButton').disabled=false;
-  const nativeCalls=[],downloads=[];const file={name:'inventory.csv',size:12};
-  const window={currentNode:{_id:'node/a'},uploadFile:{xfiles:[file],xfilePtr:0},p13gotUploadData(message){nativeCalls.push(message.action);},p13doUploadFiles(items){calls.push(items);},p13downloadDeviceFile(path){downloads.push(path);}};
+  const nativeCalls=[],downloads=[];const file={name:'inventory.csv',size:12};let failUpload=false,failDownload=false;
+  const window={currentNode:{_id:'node/a'},uploadFile:{xfiles:[file],xfilePtr:0},p13gotUploadData(message){nativeCalls.push(message.action);},p13doUploadFiles(items){calls.push(items);if(failUpload)throw new Error('upload start failed');},p13downloadDeviceFile(path){downloads.push(path);if(failDownload)throw new Error('download start failed');}};
   const document={readyState:'complete',createElement:tag=>new Element(tag),getElementById:id=>ids.get(id)||null,querySelector(){return null;},addEventListener(){}};
   const context={window,document,console,MutationObserver:class{observe(){}},addEventListener(){}};
   vm.runInNewContext(files,context,{timeout:1000});
@@ -259,6 +259,13 @@ test('upload history observes native acknowledgments and retries through the nat
   assert.deepEqual(downloads,['folder%2Freport.zip'],'History cannot replay a download against a different device');
   window.currentNode={_id:'node/a'};downloadRow.children[2].click();
   assert.deepEqual(downloads,['folder%2Freport.zip','folder%2Freport.zip'],'Download again uses the native MeshCentral endpoint');
+  failDownload=true;assert.equal(window.p13downloadDeviceFile('folder%2Fbroken.zip'),false,'synchronous native download start failures are contained');
+  const failedDownload=history.children[1].children.find(row=>row.children[0].textContent==='broken.zip');
+  assert.equal(failedDownload.children[1].textContent,'Failed to start','failed downloads are not shown as pending requests');
+  window.p13gotUploadData({action:'uploaderror'});
+  failUpload=true;const retry=history.children[1].children.find(row=>row.children[0].textContent==='inventory.csv').children[2];retry.click();
+  const failedRetry=history.children[1].children.find(row=>row.children[0].textContent==='inventory.csv');
+  assert.equal(failedRetry.children[1].textContent,'Failed to start','native upload startup exceptions remain retryable and visible');
 });
 
 test('quick power and command actions mirror MeshCentral rights and open its native audit flow',()=>{
