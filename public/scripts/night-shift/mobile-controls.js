@@ -101,10 +101,21 @@
     if (!document.body || $('ns-classic-toggle')) return;
     document.body.classList.add('ns-classic-active');
     const nativeRestore=!!nativeClassicTemplate;
-    const restore=button(nativeRestore?'Modern UI':'Night Shift','ns-classic-toggle',()=>changeClassicMode(false),nativeRestore?'Switch to Modern UI with Night Shift':'Switch back to Night Shift');
+    const restore=button(nativeRestore?'Choose Modern UI':'Night Shift','ns-classic-toggle',()=>changeClassicMode(false),nativeRestore?'Open MeshCentral UI selector to choose Modern UI with Night Shift':'Switch back to Night Shift');
     restore.id='ns-classic-toggle';
-    restore.style.cssText='position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483000;min-height:42px;padding:9px 14px;border:1px solid #6c8c69;border-radius:999px;background:#14221c;color:#e8f3e5;font:600 14px/1.2 system-ui,sans-serif;box-shadow:0 8px 28px #0008;cursor:pointer;outline:2px solid transparent;outline-offset:3px';
-    document.body.append(restore);
+    restore.style.cssText='min-height:42px;padding:9px 14px;border:1px solid #6c8c69;border-radius:999px;background:#14221c;color:#e8f3e5;font:600 14px/1.2 system-ui,sans-serif;box-shadow:0 4px 14px #0005;cursor:pointer;outline:2px solid transparent;outline-offset:3px';
+    if (nativeRestore) {
+      const notice=make('aside','');
+      notice.id='ns-classic-notice';
+      notice.setAttribute('role','status');
+      notice.setAttribute('aria-label','Night Shift interface availability');
+      notice.style.cssText='position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483000;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:10px;max-width:min(520px,calc(100vw - 24px));padding:10px 12px;border:1px solid #6c8c69;border-radius:16px;background:#101b17;color:#e8f3e5;font:500 13px/1.4 system-ui,sans-serif;box-shadow:0 8px 28px #0008';
+      notice.append(make('span','', 'Night Shift is off in Classic UI. Choose Modern UI to use the Night Shift redesign.'),restore);
+      document.body.append(notice);
+    } else {
+      restore.style.cssText+=';position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483000';
+      document.body.append(restore);
+    }
   }
   function disableNightShiftStylesheet() {
     if (!document.querySelectorAll) return;

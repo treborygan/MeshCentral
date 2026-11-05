@@ -225,8 +225,13 @@ test('native MeshCentral Classic template enters fallback without a Night Shift 
   assert.equal(h.byId.has('ns-appbar'),false,'Modern-only controls do not attach to the native Classic template');
   const restore=h.byId.get('ns-classic-toggle');
   assert.ok(restore,'the accessible return control remains available');
-  assert.equal(restore.textContent,'Modern UI','the return control explains that it changes MeshCentral UI mode');
-  assert.equal(restore.getAttribute('aria-label'),'Switch to Modern UI with Night Shift');
+  assert.equal(restore.textContent,'Choose Modern UI','the control opens the choice instead of claiming an immediate mode switch');
+  assert.equal(restore.getAttribute('aria-label'),'Open MeshCentral UI selector to choose Modern UI with Night Shift');
+  const notice=h.byId.get('ns-classic-notice');
+  assert.ok(notice,'the unchanged Classic layout explains why Night Shift is not active');
+  assert.equal(notice.getAttribute('role'),'status');
+  assert.match(notice.children[0].textContent,/Night Shift is off in Classic UI\. Choose Modern UI/);
+  assert.match(notice.style.cssText,/max-width:min\(520px,calc\(100vw - 24px\)\)/,'the notice stays inside narrow mobile viewports');
   restore.click();
   assert.deepEqual(h.calls,[['native-ui-mode']],'the control opens MeshCentral native interface selection');
   assert.equal(h.reloadCount,0,'MeshCentral owns saving the new mode and performing its reload');
