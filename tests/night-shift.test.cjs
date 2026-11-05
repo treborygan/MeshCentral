@@ -1480,3 +1480,17 @@ test('user record details stack the native profile and account fields on mobile'
   assert.match(template,/id="p30userAuthServiceLogo"/);
   assert.match(template,/account_manageImage\(1\)/);
 });
+
+test('device detail pages adapt their native fields, notes and status card to mobile',()=>{
+  assert.match(css,/body\.ns-theme #p10info > table > tbody > tr \{display:grid;grid-template-columns:minmax\(0,1fr\) minmax\(180px,230px\)\}/);
+  assert.match(css,/body\.ns-theme #p10info > table > tbody > tr > td#notesPanel/);
+  assert.match(css,/body\.ns-theme #p10info #MainComputerImage/);
+  assert.match(css,/@media\(max-width:700px\)[\s\S]*?body\.ns-theme #p10info > table > tbody > tr > td:last-child \{display:flex/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/id=p10html/);
+  assert.match(template,/id=p10html2/);
+  assert.match(template,/id=p10html5/);
+  assert.match(template,/id=notesPanel/);
+  assert.match(template,/id="p10deviceMsg"/);
+  assert.match(template,/id="p10deviceNotify"/);
+});
