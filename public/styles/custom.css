@@ -1190,6 +1190,9 @@ body.ns-shell-ready.ns-cards-enabled #xdevices {display:none!important}
 .ns-live-empty-clear{min-height:38px;padding:8px 13px;border:1px solid #b6f078;border-radius:9px;background:transparent;color:#eaf4ed;font:inherit;font-size:12px}
 .ns-live-empty-clear:hover{background:#24343d}
 .ns-live-empty-clear:focus-visible{outline:2px solid #b6f078;outline-offset:2px}
+.ns-live-load-more{grid-column:1/-1;justify-self:center;min-height:40px;margin:8px 0 18px;padding:8px 16px;border:1px solid #52715d;border-radius:9px;background:#21362c;color:#e8ffd2;font:inherit;font-weight:730;cursor:pointer}
+.ns-live-load-more:hover{background:#2b4939;border-color:#88ae65}
+.ns-live-load-more:focus-visible{outline:2px solid #b6f078;outline-offset:2px}
 @media(max-width:900px) {
   .ns-live-inventory {padding:0 3px}
   .ns-live-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}

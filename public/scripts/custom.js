@@ -724,7 +724,7 @@
     return el;
   };
   var mode = 'cards', layout = 'cards', sort = 'reachable', tag = '', state = 'all', term = '', list, grid, toggle, filter, stats, tabs, tagFilter, sortSelect, layoutSelect, lastSignature = '', updateQueued = false;
-  var maxRendered = 150;
+  var renderLimit = 150;
   function reachable(node) { return ((Number(node.conn) || 0) & 7) !== 0; }
   function nativeStars() {
     return window.stars && typeof window.stars === 'object' && typeof window.putstore === 'function'
@@ -1008,14 +1008,14 @@
     }).join('|');
     var signature = [mode,layout,sort,tag,state,term,all.length,onlineCount,selected,favorites ? Object.keys(favorites).length : -1,
       recent.map(function (item) { return item.id + ':' + item.openedAt; }).join(','),supportsView(),tagState,
-      view.slice(0,maxRendered).map(function (n) {
+      view.slice(0,renderLimit).map(function (n) {
         var group = window.meshes && window.meshes[n.meshid];
         return [n._id,n.name,n.rname,n.conn,n.meshid,group && group.name,n.osdesc,n.osd,isFavorite(n) ? 1 : 0].join(':');
       }).join('|')].join('::');
     if (signature !== lastSignature) {
       lastSignature = signature;
       grid.replaceChildren();
-      var rendered = view.slice(0,maxRendered);
+      var rendered = view.slice(0,renderLimit);
       if (layout === 'table') grid.append(makeTable(rendered));
       else rendered.forEach(function (node) { grid.append(layout === 'compact' ? makeCompact(node) : makeCard(node)); });
       if (!view.length) {
@@ -1037,9 +1037,17 @@
         }
         grid.append(empty);
       }
-      stats.textContent = all.length + ' loaded · ' + Math.min(view.length,maxRendered) + ' shown · ' + onlineCount + ' reachable · ' +
+      if (view.length > renderLimit) {
+        var remaining = view.length - renderLimit;
+        var more = create('button','ns-live-load-more','Show next ' + Math.min(150,remaining) + ' devices');
+        more.type = 'button';
+        more.setAttribute('aria-label','Show more devices; ' + remaining + ' more matches available');
+        more.addEventListener('click',function () { renderLimit += 150; update(); });
+        grid.append(more);
+      }
+      stats.textContent = all.length + ' loaded · ' + Math.min(view.length,renderLimit) + ' shown · ' + onlineCount + ' reachable · ' +
         (all.length - onlineCount) + ' offline' +
-        (view.length > maxRendered ? ' · First ' + maxRendered + ' matches' : '');
+        (view.length > renderLimit ? ' · More matches available' : '');
     }
     useCards(mode === 'cards');
   }

@@ -1270,6 +1270,15 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(body.classList.contains('ns-cards-enabled'),false);
   toggle.click();
   assert.equal(body.classList.contains('ns-cards-enabled'),true,'Cards can be re-enabled');
+  window.nodes=Array.from({length:152},(_,index)=>({_id:'node//bulk-'+index,name:'Bulk '+index,meshid:'mesh//one',conn:index%2?1:0,osdesc:'Windows',tags:[],v:true}));
+  window.__nightShiftDevices.refresh();
+  assert.equal(inventory.children[2].children.filter(row=>row.classList.contains('ns-live-device-frame')).length,150,'Large inventories render an initial bounded page');
+  const showMore=inventory.children[2].children.at(-1);
+  assert.equal(showMore.textContent,'Show next 2 devices','The continuation control reports how many remaining rows will be added');
+  assert.match(showMore.getAttribute('aria-label'),/2 more matches available/);
+  showMore.click();
+  assert.equal(inventory.children[2].children.filter(row=>row.classList.contains('ns-live-device-frame')).length,152,'Show more exposes devices past the initial 150-row limit');
+  assert.equal(inventory.children[2].children.some(row=>row.classList.contains('ns-live-load-more')),false,'The continuation control disappears when every match is rendered');
 });
 
 test('structural layer remains progressive with native sessions and no synthetic fleet',()=>{
