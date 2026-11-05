@@ -4,7 +4,7 @@
   if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftDiagnostics) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, rows = {}, actionButton, guidance, queued = false, controlStateHookServer = null;
+  var panel, rows = {}, actionButton, guidance, queued = false, controlStateHookServer = null, lastWebRtcFailure = null;
   var stateNames = ['Disconnected','Connecting','Setting up','Connected','Connected'];
   function create(tag, cls, text) {
     var node = document.createElement(tag);
@@ -30,6 +30,7 @@
     appendRow(list,'browser','Browser network');
     appendRow(list,'control','MeshCentral control channel');
     appendRow(list,'device','Device route');
+    appendRow(list,'webrtc','WebRTC link');
     appendRow(list,'session','Remote session');
     appendRow(list,'display','Remote display');
     appendRow(list,'cloudflare','Cloudflare Access');
@@ -74,6 +75,14 @@
     var state = Number.isInteger(desktop.State) ? desktop.State : desktop.state;
     return transport + ' · ' + (stateNames[state] || 'State unavailable');
   }
+  function webRtcStatus() {
+    var session = window.webRtcDesktop;
+    if (!session) return lastWebRtcFailure ? 'ICE ' + lastWebRtcFailure + ' · link reset by MeshCentral' : 'Not active';
+    var peer = session.webrtc, channel = session.webchannel, parts = [];
+    if (peer && typeof peer.iceConnectionState === 'string') parts.push('ICE ' + peer.iceConnectionState);
+    if (channel && typeof channel.readyState === 'string') parts.push('data channel ' + channel.readyState);
+    return parts.length ? parts.join(' · ') : 'Negotiating';
+  }
   function nativeControlAvailable(id) {
     var target = $(id);
     if (!target || target.disabled || target.getAttribute('aria-disabled') === 'true' || !target.getClientRects || !target.getClientRects().length) return false;
@@ -92,6 +101,7 @@
     rows.browser.textContent = browser;
     rows.control.textContent = typeof socket === 'number' ? (socket === 2 ? 'Connected' : 'Disconnected') : 'Unknown';
     rows.device.textContent = routeStatus(window.currentNode);
+    rows.webrtc.textContent = webRtcStatus();
     var desktop = window.desktop;
     rows.session.textContent = transportName(desktop);
     var desktopState = desktop && (Number.isInteger(desktop.State) ? desktop.State : desktop.state);
@@ -132,10 +142,26 @@
     server.onStateChanged = wrapped;
     controlStateHookServer = server;
   }
+  function installWebRtcResetHook() {
+    var native = window.webRtcDesktopReset;
+    if (typeof native !== 'function' || native.__nightShiftDiagnosticsHook) return;
+    var wrapped = function () {
+      var session = window.webRtcDesktop, peer = session && session.webrtc;
+      var ice = peer && peer.iceConnectionState;
+      try { return native.apply(this,arguments); }
+      finally {
+        lastWebRtcFailure = (ice === 'failed' || ice === 'disconnected') ? ice : null;
+        schedule();
+      }
+    };
+    wrapped.__nightShiftDiagnosticsHook = true;
+    window.webRtcDesktopReset = wrapped;
+  }
   function boot() {
     if (!$('p11') || !$('deskarea0')) return;
     build();
     installControlStateHook();
+    installWebRtcResetHook();
     update();
     if (typeof MutationObserver === 'function') {
       var observer = new MutationObserver(schedule);

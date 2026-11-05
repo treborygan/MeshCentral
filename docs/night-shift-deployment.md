@@ -206,3 +206,7 @@ Native MeshCentral recording rows already open their detail dialog with Enter. N
 ## Socket-state diagnostics update — 2026-11-05
 
 Remote-session diagnostics now wrap MeshCentral's native `meshserver.onStateChanged` callback and schedule a status refresh after each disconnect or reconnect. The wrapper forwards the original `this` and arguments, returns its value, and uses `finally` so native exceptions propagate while the status still refreshes. A regression verifies both state transitions and native callback behavior. The full Night Shift suite passed 55/55, with bundle consistency and JavaScript syntax checks passing. This is source-only; the PRN security release gate remains open.
+
+## WebRTC path diagnostics — 2026-11-05
+
+Connection diagnostics now include the native `RTCPeerConnection.iceConnectionState` and data-channel `readyState`. A wrapper around MeshCentral's `webRtcDesktopReset()` retains a failed/disconnected ICE state after MeshCentral closes the WebRTC objects, while forwarding native arguments, return value and exceptions. New success/recovery state supersedes the retained failure. Tests exercise checking, failed/reset and connected/open states, including native cleanup. The full Night Shift suite passed 55/55; bundle consistency, syntax and whitespace checks passed. Source only; PRN deployment remains gated on the installed package's missing reviewed security fixes.
