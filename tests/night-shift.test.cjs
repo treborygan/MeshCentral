@@ -278,6 +278,29 @@ test('rendered native events can be opened from the keyboard',()=>{
   assert.match(css,/tr\[onclick\*="showEventDetails"\]:focus-visible/);
 });
 
+test('native recording rows open from Space without intercepting nested controls',()=>{
+  const row={dataset:{},tabIndex:0,listeners:{},keypresses:[],hasAttribute(name){return name==='tabindex';},
+    addEventListener(name,callback){(this.listeners[name]||=[]).push(callback);},
+    dispatchEvent(event){this.keypresses.push(event);if(this.onkeypress)this.onkeypress(event);return true;},
+    onkeypress(event){if(event.key==='Enter')this.opened=true;}};
+  const rootNode={querySelectorAll(selector){return selector==='tbody tr[onkeypress*="showRecordingDialog"]'?[row]:[];}};
+  const document={readyState:'complete',getElementById(id){return id==='p52recordings'?rootNode:null;}};
+  class KeyEvent{constructor(type,options){this.type=type;Object.assign(this,options);}}
+  const window={addEventListener(){}};
+  vm.runInNewContext(history,{window,document,console,KeyboardEvent:KeyEvent},{timeout:1000});
+  assert.equal(row.listeners.keydown.length,1);
+  let prevented=false;
+  row.listeners.keydown[0]({target:row,key:' ',preventDefault(){prevented=true;}});
+  assert.equal(prevented,true,'Space does not scroll the recording list');
+  assert.equal(row.opened,true,'Space invokes the row native recording-dialog keyboard handler');
+  assert.equal(row.keypresses.length,1);
+  assert.equal(row.keypresses[0].key,'Enter');
+  assert.equal(row.keypresses[0].bubbles,false,'the delegated native key event stays on the row');
+  row.listeners.keydown[0]({target:{},key:' ',preventDefault(){throw Error('nested controls must retain their own Space behavior');}});
+  window.__NightShiftHistory.refresh();
+  assert.equal(row.listeners.keydown.length,1,'native rerenders do not duplicate the keyboard handler');
+});
+
 test('history search counts matches and preserves date headings for matching recordings',()=>{
   const ids=new Map();
   class Element {

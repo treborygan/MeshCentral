@@ -198,3 +198,7 @@ Installed files and local HTTP response bodies match source SHA-256: CSS `3A5E7D
 ## Device health connection routes — 2026-11-05
 
 The source change replaces the misleading `Agent status` label with native `Connection routes`. Device state now identifies Agent, AMT CIRA, Intel AMT, Relay and MQTT separately, and reports Offline and Unavailable distinctly. It reads the existing native connection bitmask and adds no requests or persisted data. The focused health tests passed; the full Night Shift suite passed 54/54, and bundle consistency and JavaScript syntax checks passed. This source change was not installed on PRN: the verified PRN MeshCentral 1.3.1 package is missing reviewed security changes, so the production release gate remains open pending a supported package update and verification.
+
+## Recording keyboard access — 2026-11-05
+
+Native MeshCentral recording rows already open their detail dialog with Enter. Night Shift now maps Space on the focused row to that same native key handler, prevents page scrolling, and leaves nested links and controls untouched. The non-bubbling keyboard event does not invoke unrelated page shortcuts. The focused regression passed, the full Night Shift suite passed 55/55, and bundle consistency and JavaScript syntax checks passed. Source only; no PRN install was made while the security release gate remains open.

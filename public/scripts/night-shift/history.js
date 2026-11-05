@@ -46,6 +46,20 @@
       });
     });
   }
+  function enhanceRecordingRows() {
+    var root = $('p52recordings'); if (!root) return;
+    root.querySelectorAll('tbody tr[onkeypress*="showRecordingDialog"]').forEach(function (row) {
+      if (row.dataset.nsKeyboardReady === '1') return;
+      row.dataset.nsKeyboardReady = '1';
+      if (!row.hasAttribute('tabindex')) row.tabIndex = 0;
+      row.addEventListener('keydown',function (event) {
+        if (event.target !== row || (event.key !== ' ' && event.key !== 'Spacebar')) return;
+        event.preventDefault();
+        if (typeof KeyboardEvent !== 'function' || typeof row.dispatchEvent !== 'function') return;
+        row.dispatchEvent(new KeyboardEvent('keypress',{key:'Enter',bubbles:false,cancelable:true}));
+      });
+    });
+  }
   function filterEvents(query) {
     var root = $('p3events'), total = 0, visible = 0; if (!root) return {total:0,visible:0};
     var tables = root.querySelectorAll('table.p3eventsTable');
@@ -96,6 +110,7 @@
     addSearch('p3', 'p3title', 'events', 'Search events');
     addSearch('p52', 'p52title', 'recordings', 'Search recordings');
     enhanceEventRows();
+    enhanceRecordingRows();
     filter('events'); filter('recordings');
   }
   function boot() {
