@@ -387,6 +387,9 @@ test('upload history observes native acknowledgments and retries through the nat
   assert.equal(list.children.length,1,'clearing replaces rows with the empty history message');
   assert.equal(list.children[0].textContent,'Transfers started in this page will appear here.');
   assert.equal(announcement.textContent,'Transfer history cleared.','clearing the local history is announced');
+  for(let i=0;i<22;i++)window.p13downloadDeviceFile('history%2Fitem-'+i+'.bin');
+  assert.equal(list.children.length,20,'transfer history remains bounded to the newest 20 page-session entries');
+  assert.equal(list.children[0].children[0].textContent,'item-21.bin','the newest transfer stays first when older entries are dropped');
 });
 
 test('quick power and command actions mirror MeshCentral rights and open its native audit flow',()=>{
