@@ -280,7 +280,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     setAttribute(name,value){this.attributes[name]=String(value);}
     getAttribute(name){return this.attributes[name]??null;}
     addEventListener(name,handler){(this.events[name]||=[]).push(handler);}
-    click(){this.clickCount=(this.clickCount||0)+1;(this.events.click||[]).forEach(handler=>handler({type:'click'}));}
+    click(){this.clickCount=(this.clickCount||0)+1;(this.events.click||[]).forEach(handler=>handler({type:'click',preventDefault(){},stopPropagation(){}}));}
     dispatchEvent(event){(this.events[event.type]||[]).forEach(handler=>handler(event));return true;}
     getClientRects(){return this.hidden?[]:[{}];}
     querySelector(selector){
@@ -312,8 +312,13 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   list.deviceCheckboxes=[new MockElement('input'),new MockElement('input')];
   add('MainDevDesktop');add('MainDevTerminal');add('MainDevFiles');
   const opened=[];
+  const favoriteWrites=[];
+  const updatedNativeDevices=[];
   const window={
     addEventListener(){},
+    stars:{},
+    putstore:(key,value)=>favoriteWrites.push({key,value}),
+    updateDeviceViewDevice:id=>updatedNativeDevices.push(id),
     nodes:[
       {_id:'node//online',name:'Workstation',meshid:'mesh//one',conn:1,osdesc:'Windows',v:true},
       {_id:'node//offline',name:'Archive',meshid:'mesh//one',conn:0,osdesc:'Linux',v:true}
@@ -354,7 +359,31 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.ok(inventory,'The native device collection is enhanced');
   const cards=inventory.children[2].children;
   assert.equal(cards.length,2,'Two authorized live device objects produce two cards');
-  cards[0].click();
+  const onlineCard=cards[0].children.find(node=>node.classList.contains('ns-live-device'));
+  let favorite=cards[0].children.find(node=>node.classList.contains('ns-live-favorite'));
+  assert.ok(onlineCard,'Each device keeps a native-navigation card action');
+  assert.ok(favorite,'Each device exposes a separate accessible favorite control');
+  favorite.click();
+  assert.equal(window.stars['node//online'],1,'Favorite action updates MeshCentral native stars');
+  assert.equal(favoriteWrites[0].key,'stars','Favorite state uses MeshCentral user preferences');
+  assert.deepEqual(JSON.parse(favoriteWrites[0].value),{'node//online':1});
+  assert.equal(favorite.getAttribute('aria-pressed'),'true');
+  assert.deepEqual(updatedNativeDevices,['node//online'],'Native device row refreshes after a favorite change');
+  const favoriteTab=inventory.children[1].children[1].children.find(node=>node.dataset.filter==='favorites');
+  assert.ok(favoriteTab,'The inventory offers a native favorites filter');
+  favoriteTab.click();
+  assert.equal(inventory.children[2].children.length,1,'Favorites filter shows only native-starred devices');
+  const allTab=inventory.children[1].children[1].children.find(node=>node.dataset.filter==='all');
+  allTab.click();
+  favorite=inventory.children[2].children[0].children.find(node=>node.classList.contains('ns-live-favorite'));
+  favorite.click();
+  assert.equal(window.stars['node//online'],undefined,'Favorite action can remove a native star');
+  assert.equal(favorite.getAttribute('aria-pressed'),'false');
+  for(let i=0;i<200;i++)window.stars['node//cap-'+i]=1;
+  window.__nightShiftDevices.refresh();
+  const cappedFavorite=inventory.children[2].children[0].children.find(node=>node.classList.contains('ns-live-favorite'));
+  assert.equal(cappedFavorite.disabled,true,'The card control respects MeshCentral\'s 200-favorite limit');
+  inventory.children[2].children[0].children.find(node=>node.classList.contains('ns-live-device')).click();
   assert.deepEqual(opened,['node//online'],'Clicking a live card delegates to upstream gotoDevice');
   const toggle=inventory.children[0].children[1];
   toggle.click();
@@ -369,6 +398,7 @@ test('structural layer remains progressive with native sessions and no synthetic
     assert.ok(js.includes(token), 'Missing live UI component '+token);
     assert.ok(css.includes(token), 'Missing matching visual component '+token);
   }
+  assert.ok(css.includes('.ns-live-favorite[aria-pressed="true"]'),'Favorite state has a visible active treatment');
   assert.match(js,/countRenderedDevices/);
   assert.match(js,/\[name="xxdevice1"\]/);
   assert.match(js,/Remote session connected/);
