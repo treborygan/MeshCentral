@@ -29,7 +29,8 @@
     ['Intel AMT','MainDevAmt',14], ['Console','MainDevConsole',15],
     ['Plugins','MainDevPlugins',19]
   ];
-  let backdrop, input, results, dock, nav, searchReturnFocus = null, refreshScheduled = false, toastHandle;
+  let backdrop, input, results, dock, nav, modifierPanel, modifierToggle, modifierButtons = {}, modifiersOpen = false;
+  let searchReturnFocus = null, refreshScheduled = false, toastHandle;
   // MeshCentral 1.3.1's default3.handlebars omits width=device-width.
   // Android otherwise retains a ~980 CSS-px layout viewport while touch-only
   // JS navigation activates, producing both the desktop sidebar and mobile bar.
@@ -223,6 +224,8 @@
     dock.setAttribute('aria-label','Touch remote desktop controls');
     const primary=make('div','ns-dock-row');
     const secondary=make('div','ns-dock-row ns-dock-secondary');
+    modifierPanel=make('div','ns-dock-modifiers');modifierPanel.id='ns-dock-modifiers';modifierPanel.hidden=true;
+    modifierPanel.setAttribute('role','group');modifierPanel.setAttribute('aria-label','Sticky keyboard modifiers');
     function add(parent,title,klass,callback,id) {
       const b=button(title,'ns-dock-action '+(klass||''),callback);
       if(id)b.id=id;
@@ -250,7 +253,14 @@
     add(secondary,'Fullscreen','',()=>act(()=>nativeFunctionWithArg('deskToggleFull',{shiftKey:false}),'Fullscreen unavailable'));
     add(secondary,'Monitors','',()=>act(()=>nativeClick('DeskScreens'),'Monitor selection unavailable'),'ns-monitors');
     add(secondary,'More actions','',()=>act(()=>nativeFunction('deskToggleMobileActions'),'Use the original desktop toolbar'));
-    dock.append(primary,secondary);document.body.append(dock);
+    modifierToggle=button('Modifiers','ns-dock-action',()=>{modifiersOpen=!modifiersOpen;scheduleUpdate();},'Show sticky keyboard modifiers');
+    modifierToggle.id='ns-modifier-toggle';modifierToggle.setAttribute('aria-controls','ns-dock-modifiers');modifierToggle.setAttribute('aria-expanded','false');
+    secondary.append(modifierToggle);
+    [['ctrl','CTRL'],['shift','SHIFT'],['alt','ALT']].forEach(function (item) {
+      const mod=button(item[1],'ns-dock-modifier',()=>act(()=>nativeFunctionWithArg('toggleMobileModifier',item[0]),item[1]+' unavailable'));
+      mod.id='ns-mod-'+item[0];mod.setAttribute('aria-pressed','false');modifierButtons[item[0]]=mod;modifierPanel.append(mod);
+    });
+    dock.append(primary,secondary,modifierPanel);document.body.append(dock);
   }
   function updateNow(){
     const small=mobile(), remote=remoteOpen();
@@ -287,6 +297,18 @@
       const k=$('ns-keyboard');if(k)k.disabled=!connected||typeof window.toggleMobileKeyboard!=='function';
       const z=$('ns-zoom');if(z)z.disabled=!connected||typeof window.deskMobileToggleZoom!=='function';
       const inputAllowed=connected&&usable($('DeskWD'));
+      const control=$('DeskControl'),nativeModifiers=window._mobileModifiers||{};
+      if(!connected)modifiersOpen=false;
+      modifierToggle.hidden=typeof window.toggleMobileModifier!=='function';
+      modifierToggle.disabled=!connected||!control||control.disabled||control.checked!==true;
+      modifierToggle.setAttribute('aria-expanded',modifiersOpen?'true':'false');
+      modifierPanel.hidden=!connected||!modifiersOpen||typeof window.toggleMobileModifier!=='function';
+      Object.keys(modifierButtons).forEach(function (mod) {
+        const active=nativeModifiers[mod]===true,button=modifierButtons[mod];
+        button.disabled=!connected||!control||control.disabled||control.checked!==true;
+        button.setAttribute('aria-pressed',active?'true':'false');
+        button.setAttribute('aria-label',(active?'Release ':'Hold ')+mod.toUpperCase());
+      });
       const keys=$('ns-keys');if(keys)keys.disabled=!inputAllowed;
       ['ns-send-key','ns-type-text','ns-cad','ns-escape'].forEach(id=>{const key=$(id);if(key)key.disabled=!inputAllowed;});
       const type=$('ns-type-text');if(type)type.hidden=!usable($('DeskType'));

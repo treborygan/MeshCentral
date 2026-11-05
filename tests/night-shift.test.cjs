@@ -66,6 +66,8 @@ test('mobile dock state follows native page and control changes without polling'
   assert.doesNotMatch(mobileControls,/setInterval/);
   assert.match(mobileControls,/searchReturnFocus/);
   assert.match(mobileControls,/aria-expanded','false'/);
+  assert.match(mobileControls,/toggleMobileModifier/);
+  assert.match(mobileControls,/window\._mobileModifiers/);
   assert.match(mobileControls,/Disable trackpad mode/);
   assert.match(mobileControls,/Disable right-click mode/);
 });
@@ -446,17 +448,20 @@ function createMobileHarness(isMobile = true) {
   const disconnect = addExisting('disconnectbutton1', false);
   addExisting('DeskScreens');
   addExisting('DeskWD');
+  const inputControl=addExisting('DeskControl');inputControl.checked=true;
   addExisting('DeskType');
   addExisting('DeskClipboardOutButton');
   addExisting('DeskClipboardInButton');
   const calls = [];
   const window = {
     trackpadMode: false,
+    _mobileModifiers:{ctrl:false,shift:false,alt:false},
     go: page => calls.push(['go', page]),
     deskToggleTrackpad: () => calls.push(['trackpad']),
     toggleMobileKeyboard: () => calls.push(['keyboard']),
     deskMobileToggleZoom: () => calls.push(['zoom']),
     deskToggleRightClickMode: () => calls.push(['right-click']),
+    toggleMobileModifier: mod => { window._mobileModifiers[mod]=!window._mobileModifiers[mod];calls.push(['modifier',mod]); },
     deskToggleFull: event => calls.push(['fullscreen', event]),
     deskToggleMobileActions: () => calls.push(['more-actions']),
     showDesktopSettings: () => calls.push(['settings']),
@@ -588,6 +593,11 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   assert.equal(more.getAttribute('aria-expanded'),'false');
   mobileNav.children[0].click();
   assert.deepEqual(h.calls.at(-1), ['go', 1], 'hidden desktop navigation falls back to MeshCentral go()');
+  h.byId.get('ns-modifier-toggle').click();
+  assert.equal(h.byId.get('ns-dock-modifiers').hidden,false,'Modifier buttons are available in an expanded touch tray');
+  h.byId.get('ns-mod-ctrl').click();
+  assert.equal(h.byId.get('ns-mod-ctrl').getAttribute('aria-pressed'),'true','Pressed state mirrors the native held modifier');
+  assert.deepEqual(h.calls.at(-1),['modifier','ctrl'],'Modifier down/up behavior delegates to MeshCentral native input handling');
 });
 
 test('desktop viewport keeps the mobile navigation and remote dock out of view', () => {
