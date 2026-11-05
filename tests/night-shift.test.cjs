@@ -17,6 +17,7 @@ const files = read('public/scripts/night-shift/files.js');
 const actions = read('public/scripts/night-shift/actions.js');
 const alerts = read('public/scripts/night-shift/alerts.js');
 const pwa = read('public/scripts/night-shift/pwa.js');
+const capabilities = read('public/scripts/night-shift/capabilities.js');
 
 test('custom script bundle matches its modular source components',()=>{
   const result=spawnSync(process.execPath,['scripts/build-night-shift.js','--check'],{cwd:root,encoding:'utf8'});
@@ -101,6 +102,37 @@ test('PWA install shortcut uses native browser installability and user gesture',
   assert.match(pwa,/appinstalled/);
   assert.doesNotMatch(pwa,/serviceWorker\.register|caches\.open|fetch\s*\(/);
   assert.match(read('views/default3.handlebars'),/rel="manifest" href="\{\{\{domainurl\}\}\}manifest\.json"/);
+});
+
+test('device capability summary reads native tab availability without replacing navigation',()=>{
+  assert.match(capabilities,/MainDevDesktop/);
+  assert.match(capabilities,/MainDevTerminal/);
+  assert.match(capabilities,/MainDevFiles/);
+  assert.match(capabilities,/MainDevAmt/);
+  assert.match(capabilities,/Unavailable/);
+  assert.doesNotMatch(capabilities,/dispatchEvent|\.click\(|gotoDevice|meshserver\.send/);
+});
+
+test('capability summary updates from the native tab visibility state',()=>{
+  class FakeElement {
+    constructor(){this.children=[];this.style={display:'block'};this.attributes={};this.dataset={};this.hidden=false;this.disabled=false;this.className='';}
+    append(...children){children.forEach(child=>this.children.push(child));}
+    insertBefore(child){this.children.unshift(child);}
+    setAttribute(k,v){this.attributes[k]=v;}
+    getAttribute(k){return this.attributes[k] ?? null;}
+    getClientRects(){return this.style.display==='none'||this.hidden?[]:[{}];}
+  }
+  const ids=new Map(), p10=new FakeElement(), host=new FakeElement();ids.set('p10',p10);ids.set('p10info',host);
+  for(const id of ['MainDevDesktop','MainDevTerminal','MainDevFiles','MainDevAmt']){const el=new FakeElement();ids.set(id,el);}
+  ids.get('MainDevTerminal').style.display='none';ids.get('MainDevAmt').style.display='none';
+  const document={readyState:'complete',getElementById:id=>ids.get(id)||null,createElement:()=>new FakeElement(),addEventListener(){}};
+  const window={};
+  vm.runInNewContext(capabilities,{window,document,console,getComputedStyle:el=>el.style},{timeout:1000});
+  const panel=host.children[0], rows=panel.children[1].children;
+  assert.equal(rows[0].children[1].textContent,'Available');
+  assert.equal(rows[1].children[1].textContent,'Unavailable');
+  ids.get('MainDevFiles').style.display='none';window.__NightShiftCapabilities.refresh();
+  assert.equal(rows[2].children[1].textContent,'Unavailable');
 });
 
 function createMobileHarness(isMobile = true) {

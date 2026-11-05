@@ -1342,3 +1342,12 @@ body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
 .ns-alert-status{margin:.65rem 0 0;color:var(--ns-muted,#a9bac3);font-size:.82rem}
 .ns-install-app{padding:.45rem .7rem;border:1px solid var(--ns-accent,#66d6ac);border-radius:9px;background:transparent;color:inherit;font-size:.85rem}
 .ns-install-app:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
+.ns-capabilities{margin:0 0 1rem;padding:1rem;border:1px solid var(--ns-line,#344652);border-radius:14px;background:var(--ns-surface,#17242e);color:var(--ns-text,#eef5f5)}
+.ns-capabilities h3{margin:0 0 .7rem;font-size:1rem}
+.ns-capabilities-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:.5rem}
+.ns-capability-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.6rem .7rem;border-radius:9px;background:rgba(255,255,255,.035)}
+.ns-capability-name{font-size:.88rem}
+.ns-capability-status{font-size:.8rem}
+.ns-capability-status.is-available{color:var(--ns-accent,#66d6ac)}
+.ns-capability-status.is-unavailable{color:var(--ns-muted,#a9bac3)}
+.ns-capability-note{margin:.7rem 0 0;color:var(--ns-muted,#a9bac3);font-size:.78rem}

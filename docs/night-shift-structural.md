@@ -4,7 +4,7 @@ Branch: `feature/night-shift-structural` (built on `fix/night-shift-mobile-layou
 
 ## Scope and implementation boundary
 
-This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell, devices, diagnostics, sessions, profiles, health, history, files, actions, alerts and PWA components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
+This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell, devices, diagnostics, sessions, profiles, health, history, files, actions, alerts, PWA and capabilities components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
 
 Included:
 - Contextual workspace appbar with live page title, native navigation search, and a functional More menu exposing only original account-accessible sections.
@@ -27,6 +27,7 @@ Included:
 - Device Details offers opt-in connection-change and CPU/memory threshold alerts per device, with per-alert-key five-minute duplicate suppression and configurable local quiet hours. Preferences use MeshCentral web state and browser notifications are requested only after user enablement. Connection changes observe native status DOM updates; metric samples come from the native graph update hook and require the graph to be open. Storage thresholds and background multi-device monitoring remain pending.
 - The appbar offers an accessible install button only when the browser signals installability. It uses MeshCentral's native manifest and worker; the current worker supports push notifications but no offline app-shell cache. Installability and launch behavior still require supported-browser/device acceptance.
 - The current MeshCentral UI/API paths reviewed expose immediate, permission-checked and audited command/power actions, but no scheduled-action endpoint. Scheduling remains pending until a supported server-side mechanism is identified; browser timers are not used as a substitute.
+- A Device Details capability summary reflects the visibility of MeshCentral's native Desktop, Terminal, Files and AMT tabs, displaying Unavailable when the account/device cannot access them. It does not modify native tab state. Role and device acceptance is still pending.
 
 The actual browser must supply MeshCentral's expected IDs. Components are created only after authenticated markup exists. When the corresponding native section or permission-gated control is absent, enhanced actions are withheld. Live session and rendered inventory state are derived from existing DOM and never asserted from mocks.
 
