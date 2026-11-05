@@ -112,6 +112,48 @@ test('history search filters only native rendered events and recordings',()=>{
   assert.doesNotMatch(history,/meshserver\.send|downloadFile|openRecodringPlayer|localStorage|sessionStorage/);
 });
 
+test('history search counts matches and preserves date headings for matching recordings',()=>{
+  const ids=new Map();
+  class Element {
+    constructor(tag,text=''){this.tagName=tag.toUpperCase();this.children=[];this.attributes={};this.events={};this.hidden=false;this.value='';this._text=text;this.parentNode=null;this.kind='';}
+    set id(value){this._id=value;ids.set(value,this);} get id(){return this._id||'';}
+    set textContent(value){this._text=String(value);this.children=[];} get textContent(){return this._text+this.children.map(child=>child.textContent).join('');}
+    append(...nodes){nodes.forEach(node=>{node.parentNode=this;this.children.push(node);});}
+    setAttribute(name,value){this.attributes[name]=String(value);}
+    addEventListener(name,fn){(this.events[name]||=[]).push(fn);}
+    dispatch(name){(this.events[name]||[]).forEach(fn=>fn({target:this}));}
+    querySelectorAll(selector){
+      if(selector==='table.p3eventsTable')return this.tables||[];
+      if(selector==='tr'||selector==='tbody tr')return this.rows||this.children.filter(node=>node.tagName==='TR');
+      if(selector==='td')return this.children.filter(node=>node.tagName==='TD');
+      if(selector==='tbody')return this.bodies||[];
+      return [];
+    }
+    querySelector(selector){if(selector==='td[colspan]'&&this.header)return this.children[0]||null;return null;}
+    get nextElementSibling(){if(!this.parentNode)return null;const i=this.parentNode.children.indexOf(this);return this.parentNode.children[i+1]||null;}
+  }
+  const makeRow=(text,cells,header=false)=>{const row=new Element('tr');row.header=header;row.cells=cells;for(let i=0;i<cells;i++)row.append(new Element('td',i===0?text:''));return row;};
+  const p3events=new Element('div');p3events.id='p3events';
+  const eventTable=new Element('table');eventTable.rows=[makeRow('date',4,true),makeRow('Disk alert',3),makeRow('',0),makeRow('User login',3),makeRow('',0)];eventTable.rows.forEach(row=>eventTable.append(row));p3events.tables=[eventTable];
+  const p52recordings=new Element('div');p52recordings.id='p52recordings';
+  const tbody=new Element('tbody');tbody.rows=[makeRow('2026-11-05',4,true),makeRow('Alpha workstation',2),makeRow('Beta laptop',2)];tbody.rows.forEach(row=>tbody.append(row));p52recordings.bodies=[tbody];
+  ['p3','p3title','p52','p52title'].forEach(id=>{const el=new Element('div');el.id=id;});
+  const document={readyState:'complete',createElement:tag=>new Element(tag),getElementById:id=>ids.get(id)||null,addEventListener(){}};
+  vm.runInNewContext(history,{window:{addEventListener(){}},document,console,MutationObserver:class{observe(){}}},{timeout:1000});
+  const eventsInput=ids.get('p3title').children[0].children[1],recordingsInput=ids.get('p52title').children[0].children[1];
+  const eventStatus=ids.get('p3title').children[1],recordingStatus=ids.get('p52title').children[1];
+  assert.equal(eventStatus.textContent,'2 loaded events.');
+  assert.equal(recordingStatus.textContent,'2 loaded recordings.');
+  eventsInput.value='disk';eventsInput.dispatch('input');
+  assert.equal(eventTable.rows[1].hidden,false);assert.equal(eventTable.rows[3].hidden,true);assert.equal(eventStatus.textContent,'Showing 1 of 2 loaded events.');
+  recordingsInput.value='alpha';recordingsInput.dispatch('input');
+  assert.equal(tbody.rows[0].hidden,false,'The date heading stays visible while its group has a match');
+  assert.equal(tbody.rows[2].hidden,true);assert.equal(recordingStatus.textContent,'Showing 1 of 2 loaded recordings.');
+  recordingsInput.value='no match';recordingsInput.dispatch('input');
+  assert.equal(tbody.rows[0].hidden,true,'The date heading hides with an empty group');
+  assert.equal(recordingStatus.textContent,'No matching recordings in loaded records.');
+});
+
 test('file workspace filters the current folder and uses native selection actions',()=>{
   assert.match(files,/p13files/);
   assert.match(files,/p13filetree/);
