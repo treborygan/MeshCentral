@@ -308,7 +308,7 @@
       const activeModifiers=Object.keys(modifierButtons).filter(mod=>nativeModifiers[mod]===true).length;
       modifierToggle.textContent=activeModifiers?'Modifiers ('+activeModifiers+')':'Modifiers';
       modifierToggle.setAttribute('aria-label',activeModifiers?'Show keyboard modifiers, '+activeModifiers+' active':'Show keyboard modifiers');
-      modifierRelease.disabled=!connected||!control||control.disabled||control.checked!==true||activeModifiers===0||typeof window._releaseMobileModifiers!=='function';
+      modifierRelease.disabled=!connected||activeModifiers===0||typeof window._releaseMobileModifiers!=='function';
       Object.keys(modifierButtons).forEach(function (mod) {
         const active=nativeModifiers[mod]===true,button=modifierButtons[mod];
         button.disabled=!connected||!control||control.disabled||control.checked!==true;

@@ -33,7 +33,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [x] Quick launch from Recent/Favorites and safe reconnection by routing through native `gotoDevice()` and exposing MeshCentral's existing Connect controls; tabs never auto-connect or bypass permissions.
 - [x] Touch dock exposes local/remote clipboard transfer, text entry, common shortcuts and selected special-key sending through native MeshCentral handlers. The keyboard map preference is per device and uses native/remote mapping modes.
 - [x] Touch dock labels trackpad and right-click mode from the live native session state, with pressed state and action-specific accessible labels.
-- [x] Touch dock exposes an expandable Ctrl/Shift/Alt sticky-modifier tray and native Release all action; connection/input permission changes and native soft-keyboard input refresh availability and pressed indicators.
+- [x] Touch dock exposes an expandable Ctrl/Shift/Alt sticky-modifier tray and native Release all cleanup (available even when input is disabled); connection/input permission changes and native soft-keyboard input refresh availability and pressed indicators.
 - [ ] Verify clipboard permissions, international input layouts, shortcuts and mobile controls against real Agent, RDP and AMT sessions.
 - [ ] Verify connection-state transitions and permission-preserving unavailable/error states in authenticated Agent, RDP and AMT sessions. Source guidance derives only from observable browser, channel, route, native session and canvas state.
 

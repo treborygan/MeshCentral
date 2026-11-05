@@ -650,8 +650,12 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   h.documentEvents.input.forEach(fn=>fn({target:{id:'softKeyboard'}}));
   assert.equal(h.byId.get('ns-mod-ctrl').getAttribute('aria-pressed'),'false','Native soft-keyboard input releases and refreshes the modifier state');
   const deskControl=h.byId.get('DeskControl');deskControl.checked=false;
+  h.window._mobileModifiers.shift=true;
   h.documentEvents.change.forEach(fn=>fn({target:deskControl}));
   assert.equal(h.byId.get('ns-modifier-toggle').disabled,true,'The modifier tray follows native remote-input permission changes');
+  assert.equal(h.byId.get('ns-mod-release').disabled,false,'Native key-up cleanup remains available when remote input is disabled');
+  h.byId.get('ns-mod-release').click();
+  assert.equal(h.window._mobileModifiers.shift,false,'Release all clears a held modifier without remote input permission');
 });
 
 test('desktop viewport keeps the mobile navigation and remote dock out of view', () => {
