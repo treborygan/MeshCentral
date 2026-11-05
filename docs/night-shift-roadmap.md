@@ -68,7 +68,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [ ] Verify the exact installed PRN source revision and confirm those upstream fixes are present before release. PRN's package reports 1.3.1, but its source revision is not recorded and targeted installed-file hashes do not match `origin/master`; package version alone is insufficient evidence.
 - [ ] Complete authenticated workflows for admin and restricted roles, Agent desktop, browser RDP, terminal, files, reconnect, guest, recordings, AMT and plugins.
 - [ ] Complete screenshot comparison and live physical-device checks; keep the PR draft until these pass.
-- [x] Recheck installed asset and rollback hashes for source commit `e44bc2e7`; verify the running revision through local HTTP and confirm the rollback manifest.
+- [x] Recheck installed asset and rollback hashes for source commits `e44bc2e7` and `1f5a3b98`; verify the running revision through local HTTP and confirm rollback manifests.
 - [ ] Complete authenticated visual review at 390×844, tablet and desktop sizes, plus physical phones. Playwright Chromium screenshots now cover only the unauthenticated PRN login page; they do not verify dashboard or current source branch rendering.
 
 ## Current evidence and blockers
@@ -78,6 +78,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - Source-only slice after that deployment: the My User Groups screen now has a responsive bulk-action toolbar, clearer native group rows and visible keyboard focus. It preserves the existing MeshCentral selection and `gotoUserGroup()` handlers; live visual and authenticated role acceptance have not been performed.
 - A follow-on source-only slice applies the same responsive visual system to My Users, keeping native search, selection, bulk actions, online/offline grouping and user navigation. Live visual and authenticated role acceptance remain outstanding.
 - User-group details now stack the native group information, illustration and state on narrow screens; source regression coverage verifies the mobile structure, but authenticated visual acceptance remains pending.
+- PRN received the user administration styling from `1f5a3b98` using the verified web-only installer. The new backup is `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-115040-fd71df`; CSS/JS source, installed and served byte hashes match. Root and asset endpoints returned HTTP 200. This is deployment evidence, not authenticated visual or workflow acceptance.
 - Event-driven diagnostics are deployed. They do not poll, inspect tunnel health after authentication, or replace MeshCentral connection controls; authenticated visual acceptance is pending.
 - Multi-session tabs are deployed and display existing MeshCentral `multiDesktop` sessions; switching and closing use native permission-aware handlers. They do not open additional transports or persist session content.
 - Per-device profiles are deployed and store only an allow-listed preference object under account/device-specific browser storage. Agent quality/scaling/keyboard map use the native desktop object; monitor and fullscreen use native display/viewer controls. RDP/AMT expose only the settings supported by their native objects, with unavailable settings reported rather than simulated.

@@ -39,6 +39,15 @@ The installer reports the exact backup directory. Use that path:
 
 Hard-refresh after rollback. Restore both override files independently; if a target file did not exist before, the installer deletes it. No service, agent or database rollback is necessary.
 
+## User administration responsive styling — 2026-11-05
+
+- Installed source commit: `1f5a3b98` (`feat(ui): make user group details responsive`). The deployment contains the preceding user-group list and My Users responsive styling from the same feature branch.
+- Verified target: `C:\ProgramData\MeshCentral`, with `meshcentral-data` present. The installer `-WhatIf` check passed before installation.
+- The standard installer backed up the prior CSS and JS, then replaced only `meshcentral-web/public/styles/custom.css` and `meshcentral-web/public/scripts/custom.js`. It left MeshCentral configuration, data, agents, services and Cloudflare unchanged.
+- Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-115040-fd71df`. Its manifest records both prior files and SHA-256 hashes.
+- Post-install, the site root and both local override endpoints returned HTTP 200. Source, installed and served CSS SHA-256 all match `2E52F8DF617365E7E887C4178472C43276704BF2D677D0805F0DA0801F5B5E49`; source, installed and served JS SHA-256 all match `8F246999A5A22C9D73790EA62F86897496BAD0379C8D9F0A5653BC1042229B24`. Mesh Agent and MeshCentralCloudflared remained running.
+- Authenticated visual review and restricted/admin user-group workflows were not performed; this verifies asset installation and serving only.
+
 ## Structural UI branch rollout — 2026-11-04
 
 The structural Night Shift revision was installed on PCRN from PR #3 source commit `989ae01333c0fc66fa19bc5de77152228345736`. The PR remains a draft; its latest source revision at the time of installation is recorded here so deployment evidence is not mistaken for release acceptance.
