@@ -23,6 +23,14 @@ const devicesSource = read('public/scripts/night-shift/devices.js');
 const mobileControls = read('public/scripts/night-shift/mobile-controls.js');
 const shell = read('public/scripts/night-shift/shell.js');
 
+test('native clipboard permission failures provide mobile feedback without replacing transport',()=>{
+  const template=read('views/default3.handlebars');
+  assert.match(mobileControls,/notifyClipboardError:function\(\)\{message\('Clipboard access was blocked\./);
+  assert.match(template,/navigator\.clipboard\.writeText\(text\)\.then\(function \(\) \{ \}\)\.catch\(function \(err\) \{ console\.log\(err\); if \(window\.__nightShiftUI\) window\.__nightShiftUI\.notifyClipboardError\(\); \}\)/);
+  assert.match(template,/navigator\.clipboard\.readText\(\)\.then\(function \(text\)/);
+  assert.match(template,/if \(window\.__nightShiftUI\) window\.__nightShiftUI\.notifyClipboardError\(\);/);
+});
+
 test('desktop navigation rail expands accessibly without replacing native routes',()=>{
   assert.match(mobileControls,/function installRailToggle\(\)/);
   assert.match(mobileControls,/aria-controls', 'page_leftbar'/);

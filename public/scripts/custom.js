@@ -369,7 +369,7 @@
     addEventListener('orientationchange',scheduleUpdate,{passive:true});
     document.addEventListener('visibilitychange',scheduleUpdate);
   }
-  window.__nightShiftUI={version:'1.0.0',refresh:scheduleUpdate,search:showSearch};
+  window.__nightShiftUI={version:'1.0.0',refresh:scheduleUpdate,search:showSearch,notifyClipboardError:function(){message('Clipboard access was blocked. Allow clipboard access for this site, then try again.');}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
 })();

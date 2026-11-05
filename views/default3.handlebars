@@ -9898,7 +9898,7 @@
             if (desktop == null || desktop.State != 3) return;
             if (desktop.m.getClipboard) {
                 var text = desktop.m.getClipboard();
-                if ((text != null) && (navigator.clipboard != null)) { navigator.clipboard.writeText(text).then(function () { }).catch(function (err) { console.log(err); }) } // Put remote clipboard data into our clipboard
+                if ((text != null) && (navigator.clipboard != null)) { navigator.clipboard.writeText(text).then(function () { }).catch(function (err) { console.log(err); if (window.__nightShiftUI) window.__nightShiftUI.notifyClipboardError(); }) } // Put remote clipboard data into our clipboard
             } else {
                 meshserver.send({ action: 'msg', type: 'getclip', nodeid: currentNode._id, tag: 2 });
             }
@@ -9916,7 +9916,7 @@
                 try {
                     navigator.clipboard.readText().then(function (text) {
                         if (desktop.m.setClipboard) { desktop.m.setClipboard(text); } else { meshserver.send({ action: 'msg', type: 'setclip', nodeid: currentNode._id, data: text }); }
-                    }).catch(function (err) { console.log(err); });
+                    }).catch(function (err) { console.log(err); if (window.__nightShiftUI) window.__nightShiftUI.notifyClipboardError(); });
                 } catch (ex) { console.log(ex); }
             }
             return true;
