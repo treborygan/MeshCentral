@@ -1083,7 +1083,8 @@
                 <input id="softKeyboard" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"
                     type="text" inputmode="text"
                     style="position:fixed;opacity:0;width:1px;height:1px;left:-9999px;top:-9999px"
-                    oninput="onSoftKeyboardInput(this)"
+                    oninput="onSoftKeyboardInput(this, event)"
+                    oncompositionend="onSoftKeyboardCompositionEnd(this, event)"
                     onblur="onSoftKeyboardFocusChange(false)"
                     onfocus="onSoftKeyboardFocusChange(true)" />
                 <!-- Trackpad cursor -->
@@ -12752,11 +12753,29 @@
         // Mobile keyboards fire 'input' instead of keypress -> SendKeyUnicode.
         var mobileKbdGotKeypress = false;
         var _mobileKbdEnabled = false;
+        var mobileKbdCompositionCommitPending = false;
 
-        function onSoftKeyboardInput(el) {
+        function onSoftKeyboardInput(el, inputEvent) {
+            if (inputEvent && inputEvent.isComposing) return;
+            if (mobileKbdCompositionCommitPending) { el.value = ''; return; }
             if (!desktop || !desktop.m || !Q('DeskControl').checked) { el.value = ''; return; }
             if (mobileKbdGotKeypress) { el.value = ''; return; } // desktop keyboard — already handled by keypress
             var str = el.value; el.value = '';
+            sendMobileKeyboardText(str);
+        }
+
+        function onSoftKeyboardCompositionEnd(el, compositionEvent) {
+            var text = (compositionEvent && typeof compositionEvent.data === 'string') ? compositionEvent.data : el.value;
+            el.value = '';
+            mobileKbdCompositionCommitPending = true;
+            setTimeout(function () {
+                mobileKbdCompositionCommitPending = false;
+                sendMobileKeyboardText(text);
+            }, 0);
+        }
+
+        function sendMobileKeyboardText(str) {
+            if (!desktop || !desktop.m || !Q('DeskControl').checked) return;
             var anyMod = _mobileModifiers.ctrl || _mobileModifiers.shift || _mobileModifiers.alt;
             if (str && desktop.m.SendKeyUnicode) {
                 for (var i = 0; i < str.length; i++) {

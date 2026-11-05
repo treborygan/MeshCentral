@@ -32,6 +32,37 @@ test('native clipboard permission failures provide mobile feedback without repla
   assert.match(template,/if \(window\.__nightShiftUI\) window\.__nightShiftUI\.notifyClipboardError\(\);/);
 });
 
+test('mobile soft keyboard waits for committed input-method text before native Unicode delivery',()=>{
+  const template=read('views/default3.handlebars');
+  assert.match(template,/oninput="onSoftKeyboardInput\(this, event\)"/);
+  assert.match(template,/oncompositionend="onSoftKeyboardCompositionEnd\(this, event\)"/);
+  assert.match(template,/if \(inputEvent && inputEvent\.isComposing\) return;/);
+  assert.match(template,/if \(mobileKbdCompositionCommitPending\) \{ el\.value = ''; return; \}/);
+  assert.match(template,/typeof compositionEvent\.data === 'string'\) \? compositionEvent\.data : el\.value/);
+  assert.match(template,/desktop\.m\.SendKeyUnicode\(desktop\.m\.KeyAction\.DOWN, c\)/);
+
+  const keyboard=template.match(/var mobileKbdGotKeypress = false;[\s\S]*?\n        function _updateSoftKbdIcon\(\)/);
+  assert.ok(keyboard,'native mobile keyboard handlers are present');
+  const sent=[],timers=[];
+  const context={
+    desktop:{m:{KeyAction:{DOWN:1,UP:2},SendKeyUnicode:(action,code)=>sent.push([action,code])}},
+    Q:()=>({checked:true}),_mobileModifiers:{ctrl:false,shift:false,alt:false},
+    _releaseMobileModifiers(){},setTimeout:callback=>timers.push(callback)
+  };
+  vm.runInNewContext(keyboard[0].replace(/\n        function _updateSoftKbdIcon\(\)$/,''),context);
+  const input={value:'に'};
+  context.onSoftKeyboardInput(input,{isComposing:true});
+  assert.equal(input.value,'に','intermediate composition remains available to the IME');
+  assert.deepEqual(sent,[],'uncommitted composition does not reach the remote session');
+  input.value='日本語';
+  context.onSoftKeyboardCompositionEnd(input,{data:'日本語'});
+  input.value='日本語';
+  context.onSoftKeyboardInput(input,{isComposing:false});
+  assert.equal(input.value,'','the browser follow-up input is consumed while the commit is queued');
+  timers[0]();
+  assert.deepEqual(sent,[[1,0x65e5],[2,0x65e5],[1,0x672c],[2,0x672c],[1,0x8a9e],[2,0x8a9e]],'only committed Unicode text is sent once through MeshCentral');
+});
+
 test('desktop navigation rail expands accessibly without replacing native routes',()=>{
   assert.match(mobileControls,/function installRailToggle\(\)/);
   assert.match(mobileControls,/aria-controls', 'page_leftbar'/);
