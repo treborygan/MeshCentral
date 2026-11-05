@@ -96,6 +96,14 @@ Hard-refresh after rollback. Restore both override files independently; if a tar
 - Post-install source, installed and served CSS SHA-256 all match `FE86DF1084427D5989DF0F8D6177874413FBFE444920E18D2D81DA3CB92B47B7`; JS hashes all match `BBDABBD8DD94A53287A58711F845D0857AC8174D78742BE2D666D699371810D7`. Root returned HTTP 200.
 - Authenticated device/role and visual acceptance remain outstanding.
 
+## Server statistics and tracing — 2026-11-05
+
+- Installed source commit: `c2aa0e58` (`feat(ui): improve server stats and tracing`).
+- PRN root and both override endpoints returned HTTP 200 before the standard installer ran. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-121204-54ab5b`.
+- Snapshot manifest records prior CSS SHA-256 `FE86DF1084427D5989DF0F8D6177874413FBFE444920E18D2D81DA3CB92B47B7` and JS SHA-256 `BBDABBD8DD94A53287A58711F845D0857AC8174D78742BE2D666D699371810D7`.
+- Post-install source, installed and served CSS SHA-256 all match `A335029697C85E6129DF65C6354D8CFF5F6D967F2F6E1B163D7E4BFDB9772420`; JS hashes all match `529EADCEBD20957EFF01EEFCA3E14A2CC4C75B324B310CA447625B1F0ECE9DB8`. Root returned HTTP 200.
+- Admin-authenticated chart and trace workflow acceptance remains outstanding.
+
 ## Structural UI branch rollout — 2026-11-04
 
 The structural Night Shift revision was installed on PCRN from PR #3 source commit `989ae01333c0fc66fa19bc5de77152228345736`. The PR remains a draft; its latest source revision at the time of installation is recorded here so deployment evidence is not mistaken for release acceptance.
