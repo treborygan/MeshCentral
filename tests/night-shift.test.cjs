@@ -25,6 +25,13 @@ const mobileControls = read('public/scripts/night-shift/mobile-controls.js');
 const shell = read('public/scripts/night-shift/shell.js');
 const sessionsSource = read('public/scripts/night-shift/sessions.js');
 
+test('CodeQL workflow grants SARIF upload permission and uses supported actions',()=>{
+  const workflow=read('.github/workflows/codeql-analysis.yml');
+  assert.match(workflow,/permissions:\s*\n\s+contents:\s*read\s*\n\s+security-events:\s*write/);
+  assert.match(workflow,/github\/codeql-action\/init@v4/);
+  assert.match(workflow,/github\/codeql-action\/analyze@v4/);
+});
+
 test('native clipboard permission failures provide mobile feedback without replacing transport',()=>{
   const template=read('views/default3.handlebars');
   assert.match(mobileControls,/notifyClipboardError:function\(\)\{message\('Clipboard access was blocked\./);

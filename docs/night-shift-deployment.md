@@ -291,7 +291,7 @@ Post-install loopback verification used the existing `127.0.0.1:9455` listener w
 
 ## GitHub Actions disabled confirmation — 2026-11-05
 
-A direct `gh workflow run night-shift-ui.yml --ref feature/night-shift-structural --repo treborygan/MeshCentral` attempt returned HTTP 422: `Actions has been disabled for this repository.` This confirms the missing current-head executions are not caused by the workflow path filters. The current head has no GitHub check runs; repository-level Actions re-enablement is required before any workflow can execute. The workflow's manual-dispatch entry can be used after the repository setting is restored and that workflow exists on the default branch. No repository security setting was changed.
+A direct `gh workflow run night-shift-ui.yml --ref feature/night-shift-structural --repo treborygan/MeshCentral` attempt returned HTTP 422: `Actions has been disabled for this repository.` Earlier CodeQL and Night Shift workflows nevertheless completed on commit `d6577919`; the dispatch response alone does not establish that all Actions were disabled. The current head had no run at this check. The workflow file is also absent from default-branch `master`, so the manual-dispatch path is unavailable until that file reaches the default branch.
 
 ## Landscape remote controls deployment — 2026-11-05
 
@@ -303,7 +303,7 @@ Chrome 156 rendered the current unauthenticated live login at 390×844 and 1440�
 
 ## GitHub Actions follow-up — 2026-11-05
 
-The current GitHub API reports repository Actions `enabled: true`, `allowed_actions: all`, and the Night Shift workflow state `active`. Sending the same settings in a PUT left them unchanged; workflow dispatch still fails with HTTP 422 `Actions has been disabled for this repository.` The workflow file is absent from `master` and exists on the feature branch only. GitHub documents a separate GitHub-controlled disabled state that repository settings cannot clear; support review may be needed if it persists ([GitHub Actions repository settings](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository)). The latest head has no CI run, and no expanded action permissions were granted.
+The current GitHub API reports repository Actions `enabled: true`, `allowed_actions: all`, and the Night Shift workflow state `active`. Workflow dispatch returns HTTP 422, while older commits have completed both push and pull-request workflows. The 2026-11-05 review found a concrete push-only CodeQL failure: SARIF upload lacked `security-events: write`; see the CodeQL repair section below. The workflow file remains absent from `master`, and the latest head still needs a hosted run.
 
 ## Security provenance recheck — 2026-11-05
 
@@ -313,4 +313,16 @@ The read-only PRN package audit still reports MeshCentral 1.3.1, verified npm ta
 
 The reproducible source build and isolated package/runtime results are recorded in [the pinned build report](night-shift-pinned-source-build.md). The package was not installed on PRN; the security provenance gate remains blocked for the currently installed package. The existing frontend-only production deployment boundary remains in effect.
 
-The workflow trigger was widened so every pull request update and every push to the two feature branches runs the focused UI, installer and pinned-source checks, including documentation-only updates. Local checks passed, but hosted Actions remains unverified: GitHub reports repository Actions enabled and the workflow active, while a manual dispatch returns HTTP 422 `Actions has been disabled for this repository.`
+The workflow trigger was widened so every pull request update and every push to the two feature branches runs the focused UI, installer and pinned-source checks, including documentation-only updates. Local checks passed; the latest branch head has no hosted run yet. A direct manual-dispatch request returns HTTP 422, but older push and pull-request workflows completed, so this response is not treated as proof that all Actions execution is disabled.
+
+## CodeQL push failure repair — 2026-11-05
+
+Inspection of the failed push run `41897152865` for `d6577919` showed CodeQL analyzed all 240 JavaScript files and failed when uploading SARIF with `Resource not accessible by integration`. The successful PR run for the same commit passed the Night Shift and CodeQL jobs. `.github/workflows/codeql-analysis.yml` now grants only `contents: read` and `security-events: write` to the CodeQL job and uses `github/codeql-action` v4 instead of v2. GitHub's [CodeQL Action documentation](https://github.com/github/codeql-action) requires the SARIF write permission and recommends the supported v4 line. Local YAML parsing passed. The new commit still needs a hosted run to verify the fix; no Actions run is associated with head `7d4e4288` yet.
+
+## PRN override and UI-mode recheck — 2026-11-05
+
+Using the local PRN route with `Host: rdp.treborygan.dev`, `/`, `/styles/custom.css` and `/scripts/custom.js` returned HTTP 200; the root HTML references both overrides. Both override responses use `Cache-Control: public, max-age=0`. CSS SHA-256 is `502839751482AC0E0773782B25F8A7CF7B6DFFA5BDC11EA2301FD8461FCBF6D7`; JavaScript SHA-256 is `2B39A1D7EBD64364DFEB9BBABC5DE34DA74E7DEF83CC70FAC69D889C8071BE4A`, matching the deployed `1781be93` assets.
+
+PRN's domain configuration leaves `siteStyle` unset, so it does not force the Modern UI. MeshCentral exposes its existing Modern UI toggle in that mode; Night Shift enhancement modules attach to the native Modern UI container, while the Classic fallback intentionally disables them. If an authenticated session still shows the original layout, check its existing Modern UI toggle. Configuration was not changed. Authenticated Chrome inspection remains unavailable because the browser-control host is down.
+
+The follow-up CodeQL permission fix and regression test are committed locally as `cc1c8f78` and `bb11d5de` but have not reached GitHub: pushes returned `Internal Server Error` and `fatal error in commit_refs_rules`. The remote PR head remains `7d4e4288`; rerun hosted workflows after GitHub accepts the next push.
