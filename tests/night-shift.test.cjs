@@ -1104,6 +1104,13 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.ok(ids.has('ns-overview'),'Native data dashboard is generated');
   assert.ok(ids.has('ns-device-actions'),'Device quick actions are generated');
   assert.equal(window.__nightShiftShell.version,'2.0.0');
+  const skipMain=ids.get('ns-skip-main');
+  assert.ok(skipMain,'Keyboard users receive a skip-to-main link before the native shell');
+  assert.equal(skipMain.textContent,'Skip to main content');
+  skipMain.click();
+  const detailsPage=ids.get('p10');
+  assert.equal(detailsPage.focused,true,'Skip link focuses the currently active native page');
+  assert.equal(detailsPage.getAttribute('tabindex'),'-1','Skip target is focusable without entering the sequential tab order');
   const overview=ids.get('ns-overview');
   const count=overview.children[1].children[1].children[1];
   assert.equal(count.textContent,'2','The dashboard counts rendered native device rows');
@@ -1223,8 +1230,10 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(inventory.children[2].children[0].children[0].textContent,'No recent devices yet. Open a device to add it here.','A second account cannot see the first account\'s recents');
   assert.equal(recentStorage.has('nightShiftRecentDevices:user/domain/other'),false,'Reading another account does not copy history');
   window.userinfo={_id:'user/domain/qa'};
-  page.hidden=true;remotePage.hidden=false;
+  page.hidden=true;detailsPage.hidden=true;remotePage.hidden=false;
   window.currentNode=window.nodes[0];
+  page.hidden=true;remotePage.hidden=false;skipMain.click();
+  assert.equal(remotePage.focused,true,'Skip link follows navigation to the active remote-session page');
   window.multiDesktop={'node//offline':{State:1,contype:1},'node//online':{State:3,contype:1}};
   window.__NightShiftDiagnostics.refresh();
   window.__NightShiftSessions.refresh();

@@ -221,6 +221,22 @@ input:disabled { opacity: .6; cursor: not-allowed; }
   outline-offset: 3px;
 }
 
+.ns-skip-main {
+  position: fixed;
+  z-index: 2200;
+  top: 8px;
+  left: 8px;
+  transform: translateY(calc(-100% - 16px));
+  padding: 10px 14px;
+  border: 1px solid var(--ns-border);
+  border-radius: 8px;
+  background: var(--ns-surface-raised);
+  color: var(--ns-foreground);
+  font-weight: 700;
+  box-shadow: 0 8px 24px #0008;
+}
+.ns-skip-main:focus-visible { transform: translateY(0); }
+
 #dialog {
   background: var(--ns-surface);
   color: var(--ns-foreground);

@@ -19,7 +19,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [ ] Match the approved Concept B across authenticated dashboard, inventory, groups, users, settings, administration, dialogs and detail screens; compare screenshots at phone, tablet and desktop sizes.
 - [ ] Complete and verify the remote-session-first viewer, floating/auto-hide controls, information drawer and fullscreen layouts. (A floating desktop toolbar now auto-hides and delegates Connect, RDP, Disconnect and Full Screen to visible native controls; mobile retains its dock; a collapsible session information drawer is implemented. Live fullscreen and visual acceptance remain pending.)
 - [ ] Verify touch, trackpad, zoom, keyboard modifiers and monitor selection on real Android and iOS devices.
-- [ ] Verify keyboard-only navigation, contrast, focus visibility, feedback and loading/empty/error states across major screens.
+- [ ] Verify keyboard-only navigation, contrast, focus visibility, feedback and loading/empty/error states across major screens. (A visible-on-focus skip link now precedes the native shell and moves focus to the currently active native page; cross-screen authenticated keyboard acceptance remains pending.)
 - [ ] Verify a clear, usable Classic UI fallback on the installed server. A local appbar switch disables the Night Shift stylesheet, skips every enhancement module and leaves an accessible return button; browser-level and installed-server acceptance remain pending.
 
 ## Phase 2 — remote-access workspace

@@ -82,6 +82,25 @@
     }
     return 'Workspace';
   }
+  function makeSkipLink() {
+    if (!document.body || $('ns-skip-main')) return;
+    var skip = create('a','ns-skip-main','Skip to main content');
+    skip.id = 'ns-skip-main';
+    skip.href = '#main-content';
+    skip.addEventListener('click',function (event) {
+      event.preventDefault();
+      var target = null;
+      for (var i = 0; i < routes.length; i++) {
+        var page = $(routes[i][0]);
+        if (visible(page)) { target = page; break; }
+      }
+      target = target || $('column_l');
+      if (!target || typeof target.focus !== 'function') return;
+      if (target.getAttribute('tabindex') === null) target.setAttribute('tabindex','-1');
+      target.focus();
+    });
+    document.body.insertBefore(skip,document.body.firstChild);
+  }
   function makeBar() {
     var host = $('column_l');
     if (!host || $('ns-appbar')) return;
@@ -262,6 +281,7 @@
   }
   function boot() {
     if (!$('container') || !$('column_l') || !$('LeftMenuMyDevices')) return;
+    makeSkipLink();
     makeBar(); makeDashboard(); makeDeviceTools(); makeRemoteState();
     if (!appbar) return;
     document.body.classList.add('ns-shell-ready');
