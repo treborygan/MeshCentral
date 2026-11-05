@@ -7,6 +7,15 @@
   if (window.__nightShiftUI) return;
   var classicMode = false;
   try { classicMode = window.localStorage && window.localStorage.getItem('_nsClassicUI') === '1'; } catch (error) { }
+  // Detect MeshCentral's native Classic template before the other bundled
+  // modules evaluate. The authenticated app templates load meshcentral.js;
+  // only default3 loads style-bootstrap.css. Login templates do not load the
+  // MeshCentral app runtime, so their existing Night Shift login styling stays.
+  try {
+    var hasNativeAppRuntime = !!document.querySelector('script[src*="meshcentral"]');
+    var hasModernUiStyles = !!document.querySelector('link[href*="style-bootstrap"]');
+    if (hasNativeAppRuntime && !hasModernUiStyles) classicMode = true;
+  } catch (error) { }
   window.__NightShiftClassicMode = !!classicMode;
   const $ = (id) => document.getElementById(id);
   const q = (selector, root = document) => root.querySelector(selector);

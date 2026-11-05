@@ -138,6 +138,22 @@ test('Classic UI preference skips Night Shift enhancements and provides an acces
   assert.equal(nightShift.reloadCount,1,'switching to Classic UI reloads the native pages cleanly');
 });
 
+test('native MeshCentral Classic template enters fallback without a Night Shift local preference',()=>{
+  const classic=read('views/default.handlebars');
+  const modern=read('views/default3.handlebars');
+  const login=read('views/login2.handlebars');
+  assert.match(classic,/scripts\/meshcentral\{\{\{min\}\}\}\.js/,'Classic app template loads the native app runtime');
+  assert.doesNotMatch(classic,/styles\/style-bootstrap\.css/,'Classic app template omits Modern UI bootstrap styles');
+  assert.match(modern,/styles\/style-bootstrap\.css/,'Modern app template carries the Modern UI marker');
+  assert.doesNotMatch(login,/scripts\/meshcentral\{\{\{min\}\}\}\.js/,'login templates are not mistaken for an authenticated Classic app');
+
+  const h=createMobileHarness(true,false,false,'classic');
+  assert.equal(h.window.__NightShiftClassicMode,true,'native template detection happens before feature modules evaluate');
+  assert.equal(h.styleSheet.disabled,true,'Night Shift CSS is disabled for the native Classic template');
+  assert.equal(h.byId.has('ns-appbar'),false,'Modern-only controls do not attach to the native Classic template');
+  assert.ok(h.byId.has('ns-classic-toggle'),'the accessible return control remains available');
+});
+
 test('contextual breadcrumbs route through native MeshCentral navigation',()=>{
   assert.match(shell,/setAttribute\('aria-label', 'Breadcrumb'\)/);
   assert.match(shell,/navigate\(entries\[0\]\)/);
@@ -793,7 +809,7 @@ test('viewer toolbar stays within the active viewer and delegates fullscreen',()
   assert.equal(controls.hidden,true,'Toolbar hides when the native viewer is inactive');
 });
 
-function createMobileHarness(isMobile = true, classicMode = false, isLandscape = false) {
+function createMobileHarness(isMobile = true, classicMode = false, isLandscape = false, nativeTemplate = 'modern') {
   let landscapeMode = isLandscape;
   const byId = new Map();
   const documentEvents = {};
@@ -844,7 +860,11 @@ function createMobileHarness(isMobile = true, classicMode = false, isLandscape =
     get activeElement() { return activeElement; },
     createElement: tag => new Element(tag),
     getElementById: id => byId.get(id) || null,
-    querySelector: () => null,
+    querySelector: selector => {
+      if (selector === 'script[src*="meshcentral"]') return nativeTemplate === 'login' ? null : {};
+      if (selector === 'link[href*="style-bootstrap"]') return nativeTemplate === 'modern' ? {} : null;
+      return null;
+    },
     querySelectorAll: selector => selector==='link[rel="stylesheet"]'?[styleSheet]:[],
     addEventListener(name, fn) { (documentEvents[name] ||= []).push(fn); }
   };
