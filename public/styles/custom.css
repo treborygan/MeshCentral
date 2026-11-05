@@ -955,7 +955,7 @@ body.ns-shell-ready #p1 {min-width:0}
   text-align:left;
   cursor:pointer;
 }
-.ns-session-tab[aria-selected="true"] {background:#263d31;border-color:#88ae65;color:#e8ffd2}
+.ns-session-tab[aria-current="true"] {background:#263d31;border-color:#88ae65;color:#e8ffd2}
 .ns-session-tab:focus-visible,.ns-session-tab-close:focus-visible {outline:2px solid #b6f078;outline-offset:2px}
 .ns-session-tab-name {overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:700}
 .ns-session-tab-status {flex:0 0 auto;color:#9bb09f;font-size:9px}

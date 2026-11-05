@@ -55,7 +55,6 @@
     panel = create('nav','ns-session-tabs');
     panel.id = 'ns-session-tabs';
     panel.setAttribute('aria-label','Open remote sessions');
-    panel.setAttribute('role','tablist');
     var parent = area.parentNode || area.parentElement;
     var before = $('ns-session-diagnostics') || area;
     parent.insertBefore(panel,before);
@@ -84,8 +83,7 @@
       var tab = create('button','ns-session-tab');
       tab.type = 'button';
       tab.dataset.sessionId = entry.id;
-      tab.setAttribute('role','tab');
-      tab.setAttribute('aria-selected',entry.current ? 'true' : 'false');
+      if (entry.current) tab.setAttribute('aria-current','true');
       tab.setAttribute('aria-label',name + ', ' + (stateNames[state] || 'Session state unavailable'));
       tab.title = name + ' · ' + (stateNames[state] || 'State unavailable');
       var deviceName = create('span','ns-session-tab-name',name);

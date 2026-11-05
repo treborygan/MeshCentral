@@ -1176,8 +1176,12 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const sessionTabs=ids.get('ns-session-tabs');
   assert.ok(sessionTabs,'Remote workspace exposes tabs for native live sessions');
   assert.equal(sessionTabs.children.filter(node=>node.classList.contains('ns-session-tab')).length,2,'Tabs enumerate existing and connecting native sessions');
+  assert.equal(sessionTabs.getAttribute('role'),null,'Session navigation does not claim tablist semantics without tab keyboard behavior');
   const archiveTab=sessionTabs.children.find(node=>node.dataset.sessionId==='node//offline');
   assert.ok(archiveTab,'Session tabs identify sessions by native device ID');
+  assert.equal(archiveTab.getAttribute('aria-current'),null,'Background sessions are not marked current');
+  const currentSessionTab=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab')&&node.getAttribute('aria-current')==='true');
+  assert.ok(currentSessionTab,'The active native session is exposed as the current navigation item');
   archiveTab.click();
   assert.equal(opened.at(-1),'node//offline','Switching a tab delegates to native gotoDevice permissions and routing');
   const closeArchive=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close'));
