@@ -38,7 +38,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 ## Phase 3 — device management and power tools
 
 - [x] Split-pane file manager with drag/drop, bulk native uploads, visible per-file queue/progress, SHA-384 checks and only backend-supported resume. The Night Shift queue summary reflects MeshCentral's native upload state and leaves its overwrite prompt, cancellation, transfer and refresh flows authoritative.
-- [ ] Unified transfer history and retry controls remain pending; downloads retain MeshCentral's native progress dialog and transfer behavior.
+- [ ] Unified transfer history and retry controls remain pending. A page-session upload history now records native upload-start, completion and error acknowledgments; retry reuses MeshCentral's native overwrite/hash/resume flow and keeps File objects in memory only. Downloads retain native progress behavior and are not yet included in history.
 - [ ] Live health panels for CPU, memory, storage, uptime, agent status and available system information. (Per-device summary shows elapsed uptime from cached native last-boot metadata, storage/system/connection state, and CPU/memory values from native graph updates while open; it adds no telemetry polling. Live/authenticated acceptance pending.)
 - [ ] Searchable activity/session history and native recording access. (Local search added to loaded native Events and recordings; expanded history workflows and live acceptance remain pending.)
 - [ ] Permission-gated quick actions and reusable audited commands. (Device Details shortcuts now expose native power actions and the native configured-command picker when MeshCentral rights and connection state allow; live acceptance remains pending.)

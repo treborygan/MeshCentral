@@ -122,6 +122,12 @@ test('upload queue display follows native queued files and native progress state
   assert.match(files,/new MutationObserver\(updateUploadQueue\)/);
   assert.match(files,/window\.p13doUploadFiles\(dropped\)/);
   assert.match(css,/\.ns-transfer-queue/);
+  assert.match(files,/window\.p13gotUploadData = function/);
+  assert.match(files,/action === 'uploaddone'.*Completed/);
+  assert.match(files,/action === 'uploaderror'.*Failed/);
+  assert.match(files,/window\.p13doUploadFiles\(\[entry\.file\]\)/);
+  assert.match(files,/Recent transfers/);
+  assert.match(css,/\.ns-transfer-history/);
   assert.doesNotMatch(files,/fetch\(|XMLHttpRequest|WebSocket\(/);
 });
 

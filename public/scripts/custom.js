@@ -1770,7 +1770,8 @@
   if (window.__NightShiftFiles) return;
   var $ = function (id) { return document.getElementById(id); };
   var search, inspector, detail, actions = [];
-  var uploadObserver, transferQueue, transferStatus, transferList, lastQueueIndex = null;
+  var uploadObserver, transferQueue, transferStatus, transferList, historyPanel, historyList, lastQueueIndex = null;
+  var transferHistory = [], uploadTrackingInstalled = false;
   function create(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -1865,6 +1866,57 @@
       lastQueueIndex = index;
     }
   }
+  function renderHistory() {
+    if (!historyList) return;
+    historyList.replaceChildren();
+    if (!transferHistory.length) {
+      historyList.append(create('li','ns-transfer-history-empty','Transfers started in this page will appear here.'));
+      return;
+    }
+    transferHistory.forEach(function (entry) {
+      var row = create('li','ns-transfer-history-item');
+      var label = create('span','ns-transfer-history-name',entry.name);
+      var state = create('span','ns-transfer-history-state',entry.state);
+      row.append(label,state);
+      if (entry.state === 'Failed' && entry.file) {
+        var retry = create('button','ns-transfer-retry','Retry');
+        retry.type = 'button'; retry.setAttribute('aria-label','Retry upload of ' + entry.name);
+        retry.addEventListener('click',function () {
+          var upload = $('p13UploadButton');
+          if (!upload || upload.disabled || typeof window.p13doUploadFiles !== 'function') return;
+          entry.state = 'Queued'; renderHistory();
+          window.p13doUploadFiles([entry.file]);
+        });
+        row.append(retry);
+      }
+      historyList.append(row);
+    });
+  }
+  function recordUpload(file,state) {
+    if (!file) return;
+    var entry = transferHistory.find(function (item) { return item.file === file; });
+    if (!entry) {
+      entry = { name:file.name || 'Unnamed file', file:file, state:state };
+      transferHistory.unshift(entry);
+      transferHistory = transferHistory.slice(0,20);
+    } else entry.state = state;
+    renderHistory();
+  }
+  function watchNativeUploadResults() {
+    if (uploadTrackingInstalled || typeof window.p13gotUploadData !== 'function') return;
+    var nativeHandler = window.p13gotUploadData;
+    window.p13gotUploadData = function (message) {
+      var upload = window.uploadFile;
+      var file = upload && upload.xfiles && upload.xfiles[upload.xfilePtr];
+      var action = message && message.action;
+      var result = nativeHandler.apply(this,arguments);
+      if (action === 'uploadstart') recordUpload(file,'In progress');
+      else if (action === 'uploaddone') recordUpload(file,'Completed');
+      else if (action === 'uploaderror') recordUpload(file,'Failed');
+      return result;
+    };
+    uploadTrackingInstalled = true;
+  }
   function watchUploadQueue() {
     var body = $('xxAddAgentBody') || (document.querySelector && document.querySelector('#xxAddAgentModal .modal-body'));
     if (!body || typeof MutationObserver !== 'function' || uploadObserver) return;
@@ -1892,11 +1944,21 @@
       actionButton(actions,'p13DeleteFileButton','Delete'); inspector.append(actions);
       list.classList.add('ns-file-layout'); list.append(inspector);
     }
+    if (!historyPanel) {
+      historyPanel = create('section','ns-transfer-history');
+      historyPanel.setAttribute('aria-label','Recent transfers');
+      historyPanel.append(create('h3','','Recent transfers'));
+      historyList = create('ol','ns-transfer-history-list');
+      historyPanel.append(historyList);
+      list.append(historyPanel);
+      renderHistory();
+    }
     update();
   }
   function boot() {
     build();
     watchUploadQueue();
+    watchNativeUploadResults();
     var dropTarget = $('p13filetable');
     if (dropTarget) {
       dropTarget.addEventListener('dragover',function (event) {
