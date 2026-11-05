@@ -59,7 +59,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [x] Keep authentication, permissions, consent, guest sharing, recording, 2FA, native transports and Cloudflare boundaries in MeshCentral.
 - [x] Use the persistent `custom.css`/`custom.js` extension points and backup-manifest installer; rollback path is documented.
 - [x] Split JavaScript into focused mobile-controls, shell, devices, diagnostics, sessions, profiles, health, history, files, actions, alerts, PWA, capabilities and viewer components; regenerate the single deployable `custom.js` bundle and include bundle validation in the CI workflow.
-- [x] Current automated source checks: `node scripts/build-night-shift.js --check`, `node --check public/scripts/custom.js` and `node --test tests/night-shift.test.cjs` (38 tests).
+- [x] Current automated source checks: `node scripts/build-night-shift.js --check`, `node --check public/scripts/custom.js` and `node --test tests/night-shift.test.cjs` (39 tests).
 - [x] Review current upstream security-fix ancestry and compatibility: the PR branch includes the reviewed 1.3.1 fixes; source changes remain limited to web overrides.
 - [ ] Verify the exact installed PRN source revision and confirm those upstream fixes are present before release.
 - [ ] Complete authenticated workflows for admin and restricted roles, Agent desktop, browser RDP, terminal, files, reconnect, guest, recordings, AMT and plugins.
