@@ -1459,3 +1459,88 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
 })();
+/* Night Shift device health summary. Reads MeshCentral's cached native details. */
+(function () {
+  'use strict';
+  if (window.__NightShiftHealth) return;
+  var $ = function (id) { return document.getElementById(id); };
+  var panel, values = {};
+  function create(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+  function row(host, key, label) {
+    var item = create('div', 'ns-health-item');
+    item.append(create('span', 'ns-health-label', label));
+    values[key] = create('strong', 'ns-health-value', 'Unavailable');
+    item.append(values[key]); host.append(item);
+  }
+  function build() {
+    var host = $('p17info');
+    if (!host || panel) return;
+    panel = create('section', 'ns-health-panel'); panel.id = 'ns-device-health';
+    panel.setAttribute('aria-label', 'Device health summary');
+    panel.append(create('h3', 'ns-health-title', 'Device health'));
+    var grid = create('div', 'ns-health-grid');
+    row(grid, 'agent', 'Agent status'); row(grid, 'uptime', 'Last boot');
+    row(grid, 'storage', 'Windows volume storage'); row(grid, 'system', 'System information');
+    panel.append(grid);
+    var note = create('p', 'ns-health-note', 'CPU and memory use MeshCentral’s native live graph.');
+    var action = create('button', 'ns-health-action', 'Open CPU and memory graph');
+    action.type = 'button';
+    action.addEventListener('click', function () {
+      var native = document.querySelector('#devListToolbarViewIcons3 [title="Show device CPU and memory usage."]');
+      if (native && typeof native.click === 'function') native.click();
+    });
+    panel.append(note, action);
+    var info = $('p17info2');
+    if (info && info.parentNode === host) host.insertBefore(panel, info);
+    else host.insertBefore(panel, host.firstChild);
+  }
+  function size(bytes) {
+    if (typeof bytes !== 'number' || !isFinite(bytes) || bytes < 0) return null;
+    var units = ['B', 'KB', 'MB', 'GB', 'TB'], index = 0, value = bytes;
+    while (value >= 1024 && index < units.length - 1) { value /= 1024; index++; }
+    return value.toFixed(index === 0 ? 0 : 1) + ' ' + units[index];
+  }
+  function update() {
+    build(); if (!panel) return;
+    var node = window.currentNode;
+    if (!node) { Object.keys(values).forEach(function (key) { values[key].textContent = 'Unavailable'; }); return; }
+    var connected = typeof node.conn === 'number' && (node.conn & 15) !== 0;
+    values.agent.textContent = connected ? 'Connected' : (typeof node.conn === 'number' ? 'Offline' : 'Unavailable');
+    var hardware = window.DeviceDetailsNodeId === node._id ? window.DeviceDetailsHardware : null;
+    var boot = node.lastbootuptime instanceof Date ? node.lastbootuptime : null;
+    if (!boot && hardware) {
+      var win = hardware.windows && hardware.windows.osinfo && hardware.windows.osinfo.LastBootUpTime;
+      if (typeof win === 'string' && /^\d{14}(?:\.\d+)?[+-]\d+$/.test(win)) {
+        boot = new Date(+win.slice(0,4), +win.slice(4,6)-1, +win.slice(6,8), +win.slice(8,10), +win.slice(10,12), +win.slice(12,14));
+      } else if (hardware.linux && hardware.linux.LastBootUpTime) boot = new Date(hardware.linux.LastBootUpTime);
+      else if (hardware.darwin && hardware.darwin.LastBootUpTime) boot = new Date(hardware.darwin.LastBootUpTime * 1000);
+    }
+    values.uptime.textContent = boot && isFinite(boot.getTime()) ? boot.toLocaleString() : 'Unavailable';
+    var volumes = hardware && hardware.windows && hardware.windows.volumes, safe = [];
+    if (volumes && typeof volumes === 'object') Object.keys(volumes).forEach(function (name) {
+      var volume = volumes[name] || {}, total = size(volume.size), free = size(volume.sizeremaining);
+      if (total || free) safe.push(name + ': ' + (free || 'Unavailable') + ' free / ' + (total || 'Unavailable'));
+    });
+    values.storage.textContent = safe.length ? safe.join(' · ') : 'Unavailable';
+    var os = node.osdesc || (hardware && hardware.windows && hardware.windows.osinfo && hardware.windows.osinfo.Description);
+    values.system.textContent = typeof os === 'string' && os ? os : 'Unavailable';
+  }
+  function boot() {
+    if (!$('p17')) return;
+    update();
+    if (typeof MutationObserver === 'function') {
+      var observer = new MutationObserver(update);
+      var target = $('p17info2');
+      if (target) observer.observe(target, {attributes:true, childList:true, subtree:true});
+    }
+    document.addEventListener('visibilitychange', update);
+    window.addEventListener('resize', update, {passive:true});
+  }
+  window.__NightShiftHealth = { refresh:update };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true}); else boot();
+})();

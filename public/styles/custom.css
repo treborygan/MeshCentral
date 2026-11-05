@@ -1298,3 +1298,11 @@ body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
   body.ns-shell-ready .ns-device-actions-row {grid-template-columns:minmax(0,1fr)}
   body.ns-theme .ns-mobile-nav-item {font-size:10px}
 }
+.ns-health-panel{margin:0 0 1rem;padding:1rem;border:1px solid var(--ns-line,#344652);border-radius:14px;background:var(--ns-surface,#17242e);color:var(--ns-text,#eef5f5)}
+.ns-health-title{margin:0 0 .75rem;font-size:1.05rem}
+.ns-health-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr));gap:.65rem}
+.ns-health-item{display:flex;flex-direction:column;gap:.25rem;padding:.7rem;border-radius:10px;background:rgba(255,255,255,.035);min-width:0}
+.ns-health-label,.ns-health-note{color:var(--ns-muted,#a9bac3);font-size:.82rem}
+.ns-health-value{overflow-wrap:anywhere;font-size:.95rem}
+.ns-health-action{margin-top:.7rem;padding:.55rem .8rem;border:1px solid var(--ns-accent,#66d6ac);border-radius:9px;background:transparent;color:inherit}
+.ns-health-action:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}

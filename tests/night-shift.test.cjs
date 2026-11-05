@@ -11,10 +11,19 @@ const read = rel => fs.readFileSync(path.join(root, rel), 'utf8');
 const css = read('public/styles/custom.css');
 const js = read('public/scripts/custom.js');
 const installer = read('scripts/Install-NightShift.ps1');
+const health = read('public/scripts/night-shift/health.js');
 
 test('custom script bundle matches its modular source components',()=>{
   const result=spawnSync(process.execPath,['scripts/build-night-shift.js','--check'],{cwd:root,encoding:'utf8'});
   assert.equal(result.status,0,result.stderr || 'Generated custom.js is stale or the build script is missing');
+});
+
+test('device health uses cached native details and delegates CPU graph to MeshCentral',()=>{
+  assert.match(health,/DeviceDetailsHardware/);
+  assert.match(health,/devListToolbarViewIcons3/);
+  assert.match(health,/native\.click\(\)/);
+  assert.doesNotMatch(health,/setInterval|send\(\s*\{\s*action:\s*['"]msg['"]|recoveryPassword|encryptionMethod|bitlocker/i);
+  assert.match(health,/sizeremaining/);
 });
 
 function createMobileHarness(isMobile = true) {
