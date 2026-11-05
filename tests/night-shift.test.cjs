@@ -1385,9 +1385,13 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(window.webRtcDesktopReset(),'native WebRTC reset','WebRTC state observation preserves the native reset return value');
   assert.equal(webRtcResetCalls,1,'WebRTC state observation still invokes MeshCentral native cleanup');
   assert.equal(diagnostic('webrtc').children[1].textContent,'ICE failed · link reset by MeshCentral','Native failure cleanup preserves an actionable WebRTC failure status');
+  window.desktop={State:3,contype:1,webRtcActive:true};window.__NightShiftDiagnostics.refresh();
+  assert.equal(diagnostic('session').children[1].textContent,'MeshAgent desktop · Connected','A stale native WebRTC flag is not reported as an active WebRTC path after reset');
   window.webRtcDesktop={webrtc:{iceConnectionState:'connected'},webchannel:{readyState:'open'}};
   window.__NightShiftDiagnostics.refresh();
   assert.equal(diagnostic('webrtc').children[1].textContent,'ICE connected · data channel open','A later successful WebRTC connection replaces stale failure status');
+  assert.equal(diagnostic('session').children[1].textContent,'MeshAgent desktop · WebRTC · Connected','The active WebRTC transport is reported when its native data channel is open');
+  window.webRtcDesktop=null;window.desktop=null;window.__NightShiftDiagnostics.refresh();
   assert.equal(diagnostic('cloudflare').children[1].textContent,'Not observable after page load','The UI does not infer Cloudflare tunnel health from an authenticated page');
   const savedDesktop=window.desktop;window.currentNode.conn=0;window.desktop=null;window.__NightShiftDiagnostics.refresh();
   assert.match(guidance.textContent,/Browser RDP is available/i,'Missing Agent/AMT route guidance preserves an enabled RDP option');

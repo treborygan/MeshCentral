@@ -1203,7 +1203,8 @@
     if (!desktop) return 'No active session';
     var transport = desktop.contype === 1 ? 'MeshAgent desktop' :
       (desktop.contype === 2 ? 'Intel AMT KVM' : (desktop.contype === 4 ? 'Browser RDP' : 'Native transport'));
-    if (desktop.webRtcActive) transport += ' · WebRTC';
+    var channel = window.webRtcDesktop && window.webRtcDesktop.webchannel;
+    if (desktop.webRtcActive && channel && channel.readyState === 'open') transport += ' · WebRTC';
     var state = Number.isInteger(desktop.State) ? desktop.State : desktop.state;
     return transport + ' · ' + (stateNames[state] || 'State unavailable');
   }
