@@ -3,26 +3,8 @@ name: Night Shift UI checks
 on:
   workflow_dispatch:
   pull_request:
-    paths:
-      - "public/styles/custom.css"
-      - "public/scripts/custom.js"
-      - "public/scripts/night-shift/**"
-      - "scripts/Install-NightShift.ps1"
-      - "tests/Test-NightShiftInstaller.ps1"
-      - "scripts/build-night-shift.js"
-      - "tests/night-shift.test.cjs"
-      - ".github/workflows/night-shift-ui.yml"
   push:
     branches: ["feature/night-shift-ui", "feature/night-shift-structural"]
-    paths:
-      - "public/styles/custom.css"
-      - "public/scripts/custom.js"
-      - "public/scripts/night-shift/**"
-      - "scripts/Install-NightShift.ps1"
-      - "tests/Test-NightShiftInstaller.ps1"
-      - "scripts/build-night-shift.js"
-      - "tests/night-shift.test.cjs"
-      - ".github/workflows/night-shift-ui.yml"
 
 permissions:
   contents: read
@@ -57,3 +39,14 @@ jobs:
       - name: Exercise installer and rollback in a disposable fixture
         shell: pwsh
         run: ./tests/Test-NightShiftInstaller.ps1
+
+  pinned-source-security-build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build pinned official MeshCentral source twice and verify provenance
+        shell: pwsh
+        run: ./tests/Test-PinnedMeshCentralBuild.ps1

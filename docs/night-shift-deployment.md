@@ -308,3 +308,9 @@ The current GitHub API reports repository Actions `enabled: true`, `allowed_acti
 ## Security provenance recheck — 2026-11-05
 
 The read-only PRN package audit still reports MeshCentral 1.3.1, verified npm tarball integrity, `MESHRIGHT_NOFILES` missing from `meshdevicefile.js`, and `force2factorPending` missing from `webserver.js`; `SECURITY_PROVENANCE_GATE=BLOCKED` (exit 2). npm latest remains 1.3.1 and official upstream master remains `2e7ec138cf45b09204bf036b500e5e2cf37aaba4` at 1.3.1. No server package was changed: the production deployment remains limited to the verified CSS/JS customization layer.
+
+## Pinned source candidate and trigger update — 2026-11-05
+
+The reproducible source build and isolated package/runtime results are recorded in [the pinned build report](night-shift-pinned-source-build.md). The package was not installed on PRN; the security provenance gate remains blocked for the currently installed package. The existing frontend-only production deployment boundary remains in effect.
+
+The workflow trigger was widened so every pull request update and every push to the two feature branches runs the focused UI, installer and pinned-source checks, including documentation-only updates. Local checks passed, but hosted Actions remains unverified: GitHub reports repository Actions enabled and the workflow active, while a manual dispatch returns HTTP 422 `Actions has been disabled for this repository.`
