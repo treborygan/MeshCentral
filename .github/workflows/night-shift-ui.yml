@@ -7,6 +7,7 @@ on:
       - "public/scripts/custom.js"
       - "public/scripts/night-shift/**"
       - "scripts/Install-NightShift.ps1"
+      - "tests/Test-NightShiftInstaller.ps1"
       - "scripts/build-night-shift.js"
       - "tests/night-shift.test.cjs"
       - ".github/workflows/night-shift-ui.yml"
@@ -17,6 +18,7 @@ on:
       - "public/scripts/custom.js"
       - "public/scripts/night-shift/**"
       - "scripts/Install-NightShift.ps1"
+      - "tests/Test-NightShiftInstaller.ps1"
       - "scripts/build-night-shift.js"
       - "tests/night-shift.test.cjs"
       - ".github/workflows/night-shift-ui.yml"
@@ -51,3 +53,6 @@ jobs:
           [System.Management.Automation.Language.Parser]::ParseFile('scripts/Install-NightShift.ps1', [ref]$tokens, [ref]$errors) | Out-Null
           if ($errors.Count -gt 0) { $errors | Format-List | Out-String | Write-Error; exit 1 }
           Write-Host 'PowerShell syntax parsed successfully.'
+      - name: Exercise installer and rollback in a disposable fixture
+        shell: pwsh
+        run: ./tests/Test-NightShiftInstaller.ps1
