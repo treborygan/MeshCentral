@@ -134,6 +134,10 @@ The latest GitHub read returned repository Actions `enabled: true`, allowed acti
 
 The workflow trigger now includes every pull request update and every push to the two feature branches, so documentation-only updates also request checks. Current GitHub API state still shows an active workflow and repository Actions enabled; the latest successful run remains on `d6577919`, and hosted checks for the current head are unverified. The pinned source candidate and local verification evidence are in [the source-build record](night-shift-pinned-source-build.md).
 
+## Legacy mobile input deployment — 2026-11-05
+
+Commit `1b11bcf6` adds a feature-detected CSS/JS overlay adapter for PRN's older native `default3.handlebars`: IME text is committed once through MeshCentral's native handler; sticky modifiers are guarded against unsupported key actions and clear safely; clipboard rejections display the existing in-page feedback. Already-enhanced native templates are not wrapped. All 63 focused Node tests and the installer fixture passed. PRN source, installed and served JS hashes match (`9536AE0B…5287C81C`); the root and both override URLs return HTTP 200, and MeshCentral, Mesh Agent, Cloudflared and MeshCentralCloudflared remain running. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-191939-d5ead2`. The signed-in browser bridge remained unavailable, so authenticated and physical-device acceptance remain open.
+
 
 ## Continuation recheck — 2026-11-05
 
