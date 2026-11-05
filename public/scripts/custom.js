@@ -29,7 +29,7 @@
     ['Intel AMT','MainDevAmt',14], ['Console','MainDevConsole',15],
     ['Plugins','MainDevPlugins',19]
   ];
-  let backdrop, input, results, dock, nav, refreshScheduled = false, toastHandle;
+  let backdrop, input, results, dock, nav, searchReturnFocus = null, refreshScheduled = false, toastHandle;
   // MeshCentral 1.3.1's default3.handlebars omits width=device-width.
   // Android otherwise retains a ~980 CSS-px layout viewport while touch-only
   // JS navigation activates, producing both the desktop sidebar and mobile bar.
@@ -100,12 +100,19 @@
   const remoteOpen = () => visible($('p11'));
   function showSearch() {
     if (!backdrop) return;
+    searchReturnFocus = document.activeElement;
     backdrop.hidden=false; document.body.classList.add('ns-search-open');
+    if(searchReturnFocus&&['ns-search-trigger','ns-search-more'].includes(searchReturnFocus.id))searchReturnFocus.setAttribute('aria-expanded','true');
+    ['ns-search-trigger','ns-search-more'].forEach(id=>{const control=$(id);if(control)control.setAttribute('aria-expanded','true');});
     input.value=''; updateResults(); input.focus();
   }
   function closeSearch() {
     if (!backdrop) return;
     backdrop.hidden=true; document.body.classList.remove('ns-search-open');
+    if(searchReturnFocus&&['ns-search-trigger','ns-search-more'].includes(searchReturnFocus.id))searchReturnFocus.setAttribute('aria-expanded','false');
+    ['ns-search-trigger','ns-search-more'].forEach(id=>{const control=$(id);if(control)control.setAttribute('aria-expanded','false');});
+    const target=searchReturnFocus;searchReturnFocus=null;
+    if(target&&typeof target.focus==='function'&&visible(target))target.focus();
   }
   function commands() {
     const out=[];
@@ -166,7 +173,7 @@
       e.preventDefault();backdrop.hidden?showSearch():closeSearch();
     });
     const target=q('#masthead .masthead-right')||$('masthead');
-    if(target){const trigger=button('⌕','ns-search-trigger',showSearch,'Search navigation (Ctrl+K)');trigger.id='ns-search-trigger';target.prepend(trigger);}
+    if(target){const trigger=button('⌕','ns-search-trigger',showSearch,'Search navigation (Ctrl+K)');trigger.id='ns-search-trigger';trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-controls','ns-search-backdrop');target.prepend(trigger);}
   }
   function labelRail() {
     destinations.forEach(([label,id])=>{
@@ -204,6 +211,7 @@
         el.dataset.page=String(destinations[index][2]);nav.append(el);
       });
       const more=button('More','ns-mobile-nav-item',showSearch,'Other pages');
+      more.id='ns-search-more';more.setAttribute('aria-expanded','false');more.setAttribute('aria-controls','ns-search-backdrop');
       const moreIcon=make('i','fa-solid fa-ellipsis');moreIcon.setAttribute('aria-hidden','true');
       more.prepend(moreIcon);nav.append(more);
       document.body.append(nav);

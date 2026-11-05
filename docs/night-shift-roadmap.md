@@ -13,6 +13,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [x] Responsive live inventory with card/table/compact layouts, native device-tag chips and filtering, search, sorting, favorites, connection filters, native bulk-selection/group actions, and native-list fallback.
 - [x] Refresh live inventory from native list mutations and view changes rather than a recurring poll; provide account-scoped, filter-aware empty states and a clear-filters action.
 - [x] Login2 activation, Android viewport correction, touch dock, keyboard focus and reduced-motion support. Dock/page state follows native mutations and events without recurring polling.
+- [x] Navigation search restores focus to its opener, exposes expanded state to assistive technology, and keeps the modal keyboard focus trap.
 - [x] Carry the installed mobile-usability rules into source: contained masthead, compact account control, viewport-bound menu, and non-overflowing appbar/cards/navigation.
 - [x] Fix mobile masthead horizontal overflow and account-area clipping using viewport-contained, safe-area-aware sizing.
 - [ ] Match the approved Concept B across authenticated dashboard, inventory, groups, users, settings, administration, dialogs and detail screens; compare screenshots at phone, tablet and desktop sizes.

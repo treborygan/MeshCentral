@@ -64,6 +64,8 @@ test('mobile dock state follows native page and control changes without polling'
   assert.match(mobileControls,/target\.id==='deskarea0'/);
   assert.match(mobileControls,/else scheduleUpdate\(\)/);
   assert.doesNotMatch(mobileControls,/setInterval/);
+  assert.match(mobileControls,/searchReturnFocus/);
+  assert.match(mobileControls,/aria-expanded','false'/);
   assert.match(mobileControls,/Disable trackpad mode/);
   assert.match(mobileControls,/Disable right-click mode/);
 });
@@ -424,6 +426,7 @@ function createMobileHarness(isMobile = true) {
   const document = {
     readyState: 'complete', visibilityState: 'visible',
     documentElement: new Element('html'), body: new Element('body'),
+    get activeElement() { return activeElement; },
     createElement: tag => new Element(tag),
     getElementById: id => byId.get(id) || null,
     querySelector: () => null,
@@ -571,6 +574,14 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
 
   const mobileNav = h.byId.get('ns-mobile-nav');
   assert.ok(mobileNav, 'mobile workspace navigation is installed');
+  const more=mobileNav.children.at(-1);more.focus();assert.equal(h.activeElement(),more);assert.equal(more.id,'ns-search-more');more.click();
+  assert.equal(more.getAttribute('aria-controls'),'ns-search-backdrop');
+  assert.equal(h.byId.get('ns-search-backdrop').hidden,false,'More opens the accessible navigation search');
+  assert.equal(more.getAttribute('aria-expanded'),'true');
+  const closeSearch=h.byId.get('ns-search-backdrop').children[0].children[0].children[1];
+  closeSearch.click();
+  assert.equal(h.activeElement(),more,'Closing search restores focus to the opening control');
+  assert.equal(more.getAttribute('aria-expanded'),'false');
   mobileNav.children[0].click();
   assert.deepEqual(h.calls.at(-1), ['go', 1], 'hidden desktop navigation falls back to MeshCentral go()');
 });
