@@ -429,6 +429,9 @@ input:disabled { opacity: .6; cursor: not-allowed; }
 .ns-dock-modifier[aria-pressed=true]{background:#b6f078;color:#17221a;border-color:#b6f078}
 .ns-dock-modifier:disabled{opacity:.45}
 .ns-dock-modifier:focus-visible,#ns-modifier-toggle:focus-visible{outline:2px solid #b6f078;outline-offset:2px}
+.ns-dock-release{min-height:38px;padding:4px 10px;border:1px solid #586674;border-radius:8px;background:#202e3a;color:#eef5f3;font-size:11px}
+.ns-dock-release:focus-visible{outline:2px solid #b6f078;outline-offset:2px}
+.ns-dock-release:disabled{opacity:.45}
 .ns-dock-action{flex:1 0 auto;border:1px solid #405361;border-radius:9px;min-height:43px;padding:9px 12px;white-space:nowrap;background:#273743;color:#eaf2ef;font-size:12px;font-weight:640}
 .ns-dock-action:hover{background:#344b57}
 .ns-dock-action:disabled{opacity:.45}

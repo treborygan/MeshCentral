@@ -462,6 +462,7 @@ function createMobileHarness(isMobile = true) {
     deskMobileToggleZoom: () => calls.push(['zoom']),
     deskToggleRightClickMode: () => calls.push(['right-click']),
     toggleMobileModifier: mod => { window._mobileModifiers[mod]=!window._mobileModifiers[mod];calls.push(['modifier',mod]); },
+    _releaseMobileModifiers: () => { Object.keys(window._mobileModifiers).forEach(mod=>window._mobileModifiers[mod]=false);calls.push(['release-all']); },
     deskToggleFull: event => calls.push(['fullscreen', event]),
     deskToggleMobileActions: () => calls.push(['more-actions']),
     showDesktopSettings: () => calls.push(['settings']),
@@ -598,7 +599,12 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   h.byId.get('ns-mod-ctrl').click();
   assert.equal(h.byId.get('ns-mod-ctrl').getAttribute('aria-pressed'),'true','Pressed state mirrors the native held modifier');
   assert.deepEqual(h.calls.at(-1),['modifier','ctrl'],'Modifier down/up behavior delegates to MeshCentral native input handling');
-  h.window._mobileModifiers.ctrl=false;
+  assert.equal(h.byId.get('ns-modifier-toggle').textContent,'Modifiers (1)','The tray summary reports active modifiers');
+  h.byId.get('ns-mod-release').click();
+  assert.deepEqual(h.calls.at(-1),['release-all'],'Release all delegates to MeshCentral native modifier cleanup');
+  assert.equal(h.byId.get('ns-mod-ctrl').getAttribute('aria-pressed'),'false');
+  h.window._mobileModifiers.ctrl=true;
+  h.window._releaseMobileModifiers();
   h.documentEvents.input.forEach(fn=>fn({target:{id:'softKeyboard'}}));
   assert.equal(h.byId.get('ns-mod-ctrl').getAttribute('aria-pressed'),'false','Native soft-keyboard input releases and refreshes the modifier state');
   const deskControl=h.byId.get('DeskControl');deskControl.checked=false;

@@ -29,7 +29,7 @@
     ['Intel AMT','MainDevAmt',14], ['Console','MainDevConsole',15],
     ['Plugins','MainDevPlugins',19]
   ];
-  let backdrop, input, results, dock, nav, modifierPanel, modifierToggle, modifierButtons = {}, modifiersOpen = false;
+  let backdrop, input, results, dock, nav, modifierPanel, modifierToggle, modifierRelease, modifierButtons = {}, modifiersOpen = false;
   let searchReturnFocus = null, refreshScheduled = false, toastHandle;
   // MeshCentral 1.3.1's default3.handlebars omits width=device-width.
   // Android otherwise retains a ~980 CSS-px layout viewport while touch-only
@@ -260,6 +260,8 @@
       const mod=button(item[1],'ns-dock-modifier',()=>act(()=>nativeFunctionWithArg('toggleMobileModifier',item[0]),item[1]+' unavailable'));
       mod.id='ns-mod-'+item[0];mod.setAttribute('aria-pressed','false');modifierButtons[item[0]]=mod;modifierPanel.append(mod);
     });
+    modifierRelease=button('Release all','ns-dock-release',()=>act(()=>nativeFunction('_releaseMobileModifiers'),'Modifier release unavailable'),'Release all held keyboard modifiers');
+    modifierRelease.id='ns-mod-release';modifierPanel.append(modifierRelease);
     dock.append(primary,secondary,modifierPanel);document.body.append(dock);
   }
   function updateNow(){
@@ -303,6 +305,10 @@
       modifierToggle.disabled=!connected||!control||control.disabled||control.checked!==true;
       modifierToggle.setAttribute('aria-expanded',modifiersOpen?'true':'false');
       modifierPanel.hidden=!connected||!modifiersOpen||typeof window.toggleMobileModifier!=='function';
+      const activeModifiers=Object.keys(modifierButtons).filter(mod=>nativeModifiers[mod]===true).length;
+      modifierToggle.textContent=activeModifiers?'Modifiers ('+activeModifiers+')':'Modifiers';
+      modifierToggle.setAttribute('aria-label',activeModifiers?'Show keyboard modifiers, '+activeModifiers+' active':'Show keyboard modifiers');
+      modifierRelease.disabled=!connected||!control||control.disabled||control.checked!==true||activeModifiers===0||typeof window._releaseMobileModifiers!=='function';
       Object.keys(modifierButtons).forEach(function (mod) {
         const active=nativeModifiers[mod]===true,button=modifierButtons[mod];
         button.disabled=!connected||!control||control.disabled||control.checked!==true;
