@@ -64,6 +64,14 @@ Hard-refresh after rollback. Restore both override files independently; if a tar
 - Post-install source, installed and served CSS SHA-256 all match `CB3D86407368FB5E9E7258A26EEC7F493EA4BFD03D77B688B2B20226B4772F88`; source, installed and served JS SHA-256 all match `8F246999A5A22C9D73790EA62F86897496BAD0379C8D9F0A5653BC1042229B24`. Root returned HTTP 200.
 - Authenticated account/security visual and workflow acceptance remains outstanding.
 
+## Native dialogs — 2026-11-05
+
+- Installed source commit: `a078b248` (`feat(ui): improve native dialog presentation`).
+- The existing PRN target and local root/CSS/JS endpoints returned HTTP 200 before installation; installer dry run passed. The standard installer changed only the two web overrides and created rollback snapshot `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-120018-cf3887`.
+- Snapshot manifest prior asset hashes: CSS `CB3D86407368FB5E9E7258A26EEC7F493EA4BFD03D77B688B2B20226B4772F88`; JS `8F246999A5A22C9D73790EA62F86897496BAD0379C8D9F0A5653BC1042229B24`.
+- After installation, source, installed and served CSS SHA-256 all match `482F923E5955B6F75DCCAD481475FC04D80D25FBEE9D861D06539D479B1131BE`; JS hashes match `8F246999A5A22C9D73790EA62F86897496BAD0379C8D9F0A5653BC1042229B24`. Root returned HTTP 200.
+- Authenticated modal workflows and visual acceptance remain outstanding.
+
 ## Structural UI branch rollout — 2026-11-04
 
 The structural Night Shift revision was installed on PCRN from PR #3 source commit `989ae01333c0fc66fa19bc5de77152228345736`. The PR remains a draft; its latest source revision at the time of installation is recorded here so deployment evidence is not mistaken for release acceptance.
