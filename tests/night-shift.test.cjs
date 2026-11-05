@@ -660,11 +660,12 @@ function createMobileHarness(isMobile = true, classicMode = false) {
     localStorage:{getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)},
     location:{reload(){reloadCount++;}},
     trackpadMode: false,
+    _mobileZoomMode:'fit',
     _mobileModifiers:{ctrl:false,shift:false,alt:false},
     go: page => calls.push(['go', page]),
     deskToggleTrackpad: () => calls.push(['trackpad']),
     toggleMobileKeyboard: () => {window._mobileKbdEnabled=!window._mobileKbdEnabled;calls.push(['keyboard']);},
-    deskMobileToggleZoom: () => calls.push(['zoom']),
+    deskMobileToggleZoom: () => {window._mobileZoomMode=window._mobileZoomMode==='native'?'fit':'native';calls.push(['zoom']);},
     deskToggleRightClickMode: () => calls.push(['right-click']),
     toggleMobileModifier: mod => { window._mobileModifiers[mod]=!window._mobileModifiers[mod];calls.push(['modifier',mod]); },
     mobileModifiersSupported:()=>true,
@@ -762,6 +763,9 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   assert.equal(h.byId.get('ns-trackpad').textContent,'Trackpad on');
   assert.equal(h.byId.get('ns-trackpad').getAttribute('aria-pressed'),'true');
   assert.equal(h.byId.get('ns-trackpad').getAttribute('aria-label'),'Disable trackpad mode');
+  assert.equal(h.byId.get('ns-zoom').textContent,'Native size');
+  assert.equal(h.byId.get('ns-zoom').getAttribute('aria-label'),'Show remote display at native size');
+  assert.equal(h.byId.get('ns-zoom').getAttribute('aria-pressed'),'false');
   assert.equal(h.byId.get('ns-rightclick').textContent,'Right-click on');
   assert.equal(h.byId.get('ns-rightclick').getAttribute('aria-pressed'),'true');
   const keyboard=h.byId.get('ns-keyboard');
@@ -770,6 +774,8 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   h.byId.get('ns-rdp-connect').click();
   h.byId.get('ns-trackpad').click();
   h.byId.get('ns-zoom').click();
+  assert.equal(h.byId.get('ns-zoom').textContent,'Scale to fit','zoom label follows the native zoom mode after toggling');
+  assert.equal(h.byId.get('ns-zoom').getAttribute('aria-pressed'),'true');
   h.byId.get('ns-rightclick').click();
   h.byId.get('DeskScreens').click();
   const fullscreen = dock.children.flatMap(row => row.children).find(button => button.textContent === 'Fullscreen');

@@ -330,7 +330,13 @@
       const control=$('DeskControl'),nativeModifiers=window._mobileModifiers||{};
       const inputAllowed=connected&&usable($('DeskWD'))&&!!control&&!control.disabled&&control.checked===true;
       const k=$('ns-keyboard');if(k){const keyboardOn=window._mobileKbdEnabled===true;k.disabled=!inputAllowed||typeof window.toggleMobileKeyboard!=='function';k.textContent=keyboardOn?'Keyboard on':'Keyboard off';k.setAttribute('aria-pressed',keyboardOn?'true':'false');k.setAttribute('aria-label',keyboardOn?'Hide on-screen keyboard':'Show on-screen keyboard');}
-      const z=$('ns-zoom');if(z)z.disabled=!connected||typeof window.deskMobileToggleZoom!=='function';
+      const z=$('ns-zoom');if(z){
+        const nativeSize=window._mobileZoomMode==='native';
+        z.disabled=!connected||typeof window.deskMobileToggleZoom!=='function';
+        z.textContent=nativeSize?'Scale to fit':'Native size';
+        z.setAttribute('aria-label',nativeSize?'Scale remote display to fit':'Show remote display at native size');
+        z.setAttribute('aria-pressed',nativeSize?'true':'false');
+      }
       const modifiersSupported=typeof window.mobileModifiersSupported==='function'?!!window.mobileModifiersSupported():!!(window.desktop&&window.desktop.m&&typeof window.desktop.m.SendKeyMsgKC==='function');
       if(!connected)modifiersOpen=false;
       modifierToggle.hidden=!modifiersSupported;
