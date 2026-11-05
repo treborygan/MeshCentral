@@ -48,6 +48,14 @@ Hard-refresh after rollback. Restore both override files independently; if a tar
 - Post-install, the site root and both local override endpoints returned HTTP 200. Source, installed and served CSS SHA-256 all match `2E52F8DF617365E7E887C4178472C43276704BF2D677D0805F0DA0801F5B5E49`; source, installed and served JS SHA-256 all match `8F246999A5A22C9D73790EA62F86897496BAD0379C8D9F0A5653BC1042229B24`. Mesh Agent and MeshCentralCloudflared remained running.
 - Authenticated visual review and restricted/admin user-group workflows were not performed; this verifies asset installation and serving only.
 
+## Server administration overview — 2026-11-05
+
+- Installed source commit: `d4fe3b0b` (`feat(ui): modernize server admin overview`).
+- The same verified target, `C:\ProgramData\MeshCentral`, and standard web-only installer were used after a successful `-WhatIf` run. The installer changed only the Night Shift CSS/JS overrides and created rollback snapshot `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-115351-745b58`.
+- The snapshot manifest records the previous CSS SHA-256 `2E52F8DF617365E7E887C4178472C43276704BF2D677D0805F0DA0801F5B5E49` and JS SHA-256 `8F246999A5A22C9D73790EA62F86897496BAD0379C8D9F0A5653BC1042229B24`.
+- After installation, source, installed and served CSS SHA-256 all match `6EA1DAB3252D7E554B558860B5103D8ADECE32C41C0A4C33A267C72E8FCFE980`; source, installed and served JS SHA-256 all match `8F246999A5A22C9D73790EA62F86897496BAD0379C8D9F0A5653BC1042229B24`. Root and asset endpoints returned HTTP 200; Mesh Agent and MeshCentralCloudflared remained running.
+- Live admin-authenticated layout and workflow review remains outstanding.
+
 ## Structural UI branch rollout — 2026-11-04
 
 The structural Night Shift revision was installed on PCRN from PR #3 source commit `989ae01333c0fc66fa19bc5de77152228345736`. The PR remains a draft; its latest source revision at the time of installation is recorded here so deployment evidence is not mistaken for release acceptance.
