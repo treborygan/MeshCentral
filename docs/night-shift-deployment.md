@@ -419,3 +419,9 @@ Installed through the existing web-only installer. Rollback snapshot: `C:\Progra
 GitHub Actions recovered for current head `f57de8bb67244e03538d870adf86831b997ff4ce`: Night Shift UI checks and PR CodeQL both completed successfully; the push-triggered Night Shift UI and CodeQL runs also completed successfully, including CodeQL analysis. PR #3 remains open/draft. Authenticated browser and live RDP/mobile device acceptance remain open because the browser-control bridge is unavailable.
 
 Rollback command: `pwsh -NoProfile -File scripts/Install-NightShift.ps1 -MeshRoot C:\ProgramData\MeshCentral -RollbackFrom C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-195230-156ced`.
+
+## Modern UI startup repair — 2026-11-05
+
+The history search observer watched the page containing its own status text; rewriting unchanged status text could continuously trigger child-list mutations and make the authenticated browser unresponsive. The frontend now writes the status only when its value changes. A focused observer callback regression check and all 65 Node tests passed, as did bundle freshness and syntax checks.
+
+Installed with the web-only installer. Rollback: `pwsh -NoProfile -File scripts/Install-NightShift.ps1 -MeshRoot C:\ProgramData\MeshCentral -RollbackFrom C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-233841-16b5c5`. Installed and locally served JavaScript SHA-256: `86C51278D6DE74CB391622428F0C75A10647800B0F2B024CD6AF181E8EAEBEDB`; HTTP 200 and all four services running. The previously hung browser remained unresponsive after installation, so authenticated verification in a fresh browser remains open.

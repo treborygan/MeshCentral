@@ -480,6 +480,20 @@ test('history search filters only native rendered events and recordings',()=>{
   assert.doesNotMatch(history,/meshserver\.send|downloadFile|openRecodringPlayer|localStorage|sessionStorage/);
 });
 
+test('history observer refresh does not rewrite unchanged status inside its observed page',()=>{
+  let writes=0, observer;
+  function element(){let text=''; return {children:[],value:'',append(...nodes){this.children.push(...nodes);},setAttribute(){},addEventListener(){},querySelectorAll(){return [];},get textContent(){return text;},set textContent(value){text=value; writes++;}};}
+  const page=element(), title=element(), events=element();
+  const ids={p3:page,p3title:title,p3events:events};
+  const document={readyState:'complete',getElementById:id=>ids[id]||null,createElement:element};
+  const window={addEventListener(){}};
+  class MutationObserver {constructor(callback){observer=callback;} observe(){}}
+  vm.runInNewContext(history,{document,window,MutationObserver},{timeout:1000});
+  const afterBoot=writes;
+  observer(); observer();
+  assert.equal(writes,afterBoot,'observer callbacks must not create another child-list mutation');
+});
+
 test('rendered native events can be opened from the keyboard',()=>{
   const eventRow={dataset:{},textContent:'Server restarted',attributes:{},listeners:{},clicks:0,
     setAttribute(name,value){this.attributes[name]=value;},

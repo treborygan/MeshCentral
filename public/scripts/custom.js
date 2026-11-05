@@ -2384,9 +2384,10 @@
     field.clear.hidden = !query;
     var counts = key === 'events' ? filterEvents(query) : filterRecordings(query);
     var noun = key === 'events' ? 'events' : 'recordings';
-    field.status.textContent = query
+    var message = query
       ? (counts.visible ? 'Showing ' + counts.visible + ' of ' + counts.total + ' loaded ' + noun + '.' : 'No matching ' + noun + ' in loaded records.')
       : counts.total + ' loaded ' + noun + '.';
+    if (field.status.textContent !== message) field.status.textContent = message;
   }
   function install() {
     addSearch('p3', 'p3title', 'events', 'Search events');
