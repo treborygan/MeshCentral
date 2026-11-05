@@ -802,6 +802,49 @@ test('alerts observer writes only changed permission text to avoid a self-trigge
   assert.match(alerts,/if \(panel\.hidden\) panel\.hidden = false/,'visible-state updates are idempotent');
 });
 
+test('isolated alerts startup observer settles and catches the pre-fix feedback loop',()=>{
+  function run(source,limit=30){
+    const ids=new Map(),observers=[],pending=new Set();let callbacks=0;
+    function changed(node,type){
+      observers.forEach(observer=>observer.targets.forEach(({target,options})=>{
+        let current=node,inside=current===target;
+        while(!inside&&current&&options.subtree){current=current.parentNode;inside=current===target;}
+        if(!inside)return;
+        if(type==='childList'&&options.childList||type==='attributes'&&options.attributes)pending.add(observer);
+      }));
+    }
+    class Element{
+      constructor(tag){this.tagName=tag.toUpperCase();this.children=[];this.parentNode=null;this.className='';this.hidden=false;this.events={};this.attributes={};this._text='';}
+      set id(value){this._id=value;ids.set(value,this);}get id(){return this._id||'';}
+      set textContent(value){this._text=String(value);this.children.forEach(child=>child.parentNode=null);this.children=[];changed(this,'childList');}
+      get textContent(){return this._text+this.children.map(child=>child.textContent).join('');}
+      append(...nodes){nodes.forEach(node=>{node.parentNode=this;this.children.push(node);});changed(this,'childList');}
+      insertBefore(node,reference){node.parentNode=this;const index=this.children.indexOf(reference);this.children.splice(index<0?this.children.length:index,0,node);changed(this,'childList');}
+      get nextSibling(){if(!this.parentNode)return null;const siblings=this.parentNode.children,index=siblings.indexOf(this);return siblings[index+1]||null;}
+      setAttribute(name,value){this.attributes[name]=String(value);changed(this,'attributes');}
+      addEventListener(name,fn){(this.events[name]||=[]).push(fn);}
+    }
+    class MutationObserver{constructor(callback){this.callback=callback;this.targets=[];observers.push(this);}observe(target,options){this.targets.push({target,options});}}
+    const host=new Element('div');host.id='p10info';
+    const anchor=new Element('div');anchor.id='p10html2';host.append(anchor);
+    const window={currentNode:null,addEventListener(){}};
+    const document={readyState:'complete',getElementById:id=>ids.get(id)||null,createElement:tag=>new Element(tag),addEventListener(){}};
+    vm.runInNewContext(source,{window,document,MutationObserver,console,Date,isFinite,Promise},{timeout:1000});
+    host.setAttribute('data-native-refresh','1');
+    while(pending.size&&callbacks<limit){const batch=Array.from(pending);pending.clear();batch.forEach(observer=>{callbacks++;observer.callback([]);});}
+    return {callbacks,pending:pending.size,refresh:window.__NightShiftAlerts&&window.__NightShiftAlerts.refresh};
+  }
+  const fixed=run(alerts);
+  assert.equal(fixed.pending,0,'the isolated Modern device-info startup drains its observer queue');
+  assert.equal(fixed.callbacks,1,'one native refresh produces one observer callback and settles');
+  const updateBlock=alerts.match(/function update\(\) \{[\s\S]*?\n  \}/);
+  assert.ok(updateBlock,'alerts startup update callback exists');
+  const regressed=alerts.replace(updateBlock[0],updateBlock[0].replace('setPermissionStatus(notificationStatus());','if (permissionStatus) permissionStatus.textContent = notificationStatus();'));
+  const broken=run(regressed);
+  assert.equal(broken.callbacks,30,'the pre-fix same-value text write repeatedly re-enters the observer');
+  assert.ok(broken.pending>0,'the callback queue remains nonempty when the safety bound is reached');
+});
+
 test('alert delivery failures retain the in-page notice and explain browser fallback',()=>{
   const helper=alerts.match(/function notify\(node,dedupeKey,label,allowed,now,quietPreferences\) \{[\s\S]*?\n  \}/);
   assert.ok(helper,'alert delivery helper exists');
