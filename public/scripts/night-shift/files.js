@@ -5,7 +5,7 @@
   if (window.__NightShiftFiles) return;
   var $ = function (id) { return document.getElementById(id); };
   var search, inspector, detail, actions = [];
-  var uploadObserver, transferQueue, transferStatus, transferList, historyPanel, historyList, lastQueueIndex = null;
+  var uploadObserver, transferQueue, transferStatus, transferList, historyPanel, historyList, historyAnnouncement, lastQueueIndex = null;
   var transferHistory = [], uploadTrackingInstalled = false, downloadTrackingInstalled = false;
   function create(tag, cls, text) {
     var node = document.createElement(tag);
@@ -119,9 +119,9 @@
         retry.addEventListener('click',function () {
           var upload = $('p13UploadButton');
           if (!upload || upload.disabled || typeof window.p13doUploadFiles !== 'function') return;
-          entry.state = 'Queued'; renderHistory();
+          entry.state = 'Queued'; renderHistory(); announceTransfer(entry);
           try { window.p13doUploadFiles([entry.file]); }
-          catch (error) { entry.state = 'Failed to start'; renderHistory(); }
+          catch (error) { entry.state = 'Failed to start'; renderHistory(); announceTransfer(entry); }
         });
         row.append(retry);
       } else if (entry.type === 'download' && entry.path) {
@@ -130,13 +130,17 @@
         again.addEventListener('click',function () {
           var download = $('p13DownloadButton'), node = window.currentNode;
           if (!download || download.disabled || !node || node._id !== entry.nodeId || typeof window.p13downloadDeviceFile !== 'function') return;
-          entry.state = 'Requested again'; renderHistory();
+          entry.state = 'Requested again'; renderHistory(); announceTransfer(entry);
           window.p13downloadDeviceFile(entry.path);
         });
         row.append(again);
       }
       historyList.append(row);
     });
+  }
+  function announceTransfer(entry) {
+    if (!historyAnnouncement || !entry) return;
+    historyAnnouncement.textContent = (entry.type === 'upload' ? 'Upload' : 'Download') + ' ' + entry.name + ': ' + entry.state + '.';
   }
   function recordUpload(file,state) {
     if (!file) return;
@@ -147,6 +151,7 @@
       transferHistory = transferHistory.slice(0,20);
     } else entry.state = state;
     renderHistory();
+    announceTransfer(entry);
   }
   function watchNativeUploadResults() {
     if (uploadTrackingInstalled || typeof window.p13gotUploadData !== 'function') return;
@@ -175,8 +180,9 @@
       transferHistory.unshift(entry);
       transferHistory = transferHistory.slice(0,20);
       renderHistory();
+      announceTransfer(entry);
       try { return nativeDownload.apply(this,arguments); }
-      catch (error) { entry.state = 'Failed to start'; renderHistory(); return false; }
+      catch (error) { entry.state = 'Failed to start'; renderHistory(); announceTransfer(entry); return false; }
     };
     downloadTrackingInstalled = true;
   }
@@ -211,8 +217,10 @@
       historyPanel = create('section','ns-transfer-history');
       historyPanel.setAttribute('aria-label','Recent transfers');
       historyPanel.append(create('h3','','Recent transfers'));
+      historyAnnouncement = create('p','ns-transfer-announcement');
+      historyAnnouncement.setAttribute('role','status'); historyAnnouncement.setAttribute('aria-live','polite'); historyAnnouncement.setAttribute('aria-atomic','true');
       historyList = create('ol','ns-transfer-history-list');
-      historyPanel.append(historyList);
+      historyPanel.append(historyAnnouncement,historyList);
       list.append(historyPanel);
       renderHistory();
     }

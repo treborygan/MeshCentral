@@ -275,6 +275,10 @@ test('upload queue display follows native queued files and native progress state
   assert.match(files,/window\.p13doUploadFiles\(\[entry\.file\]\)/);
   assert.match(files,/Recent transfers/);
   assert.match(css,/\.ns-transfer-history/);
+  assert.match(files,/historyAnnouncement\.setAttribute\('role','status'\)/);
+  assert.match(files,/historyAnnouncement\.setAttribute\('aria-live','polite'\)/);
+  assert.match(files,/announceTransfer\(entry\)/);
+  assert.match(css,/\.ns-transfer-announcement\{position:absolute;width:1px;height:1px/);
   assert.doesNotMatch(files,/fetch\(|XMLHttpRequest|WebSocket\(/);
 });
 
@@ -303,26 +307,33 @@ test('upload history observes native acknowledgments and retries through the nat
   window.p13gotUploadData({action:'uploadstart'});
   window.p13gotUploadData({action:'uploaderror'});
   const history=ids.get('p13filetable').children.find(node=>node.className==='ns-transfer-history');
-  const item=history.children[1].children[0];
+  const announcement=history.children[1], list=history.children[2];
+  assert.equal(announcement.attributes.role,'status');
+  assert.equal(announcement.attributes['aria-live'],'polite');
+  assert.equal(announcement.textContent,'Upload inventory.csv: Failed.','native upload acknowledgments announce their resulting state');
+  const item=list.children[0];
   assert.equal(item.children[1].textContent,'Failed');
   item.children[2].click();
   assert.equal(calls.length,1,'Retry invokes the native upload function once');
   assert.equal(calls[0][0],file,'Retry reuses the selected File object through the native upload function');
   assert.deepEqual(nativeCalls,['uploadstart','uploaderror'],'Native acknowledgment handling still runs');
   window.p13downloadDeviceFile('folder%2Freport.zip');
-  const downloadRow=history.children[1].children.find(row=>row.children[0].textContent==='report.zip');
+  const downloadRow=list.children.find(row=>row.children[0].textContent==='report.zip');
+  assert.equal(announcement.textContent,'Download report.zip: Requested.','download requests are announced without claiming completion');
   assert.equal(downloadRow.children[1].textContent,'Requested','Browser downloads are labeled requested, not falsely reported complete');
   window.currentNode={_id:'node/b'};downloadRow.children[2].click();
   assert.deepEqual(downloads,['folder%2Freport.zip'],'History cannot replay a download against a different device');
   window.currentNode={_id:'node/a'};downloadRow.children[2].click();
   assert.deepEqual(downloads,['folder%2Freport.zip','folder%2Freport.zip'],'Download again uses the native MeshCentral endpoint');
   failDownload=true;assert.equal(window.p13downloadDeviceFile('folder%2Fbroken.zip'),false,'synchronous native download start failures are contained');
-  const failedDownload=history.children[1].children.find(row=>row.children[0].textContent==='broken.zip');
+  const failedDownload=list.children.find(row=>row.children[0].textContent==='broken.zip');
   assert.equal(failedDownload.children[1].textContent,'Failed to start','failed downloads are not shown as pending requests');
+  assert.equal(announcement.textContent,'Download broken.zip: Failed to start.');
   window.p13gotUploadData({action:'uploaderror'});
-  failUpload=true;const retry=history.children[1].children.find(row=>row.children[0].textContent==='inventory.csv').children[2];retry.click();
-  const failedRetry=history.children[1].children.find(row=>row.children[0].textContent==='inventory.csv');
+  failUpload=true;const retry=list.children.find(row=>row.children[0].textContent==='inventory.csv').children[2];retry.click();
+  const failedRetry=list.children.find(row=>row.children[0].textContent==='inventory.csv');
   assert.equal(failedRetry.children[1].textContent,'Failed to start','native upload startup exceptions remain retryable and visible');
+  assert.equal(announcement.textContent,'Upload inventory.csv: Failed to start.');
 });
 
 test('quick power and command actions mirror MeshCentral rights and open its native audit flow',()=>{
