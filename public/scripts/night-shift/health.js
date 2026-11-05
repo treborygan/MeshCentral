@@ -4,7 +4,7 @@
   if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftHealth) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, values = {};
+  var panel, values = {}, lastNodeId = null;
   function create(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -57,7 +57,11 @@
   function update() {
     build(); if (!panel) return;
     var node = window.currentNode;
-    if (!node) { Object.keys(values).forEach(function (key) { values[key].textContent = 'Unavailable'; }); return; }
+    if (!node) { lastNodeId = null; Object.keys(values).forEach(function (key) { values[key].textContent = 'Unavailable'; }); return; }
+    if (lastNodeId !== node._id) {
+      lastNodeId = node._id;
+      values.cpu.textContent = 'Unavailable'; values.memory.textContent = 'Unavailable';
+    }
     var connected = typeof node.conn === 'number' && (node.conn & 15) !== 0;
     values.agent.textContent = connected ? 'Connected' : (typeof node.conn === 'number' ? 'Offline' : 'Unavailable');
     var hardware = window.DeviceDetailsNodeId === node._id ? window.DeviceDetailsHardware : null;
@@ -108,8 +112,20 @@
     };
     chart.__nightShiftHealthHook = true;
   }
+  function installClearHook() {
+    var nativeClear = window.deviceDetailsStatsClear;
+    if (typeof nativeClear !== 'function' || nativeClear.__nightShiftHealthHook) return;
+    var wrappedClear = function () {
+      var result = nativeClear.apply(this,arguments);
+      values.cpu.textContent = 'Unavailable'; values.memory.textContent = 'Unavailable';
+      return result;
+    };
+    wrappedClear.__nightShiftHealthHook = true;
+    window.deviceDetailsStatsClear = wrappedClear;
+  }
   function boot() {
     if (!$('p17')) return;
+    installClearHook();
     update();
     var graphControl = document.querySelector('#devListToolbarViewIcons3 [title="Show device CPU and memory usage."]');
     if (graphControl) graphControl.addEventListener('click',function () {

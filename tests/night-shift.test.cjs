@@ -184,8 +184,35 @@ test('device health uses cached native details and delegates CPU graph to MeshCe
   assert.match(health,/ns-native-storage-sample/);
   assert.match(health,/devListToolbarViewIcons3/);
   assert.match(health,/native\.click\(\)/);
+  assert.match(health,/installClearHook/);
+  assert.match(health,/lastNodeId !== node\._id/);
   assert.doesNotMatch(health,/setInterval|send\(\s*\{\s*action:\s*['"]msg['"]|recoveryPassword|encryptionMethod|bitlocker/i);
   assert.match(health,/sizeremaining/);
+
+  const ids=new Map(),calls=[];
+  class Element {
+    constructor(tag){this.tagName=tag;this.children=[];this.attributes={};this.events={};this.parentNode=null;this.textContent='';}
+    set id(value){this._id=value;ids.set(value,this);} get id(){return this._id||'';}
+    append(...nodes){nodes.forEach(node=>{node.parentNode=this;this.children.push(node);});}
+    insertBefore(node,anchor){node.parentNode=this;const index=this.children.indexOf(anchor);this.children.splice(index<0?this.children.length:index,0,node);}
+    setAttribute(key,value){this.attributes[key]=String(value);}
+    addEventListener(name,fn){(this.events[name]||=[]).push(fn);}
+  }
+  const parent=new Element('div'),host=new Element('div');host.id='p17info';parent.append(host);
+  const info=new Element('div');info.id='p17info2';host.append(info);
+  const page=new Element('div');page.id='p17';
+  const window={currentNode:{_id:'node/a',conn:1,osdesc:'Windows'},deviceDetailsStatsClear(){calls.push('clear');return 'native result';},addEventListener(){}};
+  const document={readyState:'complete',getElementById:id=>ids.get(id)||null,querySelector(){return null;},addEventListener(){},createElement:tag=>new Element(tag)};
+  vm.runInNewContext(health,{window,document,console,MutationObserver:undefined,Date,isFinite},{timeout:1000});
+  const grid=ids.get('ns-device-health').children[1],cpu=grid.children[2].children[1],memory=grid.children[3].children[1];
+  cpu.textContent='41.2%';memory.textContent='67.5%';
+  assert.equal(window.deviceDetailsStatsClear(),'native result','wrapped cleanup preserves the native return value');
+  assert.deepEqual(calls,['clear'],'native graph cleanup still runs');
+  assert.equal(cpu.textContent,'Unavailable','closing the native graph clears its stale CPU sample');
+  assert.equal(memory.textContent,'Unavailable','closing the native graph clears its stale memory sample');
+  cpu.textContent='41.2%';memory.textContent='67.5%';window.currentNode={_id:'node/b',conn:1};window.__NightShiftHealth.refresh();
+  assert.equal(cpu.textContent,'Unavailable','switching devices cannot display the prior device CPU sample');
+  assert.equal(memory.textContent,'Unavailable','switching devices cannot display the prior device memory sample');
 });
 
 test('elapsed uptime formatting is deterministic and rejects future boot dates',()=>{
