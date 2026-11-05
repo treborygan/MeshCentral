@@ -5,6 +5,9 @@
 (function () {
   'use strict';
   if (window.__nightShiftUI) return;
+  var classicMode = false;
+  try { classicMode = window.localStorage && window.localStorage.getItem('_nsClassicUI') === '1'; } catch (error) { }
+  window.__NightShiftClassicMode = !!classicMode;
   const $ = (id) => document.getElementById(id);
   const q = (selector, root = document) => root.querySelector(selector);
   const make = (tag, className, text) => {
@@ -58,6 +61,34 @@
     el.textContent = text; el.classList.add('is-visible');
     clearTimeout(toastHandle);
     toastHandle = setTimeout(() => el.classList.remove('is-visible'), 2800);
+  }
+  function changeClassicMode(classic) {
+    try {
+      if (!window.localStorage) throw new Error('Browser storage is unavailable');
+      if (classic) window.localStorage.setItem('_nsClassicUI','1');
+      else window.localStorage.removeItem('_nsClassicUI');
+    } catch (error) {
+      message('Could not save this UI preference. Allow browser storage, then try again.');
+      return false;
+    }
+    if (window.location && typeof window.location.reload === 'function') { window.location.reload(); return true; }
+    message('Reload this page to apply the UI preference.');
+    return false;
+  }
+  function installClassicRestore() {
+    if (!document.body || $('ns-classic-toggle')) return;
+    document.body.classList.add('ns-classic-active');
+    const restore=button('Night Shift','ns-classic-toggle',()=>changeClassicMode(false),'Switch back to Night Shift');
+    restore.id='ns-classic-toggle';
+    restore.style.cssText='position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483000;min-height:42px;padding:9px 14px;border:1px solid #6c8c69;border-radius:999px;background:#14221c;color:#e8f3e5;font:600 14px/1.2 system-ui,sans-serif;box-shadow:0 8px 28px #0008;cursor:pointer;outline:2px solid transparent;outline-offset:3px';
+    document.body.append(restore);
+  }
+  function disableNightShiftStylesheet() {
+    if (!document.querySelectorAll) return;
+    document.querySelectorAll('link[rel="stylesheet"]').forEach(function (link) {
+      const href=link.href||link.getAttribute('href')||'';
+      if (/(?:^|\/)custom\.css(?:[?#]|$)/i.test(href)) link.disabled=true;
+    });
   }
   function button(text, className, handler, title) {
     const el = make('button',className,text);
@@ -337,6 +368,7 @@
     refreshScheduled=true;requestAnimationFrame(()=>{refreshScheduled=false;updateNow();});
   }
   function boot(){
+    if(window.__NightShiftClassicMode){disableNightShiftStylesheet();installClassicRestore();return;}
     const hasAppContainer=!!$('container');
     const isLoginPage=!!(document.body&&(document.body.classList.contains('login')||$('centralTable')));
     if(!hasAppContainer&&!isLoginPage)return;
@@ -369,7 +401,7 @@
     addEventListener('orientationchange',scheduleUpdate,{passive:true});
     document.addEventListener('visibilitychange',scheduleUpdate);
   }
-  window.__nightShiftUI={version:'1.0.0',refresh:scheduleUpdate,search:showSearch,notifyClipboardError:function(){message('Clipboard access was blocked. Allow clipboard access for this site, then try again.');}};
+  window.__nightShiftUI={version:'1.0.0',refresh:scheduleUpdate,search:showSearch,enableClassic:function(){return changeClassicMode(true);},notifyClipboardError:function(){message('Clipboard access was blocked. Allow clipboard access for this site, then try again.');}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
 })();
@@ -382,6 +414,7 @@
  */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__nightShiftShell) return;
   var $ = function (id) { return document.getElementById(id); };
   var create = function (tag, cls, label) {
@@ -478,6 +511,9 @@
     var menu = create('nav', 'ns-appbar-menu'); menu.hidden = true;
     menu.setAttribute('aria-label', 'Additional MeshCentral sections');
     entries.forEach(function (entry) { if (allowed($(entry.id))) menu.append(link(entry, 'ns-shell-action')); });
+    menu.append(button('Classic UI','ns-shell-action',function () {
+      if (window.__nightShiftUI && typeof window.__nightShiftUI.enableClassic === 'function') window.__nightShiftUI.enableClassic();
+    },'Switch to the native Classic MeshCentral UI'));
     var nativeMenu = button('More', 'ns-shell-more', function () {
       menu.hidden = !menu.hidden;
       nativeMenu.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
@@ -665,6 +701,7 @@
  */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__nightShiftDevices) return;
   var $ = function (id) { return document.getElementById(id); };
   var create = function (tag, cls, text) {
@@ -1049,6 +1086,7 @@
 /* Night Shift remote-session diagnostics. Native MeshCentral handlers remain authoritative. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftDiagnostics) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, rows = {}, actionButton, guidance, queued = false;
@@ -1188,6 +1226,7 @@
 /* Night Shift tabs over existing MeshCentral multi-desktop sessions. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftSessions) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, queued = false;
@@ -1324,6 +1363,7 @@
 /* Per-device connection preferences layered over native MeshCentral controls. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftProfiles) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, controls = {}, status, pending = null, appliedDesktop = null, loadedNodeId = null, queued = false;
@@ -1605,6 +1645,7 @@
 /* Night Shift device health summary. Reads MeshCentral's cached native details. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftHealth) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, values = {};
@@ -1736,6 +1777,7 @@
 /* Search only the events and recordings MeshCentral has already rendered. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftHistory) return;
   var $ = function (id) { return document.getElementById(id); };
   var fields = {};
@@ -1825,6 +1867,7 @@
 /* Native file workspace enhancements: local filter and selection inspector. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftFiles) return;
   var $ = function (id) { return document.getElementById(id); };
   var search, inspector, detail, actions = [];
@@ -2079,6 +2122,7 @@
 /* Permission-aware shortcuts into MeshCentral's audited native action dialog. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftActions) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, status, power, commands;
@@ -2140,6 +2184,7 @@
 /* Opt-in connection alerts for the currently open authorized device. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftAlerts) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, enabled, metricEnabled, storageEnabled, cpuLimit, memoryLimit, storageLimit, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotices = {}, overThreshold = {}, fleetStates = Object.create(null), fleetHookInstalled = false;
@@ -2347,6 +2392,7 @@
 /* Use the browser's install prompt when the native MeshCentral manifest qualifies. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftPwa) return;
   var promptEvent = null, installButton = null, help = null, helpClose = null;
   function create(tag, cls, text) {
@@ -2416,6 +2462,7 @@
 /* Explain which native device tools MeshCentral currently exposes. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftCapabilities) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, rows = {};
@@ -2473,6 +2520,7 @@
 /* Collapsible, non-modal device information drawer for the native desktop viewer. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftViewer) return;
   var $ = function (id) { return document.getElementById(id); };
   var toggle, drawer, closeButton, detailsButton, controls, fields = {}, controlButtons = {}, hideTimer = null;

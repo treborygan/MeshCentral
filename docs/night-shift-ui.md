@@ -30,6 +30,7 @@ The aesthetic follows the independently prototyped Night Shift concept: deep nav
 - [x] Expandable desktop navigation rail with keyboard-accessible, session-only toggle; native stacked/full-desktop modes and mobile navigation are preserved
 - [x] Dark device detail, remote desktop, terminal, files and settings presentation without displacing original MeshCentral controls
 - [x] Mobile actions wired to existing MeshCentral Connect, RDP, Disconnect, trackpad, right-click, keyboard, zoom, fullscreen, monitor and settings handlers (source-level interaction harness passes; real-session acceptance remains open)
+- [x] User-facing Classic UI fallback: choose **More → Classic UI** to disable the Night Shift stylesheet and skip all enhancement modules for this tab; the native Classic pages retain a **Night Shift** return button. The preference is local to the browser and is not synced as MeshCentral user state. Installed-server acceptance remains pending.
 - [x] PCRN web override installed and exact CSS/JS assets verified from the local MeshCentral listener
 - [ ] Comprehensive MeshCentral feature parity and role permissions validation
 

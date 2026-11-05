@@ -1,6 +1,7 @@
 /* Opt-in connection alerts for the currently open authorized device. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftAlerts) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, enabled, metricEnabled, storageEnabled, cpuLimit, memoryLimit, storageLimit, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotices = {}, overThreshold = {}, fleetStates = Object.create(null), fleetHookInstalled = false;

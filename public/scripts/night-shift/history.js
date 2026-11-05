@@ -1,6 +1,7 @@
 /* Search only the events and recordings MeshCentral has already rendered. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftHistory) return;
   var $ = function (id) { return document.getElementById(id); };
   var fields = {};

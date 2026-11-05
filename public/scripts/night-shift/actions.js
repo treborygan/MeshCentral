@@ -1,6 +1,7 @@
 /* Permission-aware shortcuts into MeshCentral's audited native action dialog. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftActions) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, status, power, commands;

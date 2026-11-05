@@ -1,6 +1,7 @@
 /* Per-device connection preferences layered over native MeshCentral controls. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftProfiles) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, controls = {}, status, pending = null, appliedDesktop = null, loadedNodeId = null, queued = false;

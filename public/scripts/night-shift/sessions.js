@@ -1,6 +1,7 @@
 /* Night Shift tabs over existing MeshCentral multi-desktop sessions. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftSessions) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, queued = false;

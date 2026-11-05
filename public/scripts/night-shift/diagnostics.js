@@ -1,6 +1,7 @@
 /* Night Shift remote-session diagnostics. Native MeshCentral handlers remain authoritative. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftDiagnostics) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, rows = {}, actionButton, guidance, queued = false;

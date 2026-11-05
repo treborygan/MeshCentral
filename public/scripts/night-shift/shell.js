@@ -6,6 +6,7 @@
  */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__nightShiftShell) return;
   var $ = function (id) { return document.getElementById(id); };
   var create = function (tag, cls, label) {
@@ -102,6 +103,9 @@
     var menu = create('nav', 'ns-appbar-menu'); menu.hidden = true;
     menu.setAttribute('aria-label', 'Additional MeshCentral sections');
     entries.forEach(function (entry) { if (allowed($(entry.id))) menu.append(link(entry, 'ns-shell-action')); });
+    menu.append(button('Classic UI','ns-shell-action',function () {
+      if (window.__nightShiftUI && typeof window.__nightShiftUI.enableClassic === 'function') window.__nightShiftUI.enableClassic();
+    },'Switch to the native Classic MeshCentral UI'));
     var nativeMenu = button('More', 'ns-shell-more', function () {
       menu.hidden = !menu.hidden;
       nativeMenu.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');

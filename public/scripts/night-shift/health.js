@@ -1,6 +1,7 @@
 /* Night Shift device health summary. Reads MeshCentral's cached native details. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftHealth) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, values = {};

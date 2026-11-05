@@ -1,6 +1,7 @@
 /* Collapsible, non-modal device information drawer for the native desktop viewer. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftViewer) return;
   var $ = function (id) { return document.getElementById(id); };
   var toggle, drawer, closeButton, detailsButton, controls, fields = {}, controlButtons = {}, hideTimer = null;

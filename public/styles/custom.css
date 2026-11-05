@@ -809,6 +809,9 @@ body.ns-shell-ready #ns-appbar {
 }
 .ns-shell-search:hover,.ns-shell-more:hover {background:#30443b;border-color:#63865a;color:#d8ffb4}
 .ns-shell-more {color:#c5d3d8}
+.ns-classic-toggle{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483000;min-height:42px;padding:9px 14px;border:1px solid #6c8c69;border-radius:999px;background:#14221c;color:#e8f3e5;font:600 14px/1.2 system-ui,sans-serif;box-shadow:0 8px 28px #0008;cursor:pointer}
+.ns-classic-toggle:hover{background:#243b2d}
+.ns-classic-toggle:focus-visible{outline:3px solid #b6df72;outline-offset:3px}
 body.ns-shell-ready #p1 {min-width:0}
 .ns-overview {margin:0 0 22px;padding:0 clamp(5px,1vw,12px);color:#f1f5f4}
 .ns-overview[hidden],.ns-shell-action[hidden],.ns-device-actions [hidden] {display:none!important}

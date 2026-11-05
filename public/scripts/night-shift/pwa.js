@@ -1,6 +1,7 @@
 /* Use the browser's install prompt when the native MeshCentral manifest qualifies. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftPwa) return;
   var promptEvent = null, installButton = null, help = null, helpClose = null;
   function create(tag, cls, text) {

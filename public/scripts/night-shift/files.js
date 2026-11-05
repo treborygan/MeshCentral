@@ -1,6 +1,7 @@
 /* Native file workspace enhancements: local filter and selection inspector. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftFiles) return;
   var $ = function (id) { return document.getElementById(id); };
   var search, inspector, detail, actions = [];

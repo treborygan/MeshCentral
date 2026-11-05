@@ -5,6 +5,7 @@
  */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__nightShiftDevices) return;
   var $ = function (id) { return document.getElementById(id); };
   var create = function (tag, cls, text) {

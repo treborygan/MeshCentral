@@ -5,6 +5,9 @@
 (function () {
   'use strict';
   if (window.__nightShiftUI) return;
+  var classicMode = false;
+  try { classicMode = window.localStorage && window.localStorage.getItem('_nsClassicUI') === '1'; } catch (error) { }
+  window.__NightShiftClassicMode = !!classicMode;
   const $ = (id) => document.getElementById(id);
   const q = (selector, root = document) => root.querySelector(selector);
   const make = (tag, className, text) => {
@@ -58,6 +61,34 @@
     el.textContent = text; el.classList.add('is-visible');
     clearTimeout(toastHandle);
     toastHandle = setTimeout(() => el.classList.remove('is-visible'), 2800);
+  }
+  function changeClassicMode(classic) {
+    try {
+      if (!window.localStorage) throw new Error('Browser storage is unavailable');
+      if (classic) window.localStorage.setItem('_nsClassicUI','1');
+      else window.localStorage.removeItem('_nsClassicUI');
+    } catch (error) {
+      message('Could not save this UI preference. Allow browser storage, then try again.');
+      return false;
+    }
+    if (window.location && typeof window.location.reload === 'function') { window.location.reload(); return true; }
+    message('Reload this page to apply the UI preference.');
+    return false;
+  }
+  function installClassicRestore() {
+    if (!document.body || $('ns-classic-toggle')) return;
+    document.body.classList.add('ns-classic-active');
+    const restore=button('Night Shift','ns-classic-toggle',()=>changeClassicMode(false),'Switch back to Night Shift');
+    restore.id='ns-classic-toggle';
+    restore.style.cssText='position:fixed;right:max(12px,env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));z-index:2147483000;min-height:42px;padding:9px 14px;border:1px solid #6c8c69;border-radius:999px;background:#14221c;color:#e8f3e5;font:600 14px/1.2 system-ui,sans-serif;box-shadow:0 8px 28px #0008;cursor:pointer;outline:2px solid transparent;outline-offset:3px';
+    document.body.append(restore);
+  }
+  function disableNightShiftStylesheet() {
+    if (!document.querySelectorAll) return;
+    document.querySelectorAll('link[rel="stylesheet"]').forEach(function (link) {
+      const href=link.href||link.getAttribute('href')||'';
+      if (/(?:^|\/)custom\.css(?:[?#]|$)/i.test(href)) link.disabled=true;
+    });
   }
   function button(text, className, handler, title) {
     const el = make('button',className,text);
@@ -337,6 +368,7 @@
     refreshScheduled=true;requestAnimationFrame(()=>{refreshScheduled=false;updateNow();});
   }
   function boot(){
+    if(window.__NightShiftClassicMode){disableNightShiftStylesheet();installClassicRestore();return;}
     const hasAppContainer=!!$('container');
     const isLoginPage=!!(document.body&&(document.body.classList.contains('login')||$('centralTable')));
     if(!hasAppContainer&&!isLoginPage)return;
@@ -369,7 +401,7 @@
     addEventListener('orientationchange',scheduleUpdate,{passive:true});
     document.addEventListener('visibilitychange',scheduleUpdate);
   }
-  window.__nightShiftUI={version:'1.0.0',refresh:scheduleUpdate,search:showSearch,notifyClipboardError:function(){message('Clipboard access was blocked. Allow clipboard access for this site, then try again.');}};
+  window.__nightShiftUI={version:'1.0.0',refresh:scheduleUpdate,search:showSearch,enableClassic:function(){return changeClassicMode(true);},notifyClipboardError:function(){message('Clipboard access was blocked. Allow clipboard access for this site, then try again.');}};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
 })();

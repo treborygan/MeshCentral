@@ -20,7 +20,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [ ] Complete and verify the remote-session-first viewer, floating/auto-hide controls, information drawer and fullscreen layouts. (A floating desktop toolbar now auto-hides and delegates Connect, RDP, Disconnect and Full Screen to visible native controls; mobile retains its dock; a collapsible session information drawer is implemented. Live fullscreen and visual acceptance remain pending.)
 - [ ] Verify touch, trackpad, zoom, keyboard modifiers and monitor selection on real Android and iOS devices.
 - [ ] Verify keyboard-only navigation, contrast, focus visibility, feedback and loading/empty/error states across major screens.
-- [ ] Verify a clear, usable Classic UI fallback on the installed server.
+- [ ] Verify a clear, usable Classic UI fallback on the installed server. A local appbar switch disables the Night Shift stylesheet, skips every enhancement module and leaves an accessible return button; browser-level and installed-server acceptance remain pending.
 
 ## Phase 2 — remote-access workspace
 
@@ -59,7 +59,7 @@ Status labels: **Done** means source and the stated verification exist; it does 
 - [x] Keep authentication, permissions, consent, guest sharing, recording, 2FA, native transports and Cloudflare boundaries in MeshCentral.
 - [x] Use the persistent `custom.css`/`custom.js` extension points and backup-manifest installer; rollback path is documented.
 - [x] Split JavaScript into focused mobile-controls, shell, devices, diagnostics, sessions, profiles, health, history, files, actions, alerts, PWA, capabilities and viewer components; regenerate the single deployable `custom.js` bundle and include bundle validation in the CI workflow.
-- [x] Current automated source checks: `node scripts/build-night-shift.js --check`, `node --check public/scripts/custom.js` and `node --test tests/night-shift.test.cjs` (41 tests).
+- [x] Current automated source checks: `node scripts/build-night-shift.js --check`, `node --check public/scripts/custom.js` and `node --test tests/night-shift.test.cjs` (42 tests).
 - [x] Review current upstream security-fix ancestry and compatibility: the PR branch includes the reviewed 1.3.1 fixes; source changes remain limited to web overrides.
 - [ ] Verify the exact installed PRN source revision and confirm those upstream fixes are present before release.
 - [ ] Complete authenticated workflows for admin and restricted roles, Agent desktop, browser RDP, terminal, files, reconnect, guest, recordings, AMT and plugins.

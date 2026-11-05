@@ -72,6 +72,30 @@ test('desktop navigation rail expands accessibly without replacing native routes
   assert.match(css,/body\.ns-theme\.ns-rail-expanded\.fullscreen[^\n]*#container\{grid-template-columns:168px minmax\(0,1fr\)\}/);
 });
 
+test('Classic UI preference skips Night Shift enhancements and provides an accessible return control',()=>{
+  const h=createMobileHarness(true,true);
+  assert.equal(h.window.__NightShiftClassicMode,true,'stored Classic UI preference is detected before feature modules run');
+  assert.equal(h.document.body.classList.contains('ns-theme'),false,'native page does not receive Night Shift theme classes');
+  assert.equal(h.byId.has('ns-appbar'),false,'Night Shift appbar is omitted in Classic UI mode');
+  assert.equal(h.byId.has('ns-mobile-dock'),false,'Night Shift touch dock is omitted in Classic UI mode');
+  assert.equal(h.styleSheet.disabled,true,'Night Shift override stylesheet is disabled in Classic UI mode');
+  for(const moduleFlag of ['__nightShiftShell','__nightShiftDevices','__NightShiftDiagnostics','__NightShiftSessions','__NightShiftFiles','__NightShiftAlerts','__NightShiftViewer']) {
+    assert.equal(h.window[moduleFlag],undefined,moduleFlag+' remains unloaded in Classic UI mode');
+  }
+  const restore=h.byId.get('ns-classic-toggle');
+  assert.ok(restore,'a return control remains available on the native UI');
+  assert.equal(restore.getAttribute('aria-label'),'Switch back to Night Shift');
+  assert.match(h.byId.get('ns-classic-toggle').style.cssText,/outline:2px solid/,'the return control retains a visible native keyboard focus outline');
+  restore.click();
+  assert.equal(h.storage.has('_nsClassicUI'),false,'returning to Night Shift removes the local Classic preference');
+  assert.equal(h.reloadCount,1,'the preference change reloads native controls cleanly');
+  assert.match(shell,/Classic UI/,'authenticated appbar menu exposes the user-facing fallback');
+  const nightShift=createMobileHarness(true,false);
+  assert.equal(nightShift.window.__nightShiftUI.enableClassic(),true,'the Night Shift menu can enable the Classic UI preference');
+  assert.equal(nightShift.storage.get('_nsClassicUI'),'1','the local presentation preference is saved');
+  assert.equal(nightShift.reloadCount,1,'switching to Classic UI reloads the native pages cleanly');
+});
+
 test('contextual breadcrumbs route through native MeshCentral navigation',()=>{
   assert.match(shell,/setAttribute\('aria-label', 'Breadcrumb'\)/);
   assert.match(shell,/navigate\(entries\[0\]\)/);
@@ -508,9 +532,12 @@ test('viewer toolbar stays within the active viewer and delegates fullscreen',()
   assert.equal(controls.hidden,true,'Toolbar hides when the native viewer is inactive');
 });
 
-function createMobileHarness(isMobile = true) {
+function createMobileHarness(isMobile = true, classicMode = false) {
   const byId = new Map();
   const documentEvents = {};
+  const storage = new Map(classicMode ? [['_nsClassicUI','1']] : []);
+  let reloadCount = 0;
+  const styleSheet={href:'styles/custom.css',disabled:false,getAttribute(name){return name==='href'?'styles/custom.css':null;}};
   let activeElement = null;
   class Element {
     constructor(tag, className = '', text = '') {
@@ -556,7 +583,7 @@ function createMobileHarness(isMobile = true) {
     createElement: tag => new Element(tag),
     getElementById: id => byId.get(id) || null,
     querySelector: () => null,
-    querySelectorAll: () => [],
+    querySelectorAll: selector => selector==='link[rel="stylesheet"]'?[styleSheet]:[],
     addEventListener(name, fn) { (documentEvents[name] ||= []).push(fn); }
   };
   const addExisting = (id, visible = true) => {
@@ -574,6 +601,8 @@ function createMobileHarness(isMobile = true) {
   addExisting('DeskClipboardInButton');
   const calls = [];
   const window = {
+    localStorage:{getItem:key=>storage.has(key)?storage.get(key):null,setItem:(key,value)=>storage.set(key,String(value)),removeItem:key=>storage.delete(key)},
+    location:{reload(){reloadCount++;}},
     trackpadMode: false,
     _mobileModifiers:{ctrl:false,shift:false,alt:false},
     go: page => calls.push(['go', page]),
@@ -604,7 +633,7 @@ function createMobileHarness(isMobile = true) {
     MouseEvent: class { constructor(type, init = {}) { this.type = type; Object.assign(this, init); } }
   };
   vm.runInNewContext(js, context, { timeout: 1000 });
-  return { document, documentEvents, byId, calls, window, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement };
+  return { document, documentEvents, byId, calls, window, storage, styleSheet, get reloadCount(){return reloadCount;}, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement };
 }
 
 test('custom JavaScript parses and registers without requiring a live server', () => {

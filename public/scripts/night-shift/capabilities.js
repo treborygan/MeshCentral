@@ -1,6 +1,7 @@
 /* Explain which native device tools MeshCentral currently exposes. */
 (function () {
   'use strict';
+  if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftCapabilities) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, rows = {};
