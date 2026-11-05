@@ -3,7 +3,7 @@
   'use strict';
   if (window.__NightShiftAlerts) return;
   var $ = function (id) { return document.getElementById(id); };
-  var panel, enabled, metricEnabled, storageEnabled, cpuLimit, memoryLimit, storageLimit, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotices = {}, overThreshold = {};
+  var panel, enabled, metricEnabled, storageEnabled, cpuLimit, memoryLimit, storageLimit, quietStart, quietEnd, status, activeNode = null, lastState = null, lastNotices = {}, overThreshold = {}, fleetStates = Object.create(null), fleetHookInstalled = false;
   function create(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -63,7 +63,7 @@
     quietStart = addTimeControl(times,'Quiet hours start','ns-alert-quiet-start');
     quietEnd = addTimeControl(times,'Quiet hours end','ns-alert-quiet-end');
     panel.append(times);
-    status = create('p','ns-alert-status','Alerts watch connection changes while this MeshCentral page is open.');
+    status = create('p','ns-alert-status','Opted-in connection alerts follow native device updates while this page is open. CPU and memory alerts require the native live graph.');
     status.setAttribute('aria-live','polite'); panel.append(status);
     if (anchor && anchor.parentNode === host) host.insertBefore(panel,anchor.nextSibling);
     else host.append(panel);
@@ -81,8 +81,9 @@
     quietStart.value = typeof prefs.s === 'string' ? prefs.s : '';
     quietEnd.value = typeof prefs.t === 'string' ? prefs.t : '';
   }
-  function quietNow(date) {
-    var start = quietStart && quietStart.value, end = quietEnd && quietEnd.value;
+  function quietNow(date, preferences) {
+    var start = preferences ? preferences.s : (quietStart && quietStart.value);
+    var end = preferences ? preferences.t : (quietEnd && quietEnd.value);
     if (!start || !end || start === end) return false;
     var now = date.getHours() * 60 + date.getMinutes();
     var toMinutes = function (v) { var p = v.split(':'); return (+p[0] * 60) + (+p[1]); };
@@ -105,10 +106,10 @@
     var label = (node.name || node.rname || 'Device') + ' connection: ' + current.split('+').join(' / ');
     notify(node,dedupeKey,label,enabled.checked,now);
   }
-  function notify(node,dedupeKey,label,allowed,now) {
-    if (!allowed || quietNow(now) || (lastNotices[dedupeKey] && now.getTime() - lastNotices[dedupeKey] < 300000)) return;
+  function notify(node,dedupeKey,label,allowed,now,quietPreferences) {
+    if (!allowed || quietNow(now,quietPreferences) || (lastNotices[dedupeKey] && now.getTime() - lastNotices[dedupeKey] < 300000)) return;
     lastNotices[dedupeKey] = now.getTime();
-    status.textContent = label;
+    if (status) status.textContent = label;
     if (window.Notification && window.Notification.permission === 'granted') {
       try { new window.Notification('MeshCentral connection changed',{body:label,tag:dedupeKey}); } catch (e) { }
     }
@@ -147,8 +148,32 @@
     if (lastState !== null && current !== lastState) announce(node,current);
     lastState = current;
   }
+  function seedFleetStates() {
+    if (!Array.isArray(window.nodes)) return;
+    window.nodes.forEach(function (node) {
+      if (node && typeof node._id === 'string') fleetStates[node._id] = state(node);
+    });
+  }
+  function installFleetConnectionHook() {
+    var nativeUpdate = window.updateDeviceViewDevice;
+    if (fleetHookInstalled || typeof nativeUpdate !== 'function') return;
+    window.updateDeviceViewDevice = function (node) {
+      if (node && typeof node._id === 'string') {
+        var current = state(node), previous = fleetStates[node._id];
+        fleetStates[node._id] = current;
+        if (previous !== undefined && previous !== 'unknown' && previous !== current) {
+          var preferences = load(node);
+          var label = (node.name || node.rname || 'Device') + ' connection: ' + current.split('+').join(' / ');
+          notify(node,node._id + '|' + current,label,preferences.e === 1,new Date(),preferences);
+        }
+      }
+      return nativeUpdate.apply(this,arguments);
+    };
+    fleetHookInstalled = true;
+  }
   function boot() {
-    if (!$('p10')) return;
+    seedFleetStates();
+    installFleetConnectionHook();
     update();
     if (typeof MutationObserver === 'function') {
       var observer = new MutationObserver(update);

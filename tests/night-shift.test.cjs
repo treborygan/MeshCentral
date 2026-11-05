@@ -215,7 +215,25 @@ test('connection alerts are opt-in, device-scoped, deduplicated and quiet-hours 
   assert.match(alerts,/CPU threshold/);
   assert.match(alerts,/ns-native-health-sample/);
   assert.match(alerts,/ns-native-storage-sample/);
+  assert.match(alerts,/seedFleetStates/);
+  assert.match(alerts,/installFleetConnectionHook/);
+  assert.match(alerts,/preferences\.e === 1/);
   assert.doesNotMatch(alerts,/setInterval|meshserver\.send|poweraction|runcommands/);
+});
+
+test('fleet connection alerts observe native device updates only for opted-in devices',()=>{
+  const alertsSource=read('public/scripts/night-shift/alerts.js'),notifications=[],nativeCalls=[];
+  const nodes=[{_id:'node/a',name:'Allowed',conn:0},{_id:'node/b',name:'Muted',conn:0}];
+  class Notification { constructor(title,options){notifications.push({title,options});} }
+  Notification.permission='granted';
+  const window={nodes,Notification,getstore:key=>key==='nsAlerts.node/a'?'{"e":1}':'{}',updateDeviceViewDevice(node){nativeCalls.push(node._id);}};
+  const document={readyState:'complete',getElementById(){return null;},addEventListener(){}};
+  vm.runInNewContext(alertsSource,{window,document,console,Date,MutationObserver:undefined},{timeout:1000});
+  nodes[0].conn=1;window.updateDeviceViewDevice(nodes[0]);
+  nodes[1].conn=1;window.updateDeviceViewDevice(nodes[1]);
+  assert.equal(notifications.length,1,'Only a device with its own saved alert preference produces a notification');
+  assert.match(notifications[0].options.body,/Allowed connection: agent/);
+  assert.deepEqual(nativeCalls,['node/a','node/b'],'The original MeshCentral view updater still runs for both devices');
 });
 
 test('PWA install shortcut uses native browser installability and user gesture',()=>{
