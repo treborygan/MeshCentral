@@ -340,3 +340,11 @@ The latest visible Chrome attempt remains blank after canceling the stalled navi
 From this host, an unauthenticated public request returns HTTP 302 from Cloudflare Access. The existing MeshCentral loopback route returns the login page in about 160 ms, and both `/styles/custom.css` and `/scripts/custom.js` return HTTP 200 with bytes matching the branch and installed override hashes. This isolates asset delivery from the unresolved authenticated public path. No configuration, service, tunnel, or route was changed.
 
 After the user reported signing in again, the computer-use bridge still reported that the browser host was unavailable. The visible Chrome process had no remote-debugging endpoint. No further navigation or form resubmission was attempted, so the newly signed-in public page was not observed in this check.
+
+## Authenticated Chrome and responsive check — 2026-11-05
+
+A local Playwright Chromium run loaded the PRN loopback login page at 390×844, 768×1024 and 1440×900. Each viewport returned HTTP 200, kept document scroll width equal to viewport width, referenced both custom CSS and JavaScript, and reported no page errors or failed requests. These screenshots cover the unauthenticated login page only.
+
+The user Chrome window has a separate Cloudflare Access callback tab and multiple `rdp.treborygan.dev` tabs. A newly opened direct-URL tab displayed a blank page titled `PCRN Remote Desktop`. Its DevTools Performance Monitor showed 0 DOM nodes, 0 B JavaScript heap and 0% CPU; the Console showed no page errors, and the Elements panel tree was empty. Network recording started after the first navigation and the panel had no recorded requests, so this does not identify the public navigation failure or establish that the Night Shift script caused it. The computer-use bridge remains unavailable. The signed-in dashboard and remote session are still unverified.
+
+Focused source checks passed: 7 mobile/viewer compatibility tests, generated bundle freshness, JavaScript syntax and `git diff --check`. Installed PRN CSS and JavaScript hashes still equal the branch and loopback-served hashes (`50283975…1FCBF6D7` and `2B39A1D7…071BE4A`); MeshCentral, Cloudflared and Mesh Agent services remain running. No production file, configuration or service changed during this check.
