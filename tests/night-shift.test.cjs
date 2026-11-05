@@ -325,6 +325,23 @@ test('configurable alert thresholds clamp to valid percentages and recover inval
   assert.match(alerts,/normalizeThreshold\(storageLimit\.value,15\)/);
 });
 
+test('alert settings explain denied and unavailable browser notifications',()=>{
+  const helper=alerts.match(/function notificationStatus\(permission\) \{[\s\S]*?\n  \}/);
+  assert.ok(helper,'notification permission status helper exists');
+  const context={window:{}};
+  const status=vm.runInNewContext('('+helper[0]+')',context);
+  assert.match(status(),/unavailable/,'browsers without Notification receive a page-only explanation');
+  context.window.Notification={permission:'denied'};
+  assert.match(status(),/blocked/,'denied notification permission gives an actionable site-settings hint');
+  context.window.Notification.permission='default';
+  assert.match(status(),/request browser notifications/,'the user is told when enabling an alert can prompt');
+  context.window.Notification.permission='granted';
+  assert.match(status(),/notifications are enabled/,'granted permission is reflected accurately');
+  assert.match(alerts,/enabled\.addEventListener\('change',saveToggle\)/);
+  assert.match(alerts,/metricEnabled\.addEventListener\('change',saveToggle\)/);
+  assert.match(alerts,/storageEnabled\.addEventListener\('change',saveToggle\)/);
+});
+
 test('fleet connection alerts observe native device updates only for opted-in devices',()=>{
   const alertsSource=read('public/scripts/night-shift/alerts.js'),notifications=[],nativeCalls=[];
   const nodes=[{_id:'node/a',name:'Allowed',conn:0},{_id:'node/b',name:'Muted',conn:0}];

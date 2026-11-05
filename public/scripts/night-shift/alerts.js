@@ -20,6 +20,13 @@
     if (!isFinite(number)) return String(fallback);
     return String(Math.max(1,Math.min(100,Math.round(number))));
   }
+  function notificationStatus(permission) {
+    if (!window.Notification) return 'Browser notifications are unavailable; in-page alerts require this page to remain open.';
+    var state = permission || window.Notification.permission;
+    if (state === 'denied') return 'Browser notifications are blocked. Allow them in this site’s browser settings; in-page alerts require this page to remain open.';
+    if (state === 'granted') return 'Browser notifications are enabled. Alerts run while this page is open and native updates arrive.';
+    return 'Enable an alert to request browser notifications. Alerts run while this page is open and native updates arrive.';
+  }
   function save() {
     if (!activeNode || typeof window.putstore !== 'function') return;
     cpuLimit.value = normalizeThreshold(cpuLimit.value,85);
@@ -27,6 +34,17 @@
     storageLimit.value = normalizeThreshold(storageLimit.value,15);
     window.putstore(key(activeNode), JSON.stringify({e:enabled.checked?1:0,m:metricEnabled.checked?1:0,c:cpuLimit.value,r:memoryLimit.value,s:quietStart.value,t:quietEnd.value}));
     window.putstore('nsAlertsS.' + activeNode,JSON.stringify({b:storageEnabled.checked?1:0,f:storageLimit.value}));
+  }
+  function saveToggle() {
+    if ((enabled.checked || metricEnabled.checked || storageEnabled.checked) && window.Notification && window.Notification.permission === 'default' && typeof window.Notification.requestPermission === 'function') {
+      try {
+        Promise.resolve(window.Notification.requestPermission()).then(function (permission) {
+          save(); if (status) status.textContent = notificationStatus(permission);
+        }).catch(function () { save(); if (status) status.textContent = notificationStatus(); });
+      } catch (e) { save(); if (status) status.textContent = notificationStatus(); }
+    } else {
+      save(); if (status) status.textContent = notificationStatus();
+    }
   }
   function addTimeControl(host, label, id) {
     var wrap = create('label','ns-alert-time'); wrap.append(create('span','',label));
@@ -40,23 +58,13 @@
     panel.setAttribute('aria-label','Connection alert settings');
     panel.append(create('h3','','Connection alerts'));
     var toggle = create('label','ns-alert-toggle'); enabled = create('input',''); enabled.type = 'checkbox';
-    enabled.addEventListener('change',function () {
-      if (enabled.checked && window.Notification && window.Notification.permission === 'default') {
-        window.Notification.requestPermission().then(function () { save(); });
-      } else save();
-    });
+    enabled.addEventListener('change',saveToggle);
     toggle.append(enabled,create('span','','Notify when this device connection changes')); panel.append(toggle);
     var metricToggle = create('label','ns-alert-toggle'); metricEnabled = create('input',''); metricEnabled.type = 'checkbox';
-    metricEnabled.addEventListener('change',function () {
-      if (metricEnabled.checked && window.Notification && window.Notification.permission === 'default') window.Notification.requestPermission().then(save);
-      else save();
-    });
+    metricEnabled.addEventListener('change',saveToggle);
     metricToggle.append(metricEnabled,create('span','','Notify when CPU or memory crosses its threshold')); panel.append(metricToggle);
     var storageToggle = create('label','ns-alert-toggle'); storageEnabled = create('input',''); storageEnabled.type = 'checkbox';
-    storageEnabled.addEventListener('change',function () {
-      if (storageEnabled.checked && window.Notification && window.Notification.permission === 'default') window.Notification.requestPermission().then(save);
-      else save();
-    });
+    storageEnabled.addEventListener('change',saveToggle);
     storageToggle.append(storageEnabled,create('span','','Notify when Windows volume free space falls below threshold')); panel.append(storageToggle);
     var thresholds = create('div','ns-alert-times');
     function numberControl(label,id,value) {
@@ -72,7 +80,7 @@
     quietStart = addTimeControl(times,'Quiet hours start','ns-alert-quiet-start');
     quietEnd = addTimeControl(times,'Quiet hours end','ns-alert-quiet-end');
     panel.append(times);
-    status = create('p','ns-alert-status','Opted-in connection alerts follow native device updates while this page is open. CPU and memory alerts require the native live graph.');
+    status = create('p','ns-alert-status',notificationStatus());
     status.setAttribute('aria-live','polite'); panel.append(status);
     if (anchor && anchor.parentNode === host) host.insertBefore(panel,anchor.nextSibling);
     else host.append(panel);
@@ -118,7 +126,7 @@
   function notify(node,dedupeKey,label,allowed,now,quietPreferences) {
     if (!allowed || quietNow(now,quietPreferences) || (lastNotices[dedupeKey] && now.getTime() - lastNotices[dedupeKey] < 300000)) return;
     lastNotices[dedupeKey] = now.getTime();
-    if (status) status.textContent = label;
+    if (status) status.textContent = label + (window.Notification && window.Notification.permission === 'granted' ? '' : '. Browser notifications are not enabled; in-page alerts require this page to remain open.');
     if (window.Notification && window.Notification.permission === 'granted') {
       try { new window.Notification('MeshCentral connection changed',{body:label,tag:dedupeKey}); } catch (e) { }
     }
