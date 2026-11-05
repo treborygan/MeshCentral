@@ -1351,3 +1351,17 @@ body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
 .ns-capability-status.is-available{color:var(--ns-accent,#66d6ac)}
 .ns-capability-status.is-unavailable{color:var(--ns-muted,#a9bac3)}
 .ns-capability-note{margin:.7rem 0 0;color:var(--ns-muted,#a9bac3);font-size:.78rem}
+.ns-viewer-info-toggle{position:fixed;top:calc(1rem + env(safe-area-inset-top));right:1rem;z-index:905;padding:.5rem .8rem;border:1px solid var(--ns-accent,#66d6ac);border-radius:10px;background:rgba(19,30,41,.94);color:var(--ns-text,#eef5f5);box-shadow:0 8px 24px #0005}
+.ns-viewer-info-drawer{position:fixed;top:0;right:0;bottom:0;z-index:906;width:min(25rem,calc(100vw - 1rem));overflow-y:auto;padding:calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom));border-left:1px solid var(--ns-line,#344652);background:#17242e;color:var(--ns-text,#eef5f5);box-shadow:-18px 0 45px #0006}
+.ns-viewer-info-heading{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
+.ns-viewer-info-heading h2{margin:0;font-size:1.1rem}
+.ns-viewer-info-close,.ns-viewer-info-details{padding:.5rem .75rem;border:1px solid var(--ns-line,#344652);border-radius:9px;background:transparent;color:inherit}
+.ns-viewer-info-list{display:grid;gap:.55rem;margin:0}
+.ns-viewer-info-row{padding:.7rem .75rem;border-radius:10px;background:rgba(255,255,255,.035)}
+.ns-viewer-info-row dt{margin-bottom:.25rem;color:var(--ns-muted,#a9bac3);font-size:.78rem;font-weight:500}
+.ns-viewer-info-row dd{margin:0;overflow-wrap:anywhere;font-size:.9rem}
+.ns-viewer-info-details{margin-top:1rem;border-color:var(--ns-accent,#66d6ac)}
+.ns-viewer-info-close:focus-visible,.ns-viewer-info-details:focus-visible,.ns-viewer-info-toggle:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
+.ns-viewer-info-close:disabled,.ns-viewer-info-details:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:700px){.ns-viewer-info-drawer{top:env(safe-area-inset-top);bottom:calc(125px + env(safe-area-inset-bottom));width:min(24rem,calc(100vw - 1rem));border-radius:0 0 0 16px}.ns-viewer-info-toggle{top:calc(.65rem + env(safe-area-inset-top));right:.65rem}}
+@media(prefers-reduced-motion:no-preference){.ns-viewer-info-drawer:not([hidden]){animation:ns-viewer-drawer-in .16s ease-out}@keyframes ns-viewer-drawer-in{from{transform:translateX(1rem);opacity:.7}to{transform:translateX(0);opacity:1}}}

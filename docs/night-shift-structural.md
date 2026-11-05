@@ -4,7 +4,7 @@ Branch: `feature/night-shift-structural` (built on `fix/night-shift-mobile-layou
 
 ## Scope and implementation boundary
 
-This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell, devices, diagnostics, sessions, profiles, health, history, files, actions, alerts, PWA and capabilities components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
+This slice extends the generated `custom.js` and `custom.css` overrides without replacing MeshCentral templates, services, agents, database, authentication, Cloudflare integration, or transport protocol. JavaScript source is split into focused mobile-controls, shell, devices, diagnostics, sessions, profiles, health, history, files, actions, alerts, PWA, capabilities and viewer components and assembled by `scripts/build-night-shift.js`; the generated bundle remains the only deployed script asset. The UI wraps **real** MeshCentral DOM and native handlers. It is not the standalone HTML prototype, and it does not use any data from its sample fleet.
 
 Included:
 - Contextual workspace appbar with live page title, native navigation search, and a functional More menu exposing only original account-accessible sections.
@@ -28,6 +28,7 @@ Included:
 - The appbar offers an accessible install button only when the browser signals installability. It uses MeshCentral's native manifest and worker; the current worker supports push notifications but no offline app-shell cache. Installability and launch behavior still require supported-browser/device acceptance.
 - The current MeshCentral UI/API paths reviewed expose immediate, permission-checked and audited command/power actions, but no scheduled-action endpoint. Scheduling remains pending until a supported server-side mechanism is identified; browser timers are not used as a substitute.
 - A Device Details capability summary reflects the visibility of MeshCentral's native Desktop, Terminal, Files and AMT tabs, displaying Unavailable when the account/device cannot access them. It does not modify native tab state. Role and device acceptance is still pending.
+- Remote Desktop adds a floating, collapsible information drawer with current device/group, native route and remote session data. A details shortcut dispatches through the visible native `MainDevInfo` tab; no session transport or control is replaced. Fullscreen/mobile visual acceptance remains pending.
 
 The actual browser must supply MeshCentral's expected IDs. Components are created only after authenticated markup exists. When the corresponding native section or permission-gated control is absent, enhanced actions are withheld. Live session and rendered inventory state are derived from existing DOM and never asserted from mocks.
 

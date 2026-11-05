@@ -18,6 +18,7 @@ const actions = read('public/scripts/night-shift/actions.js');
 const alerts = read('public/scripts/night-shift/alerts.js');
 const pwa = read('public/scripts/night-shift/pwa.js');
 const capabilities = read('public/scripts/night-shift/capabilities.js');
+const viewer = read('public/scripts/night-shift/viewer.js');
 
 test('custom script bundle matches its modular source components',()=>{
   const result=spawnSync(process.execPath,['scripts/build-night-shift.js','--check'],{cwd:root,encoding:'utf8'});
@@ -135,6 +136,15 @@ test('capability summary updates from the native tab visibility state',()=>{
   assert.equal(rows[1].children[1].textContent,'Unavailable');
   ids.get('MainDevFiles').style.display='none';window.__NightShiftCapabilities.refresh();
   assert.equal(rows[2].children[1].textContent,'Unavailable');
+});
+
+test('remote viewer information drawer preserves native details navigation',()=>{
+  assert.match(viewer,/aria-expanded/);
+  assert.match(viewer,/ns-viewer-info-drawer/);
+  assert.match(viewer,/MainDevInfo/);
+  assert.match(viewer,/Escape/);
+  assert.match(viewer,/window\.desktop/);
+  assert.doesNotMatch(viewer,/new\s+WebSocket|meshserver\.send|gotoDevice/);
 });
 
 function createMobileHarness(isMobile = true) {
