@@ -32,7 +32,8 @@
     ['Intel AMT','MainDevAmt',14], ['Console','MainDevConsole',15],
     ['Plugins','MainDevPlugins',19]
   ];
-  let backdrop, input, results, dock, nav, modifierPanel, modifierToggle, modifierRelease, modifierButtons = {}, modifiersOpen = false;
+  let backdrop, input, results, dock, nav, secondaryControls, dockMoreToggle, modifierPanel, modifierToggle, modifierRelease, modifierButtons = {}, modifiersOpen = false;
+  let dockExpanded = true, lastLandscapeRemote = null;
   let searchReturnFocus = null, refreshScheduled = false, toastHandle;
   // MeshCentral 1.3.1's default3.handlebars omits width=device-width.
   // Android otherwise retains a ~980 CSS-px layout viewport while touch-only
@@ -254,7 +255,7 @@
     dock=make('nav','ns-mobile-dock');dock.id='ns-mobile-dock';
     dock.setAttribute('aria-label','Touch remote desktop controls');
     const primary=make('div','ns-dock-row');
-    const secondary=make('div','ns-dock-row ns-dock-secondary');
+    secondaryControls=make('div','ns-dock-row ns-dock-secondary');secondaryControls.id='ns-dock-secondary';
     modifierPanel=make('div','ns-dock-modifiers');modifierPanel.id='ns-dock-modifiers';modifierPanel.hidden=true;
     modifierPanel.setAttribute('role','group');modifierPanel.setAttribute('aria-label','Sticky keyboard modifiers');
     function add(parent,title,klass,callback,id) {
@@ -263,40 +264,50 @@
       parent.append(b);
     }
     add(primary,'Back','',()=>act(()=>nativeFunction('goBack'),'Cannot navigate back'));
+    dockMoreToggle=button('More','ns-dock-action ns-dock-more',()=>{dockExpanded=!dockExpanded;updateNow();},'Show more remote controls');
+    dockMoreToggle.id='ns-dock-more';dockMoreToggle.setAttribute('aria-controls','ns-dock-secondary');dockMoreToggle.setAttribute('aria-expanded','true');
+    primary.append(dockMoreToggle);
     add(primary,'Connect','ns-positive',()=>act(()=>nativeClick('connectbutton1'),'Agent connection unavailable'),'ns-agent-connect');
     add(primary,'RDP','ns-positive',()=>act(()=>nativeClick('connectbutton1r'),'RDP connection unavailable'),'ns-rdp-connect');
     add(primary,'Disconnect','ns-danger',()=>act(()=>nativeClick('disconnectbutton1'),'No connected session'),'ns-disconnect');
     add(primary,'Trackpad','',()=>act(()=>nativeFunction('deskToggleTrackpad'),'Trackpad unavailable'),'ns-trackpad');
     add(primary,'Keyboard','',()=>act(()=>{const ok=nativeFunction('toggleMobileKeyboard');if(ok)scheduleUpdate();return ok;},'Keyboard unavailable'),'ns-keyboard');
     add(primary,'Right click','',()=>act(()=>nativeFunction('deskToggleRightClickMode'),'Right-click mode unavailable'),'ns-rightclick');
-    add(secondary,'Fit / 1:1','',()=>act(()=>nativeFunction('deskMobileToggleZoom'),'Zoom unavailable'),'ns-zoom');
-    add(secondary,'Special keys','',()=>{
+    add(secondaryControls,'Fit / 1:1','',()=>act(()=>nativeFunction('deskMobileToggleZoom'),'Zoom unavailable'),'ns-zoom');
+    add(secondaryControls,'Special keys','',()=>{
       const picker=$('deskkeys');if(picker){picker.focus();picker.click();return;}
       act(()=>nativeFunction('sendSpecialKeys'),'Special keys unavailable');
     },'ns-keys');
-    add(secondary,'Send selected key','',()=>act(()=>nativeFunction('deskSendKeys'),'Choose an available key first'),'ns-send-key');
-    add(secondary,'Type text','',()=>act(()=>nativeFunction('showDeskType'),'Text entry unavailable'),'ns-type-text');
-    add(secondary,'Ctrl+Alt+Del','',()=>act(()=>nativeFunction('sendCAD'),'Shortcut unavailable'),'ns-cad');
-    add(secondary,'Escape','',()=>act(()=>nativeFunction('sendDeskEsc'),'Shortcut unavailable'),'ns-escape');
-    add(secondary,'Clipboard to remote','',()=>act(()=>nativeFunction('deskClipboardOutFunction'),'Clipboard read is unavailable'),'ns-clipboard-out');
-    add(secondary,'Remote clipboard here','',()=>act(()=>nativeFunction('deskClipboardInFunction'),'Remote clipboard is unavailable'),'ns-clipboard-in');
-    add(secondary,'Settings','',()=>act(()=>nativeFunction('showDesktopSettings'),'Desktop settings unavailable'));
-    add(secondary,'Fullscreen','',()=>act(()=>nativeFunctionWithArg('deskToggleFull',{shiftKey:false}),'Fullscreen unavailable'));
-    add(secondary,'Monitors','',()=>act(()=>nativeClick('DeskScreens'),'Monitor selection unavailable'),'ns-monitors');
-    add(secondary,'More actions','',()=>act(()=>nativeFunction('deskToggleMobileActions'),'Use the original desktop toolbar'));
+    add(secondaryControls,'Send selected key','',()=>act(()=>nativeFunction('deskSendKeys'),'Choose an available key first'),'ns-send-key');
+    add(secondaryControls,'Type text','',()=>act(()=>nativeFunction('showDeskType'),'Text entry unavailable'),'ns-type-text');
+    add(secondaryControls,'Ctrl+Alt+Del','',()=>act(()=>nativeFunction('sendCAD'),'Shortcut unavailable'),'ns-cad');
+    add(secondaryControls,'Escape','',()=>act(()=>nativeFunction('sendDeskEsc'),'Shortcut unavailable'),'ns-escape');
+    add(secondaryControls,'Clipboard to remote','',()=>act(()=>nativeFunction('deskClipboardOutFunction'),'Clipboard read is unavailable'),'ns-clipboard-out');
+    add(secondaryControls,'Remote clipboard here','',()=>act(()=>nativeFunction('deskClipboardInFunction'),'Remote clipboard is unavailable'),'ns-clipboard-in');
+    add(secondaryControls,'Settings','',()=>act(()=>nativeFunction('showDesktopSettings'),'Desktop settings unavailable'));
+    add(secondaryControls,'Fullscreen','',()=>act(()=>nativeFunctionWithArg('deskToggleFull',{shiftKey:false}),'Fullscreen unavailable'));
+    add(secondaryControls,'Monitors','',()=>act(()=>nativeClick('DeskScreens'),'Monitor selection unavailable'),'ns-monitors');
+    add(secondaryControls,'More actions','',()=>act(()=>nativeFunction('deskToggleMobileActions'),'Use the original desktop toolbar'));
     modifierToggle=button('Modifiers','ns-dock-action',()=>{modifiersOpen=!modifiersOpen;scheduleUpdate();},'Show sticky keyboard modifiers');
     modifierToggle.id='ns-modifier-toggle';modifierToggle.setAttribute('aria-controls','ns-dock-modifiers');modifierToggle.setAttribute('aria-expanded','false');
-    secondary.append(modifierToggle);
+    secondaryControls.append(modifierToggle);
     [['ctrl','CTRL'],['shift','SHIFT'],['alt','ALT']].forEach(function (item) {
       const mod=button(item[1],'ns-dock-modifier',()=>act(()=>nativeFunctionWithArg('toggleMobileModifier',item[0]),item[1]+' unavailable'));
       mod.id='ns-mod-'+item[0];mod.setAttribute('aria-pressed','false');modifierButtons[item[0]]=mod;modifierPanel.append(mod);
     });
     modifierRelease=button('Release all','ns-dock-release',()=>act(()=>nativeFunction('_releaseMobileModifiers'),'Modifier release unavailable'),'Release all held keyboard modifiers');
     modifierRelease.id='ns-mod-release';modifierPanel.append(modifierRelease);
-    dock.append(primary,secondary,modifierPanel);document.body.append(dock);
+    dock.append(primary,secondaryControls,modifierPanel);document.body.append(dock);
   }
   function updateNow(){
     const small=mobile(), remote=remoteOpen();
+    const landscapeRemote=small&&remote&&matchMedia('(orientation: landscape)').matches;
+    if(landscapeRemote!==lastLandscapeRemote){
+      let focus=document.activeElement,focusInsideSecondary=false;
+      while(focus){if(focus===secondaryControls){focusInsideSecondary=true;break;}focus=focus.parentElement||focus.parentNode;}
+      dockExpanded=!landscapeRemote||focusInsideSecondary;
+      lastLandscapeRemote=landscapeRemote;
+    }
     const authenticated=!!$('LeftMenuMyDevices')&&!document.body.classList.contains('login');
     document.body.classList.toggle('ns-mobile-workspace',small&&!remote&&authenticated);
     document.body.classList.toggle('ns-mobile-remote',small&&remote);
@@ -314,6 +325,13 @@
     }
     if(dock)dock.hidden=!(small&&remote);
     if(dock&&!dock.hidden){
+      if(secondaryControls)secondaryControls.hidden=landscapeRemote&&!dockExpanded;
+      if(dockMoreToggle){
+        dockMoreToggle.hidden=!landscapeRemote;
+        dockMoreToggle.textContent=dockExpanded?'Less':'More';
+        dockMoreToggle.setAttribute('aria-expanded',dockExpanded?'true':'false');
+        dockMoreToggle.setAttribute('aria-label',dockExpanded?'Hide extra remote controls':'Show more remote controls');
+      }
       const connected=usable($('disconnectbutton1'));
       const c=$('ns-agent-connect'),r=$('ns-rdp-connect'),d=$('ns-disconnect');
       if(c)c.hidden=connected||!usable($('connectbutton1'));

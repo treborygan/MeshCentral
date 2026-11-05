@@ -731,7 +731,7 @@ test('floating desktop viewer controls use only visible native controls and auto
   assert.match(viewer,/connectbutton1r/);
   assert.match(viewer,/disconnectbutton1/);
   assert.match(css,/\.ns-viewer-controls\.is-idle/);
-  assert.match(css,/@media\(max-width:700px\)\{\.ns-viewer-controls\{display:none!important\}/);
+  assert.match(css,/@media\(max-width:900px\)\{\.ns-viewer-controls\{display:none!important\}/);
 });
 
 test('viewer toolbar stays within the active viewer and delegates fullscreen',()=>{
@@ -786,7 +786,8 @@ test('viewer toolbar stays within the active viewer and delegates fullscreen',()
   assert.equal(controls.hidden,true,'Toolbar hides when the native viewer is inactive');
 });
 
-function createMobileHarness(isMobile = true, classicMode = false) {
+function createMobileHarness(isMobile = true, classicMode = false, isLandscape = false) {
+  let landscapeMode = isLandscape;
   const byId = new Map();
   const documentEvents = {};
   const storage = new Map(classicMode ? [['_nsClassicUI','1']] : []);
@@ -884,7 +885,7 @@ function createMobileHarness(isMobile = true, classicMode = false) {
   };
   const context = {
     window, document, console,
-    matchMedia: () => ({ matches: isMobile }),
+    matchMedia: query => ({ matches: query.includes('orientation: landscape') ? landscapeMode : isMobile }),
     getComputedStyle: () => ({ visibility: 'visible' }),
     requestAnimationFrame: callback => callback(),
     addEventListener:addWindowEvent, setInterval() { return 1; }, clearTimeout() {}, setTimeout() { return 1; },
@@ -892,7 +893,7 @@ function createMobileHarness(isMobile = true, classicMode = false) {
     MouseEvent: class { constructor(type, init = {}) { this.type = type; Object.assign(this, init); } }
   };
   vm.runInNewContext(js, context, { timeout: 1000 });
-  return { document, documentEvents, windowEvents, byId, calls, window, storage, styleSheet, get reloadCount(){return reloadCount;}, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement };
+  return { document, documentEvents, windowEvents, byId, calls, window, storage, styleSheet, get reloadCount(){return reloadCount;}, agentConnect, rdpConnect, disconnect, activeElement: () => activeElement, setLandscape(value){landscapeMode=value;(windowEvents.orientationchange||[]).forEach(fn=>fn());} };
 }
 
 test('custom JavaScript parses and registers without requiring a live server', () => {
@@ -955,6 +956,8 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   const dock = h.byId.get('ns-mobile-dock');
   assert.ok(dock, 'mobile remote dock is installed');
   assert.equal(dock.hidden, false, 'dock is visible while the desktop view is open');
+  assert.equal(h.byId.get('ns-dock-more').hidden, true, 'portrait keeps its existing full control rows without a redundant expander');
+  assert.equal(h.byId.get('ns-dock-secondary').hidden, false, 'portrait keeps every secondary remote action visible');
   assert.equal(h.byId.get('ns-agent-connect').hidden, false, 'native agent connect remains available');
   assert.equal(h.byId.get('ns-rdp-connect').hidden, false, 'native browser RDP connect remains available');
   assert.equal(h.byId.get('ns-trackpad').textContent,'Trackpad off');
@@ -1054,6 +1057,32 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   assert.equal(h.window._mobileModifiers.shift,false,'Release all clears a held modifier without remote input permission');
 });
 
+test('landscape remote view collapses extra controls without hiding native actions or focused controls', () => {
+  const h = createMobileHarness(true, false, true);
+  const more = h.byId.get('ns-dock-more');
+  const secondary = h.byId.get('ns-dock-secondary');
+  assert.ok(more, 'Landscape provides a discoverable control for the secondary remote actions');
+  assert.ok(secondary, 'Secondary remote actions remain mounted');
+  assert.equal(secondary.hidden, true, 'Landscape starts with the remote canvas space reclaimed');
+  assert.equal(more.getAttribute('aria-expanded'), 'false');
+  assert.equal(more.getAttribute('aria-controls'), 'ns-dock-secondary');
+
+  more.click();
+  assert.equal(secondary.hidden, false, 'More expands the complete secondary control row');
+  assert.equal(more.getAttribute('aria-expanded'), 'true');
+  assert.ok(secondary.children.some(control => control.textContent === 'Fullscreen'), 'Fullscreen stays available');
+  assert.ok(secondary.children.some(control => control.id === 'ns-monitors'), 'Monitor selection stays available');
+
+  h.setLandscape(false);
+  assert.equal(secondary.hidden, false, 'Portrait restores the complete dock');
+  assert.equal(more.hidden, true, 'The extra toggle is unnecessary in portrait');
+  const focusedControl = secondary.children.find(control => control.textContent === 'Fullscreen');
+  focusedControl.focus();
+  h.setLandscape(true);
+  assert.equal(secondary.hidden, false, 'Rotation never hides the currently focused native action');
+  assert.equal(more.hidden, false, 'The landscape expander remains available while a secondary action has focus');
+});
+
 test('desktop viewport keeps the mobile navigation and remote dock out of view', () => {
   const h = createMobileHarness(false);
   assert.equal(h.byId.get('ns-mobile-nav').hidden, true, 'workspace navigation is hidden on desktop');
@@ -1065,7 +1094,7 @@ test('desktop viewport keeps the mobile navigation and remote dock out of view',
 test('modern, responsive and fallback selectors remain present', () => {
   for (const token of [
     '--ns-accent','#page_leftbar','#deskarea0','#DeskParent',
-    '.ns-mobile-nav','.ns-mobile-dock','@media',
+    '.ns-mobile-nav','.ns-mobile-dock','.ns-dock-secondary[hidden]','@media(max-width:900px) and (orientation:landscape)',
     '.ns-search-panel','prefers-reduced-motion'
   ]) assert.ok(css.includes(token),'Missing styles: ' + token);
   assert.ok(css.includes('z-index:900'), 'Mobile overlays must remain below consent/modal dialogs');

@@ -439,6 +439,7 @@ input:disabled { opacity: .6; cursor: not-allowed; }
 .ns-mobile-dock{display:flex;flex-direction:column;gap:5px;padding:7px 8px max(8px,env(safe-area-inset-bottom))}
 .ns-dock-row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
 .ns-dock-row::-webkit-scrollbar{display:none}
+.ns-dock-secondary[hidden]{display:none!important}
 .ns-dock-modifiers{display:flex;gap:6px;padding:1px 2px}
 .ns-dock-modifiers[hidden]{display:none!important}
 .ns-dock-modifier{flex:1;min-height:38px;border:1px solid #586674;border-radius:8px;background:#202e3a;color:#eef5f3;font-weight:700;font-size:12px}
@@ -455,6 +456,10 @@ input:disabled { opacity: .6; cursor: not-allowed; }
 .ns-dock-action[aria-pressed=true],.ns-dock-action.ns-positive{background:#b6f078;color:#17221a;border-color:#b6f078}
 .ns-dock-action.ns-danger{background:#4d3038;color:#ffd2d6;border-color:#77454e}
 .ns-dock-secondary .ns-dock-action{background:#1a2833;border-color:#334751;min-height:38px}
+@media(max-width:900px) and (orientation:landscape){
+  .ns-mobile-dock{gap:4px;padding:4px 8px max(4px,env(safe-area-inset-bottom))}
+  .ns-dock-more{min-height:43px;border-color:#7e9a79;background:#1f3328;color:#dff5d2}
+}
 @media(max-width:900px){
   .ns-theme #masthead{height:55px;min-height:55px;padding-inline:9px}
   .ns-theme #masthead .title{font-size:18px}
@@ -1495,7 +1500,8 @@ body.ns-theme #p52recordings .p3usersTable > tbody > tr[tabindex]:focus-visible 
 .ns-viewer-info-details{margin-top:1rem;border-color:var(--ns-accent,#66d6ac)}
 .ns-viewer-info-close:focus-visible,.ns-viewer-info-details:focus-visible,.ns-viewer-info-toggle:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
 .ns-viewer-info-close:disabled,.ns-viewer-info-details:disabled{opacity:.5;cursor:not-allowed}
-@media(max-width:700px){.ns-viewer-controls{display:none!important}.ns-viewer-info-drawer{top:env(safe-area-inset-top);bottom:calc(125px + env(safe-area-inset-bottom));width:min(24rem,calc(100vw - 1rem));border-radius:0 0 0 16px}.ns-viewer-info-toggle{top:calc(.65rem + env(safe-area-inset-top));right:.65rem}}
+@media(max-width:900px){.ns-viewer-controls{display:none!important}}
+@media(max-width:700px){.ns-viewer-info-drawer{top:env(safe-area-inset-top);bottom:calc(125px + env(safe-area-inset-bottom));width:min(24rem,calc(100vw - 1rem));border-radius:0 0 0 16px}.ns-viewer-info-toggle{top:calc(.65rem + env(safe-area-inset-top));right:.65rem}}
 @media(prefers-reduced-motion:no-preference){.ns-viewer-info-drawer:not([hidden]){animation:ns-viewer-drawer-in .16s ease-out}@keyframes ns-viewer-drawer-in{from{transform:translateX(1rem);opacity:.7}to{transform:translateX(0);opacity:1}}}
 
 /* Native user-group management: keep MeshCentral's table and actions while
