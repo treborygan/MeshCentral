@@ -1687,3 +1687,96 @@ body.ns-theme #p51group :is(input,select,textarea) {max-width:100%}
   body.ns-theme #MainUserImage img {width:72px;height:72px;object-fit:cover;border-radius:14px}
   body.ns-theme #p51info > table > tbody > tr > td:last-child > div {text-align:left!important}
 }
+
+/* Server administration overview: keep native actions and telemetry, improve grouping. */
+body.ns-theme #p6info {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-content:start;
+  gap:14px;
+  box-sizing:border-box;
+  width:100%;
+  max-width:1200px;
+  margin:0 auto;
+  padding:4px 0 24px;
+  color:var(--ns-foreground);
+}
+body.ns-theme #p6title {
+  grid-column:1/-1;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  padding:4px 0 14px;
+  border-bottom:1px solid var(--ns-border);
+}
+body.ns-theme #p6title img {width:38px;height:38px;border-radius:10px;object-fit:cover}
+body.ns-theme #p6title h1 {margin:0;font-size:1.35rem;font-weight:730;letter-spacing:-.025em}
+body.ns-theme #p6info > br {display:none}
+body.ns-theme #p6 #p2ServerActions,
+body.ns-theme #p6 #serverStats,
+body.ns-theme #p6 #serverWarningsDiv {
+  box-sizing:border-box;
+  min-width:0;
+  padding:16px;
+  border:1px solid var(--ns-border);
+  border-radius:14px;
+  background:var(--ns-surface);
+  box-shadow:0 8px 24px #0002;
+}
+body.ns-theme #p6 #p2ServerActions {grid-column:1}
+body.ns-theme #p6 #p2ServerActions > p:first-child,
+body.ns-theme #p6 #p6info > strong {
+  display:block;
+  margin:0 0 12px;
+  color:var(--ns-foreground);
+  font-size:1rem;
+  font-weight:720;
+}
+body.ns-theme #p6 #p6info > strong {grid-column:2;grid-row:2;align-self:end;margin-bottom:-10px}
+body.ns-theme #p6 #p2ServerActions > div {margin:0!important}
+body.ns-theme #p6 #p2ServerActions > div > div {
+  display:inline-flex;
+  width:21px;
+  justify-content:center;
+  margin:0 7px 0 0;
+  vertical-align:middle;
+}
+body.ns-theme #p6 #p2ServerActions a {
+  display:inline-flex;
+  min-height:42px;
+  align-items:center;
+  color:#c9f4a9;
+  font-size:14px;
+  text-decoration:none;
+}
+body.ns-theme #p6 #p2ServerActions a:hover {color:#e0ffc6;text-decoration:underline}
+body.ns-theme #p6 #p2ServerActions a:focus-visible {outline:2px solid var(--ns-focus);outline-offset:2px}
+body.ns-theme #p6 #serverStats {
+  grid-column:2;
+  grid-row:3;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-content:start;
+  gap:10px;
+}
+body.ns-theme #p6 #serverStats > div {
+  min-width:0;
+  padding:12px;
+  border:1px solid #2d3b46;
+  border-radius:11px;
+  background:#111a23;
+}
+body.ns-theme #p6 #serverStats > br {display:none}
+body.ns-theme #p6 #serverStatsTable {grid-column:1/-1;overflow:auto;max-width:100%}
+body.ns-theme #p6 #serverWarningsDiv {grid-column:1;grid-row:3}
+body.ns-theme #p6 #serverWarningsDiv > strong {display:block;margin-bottom:8px;color:var(--ns-warning)}
+body.ns-theme #p6 #serverWarningsDiv :is(#serverCertWarnings,#serverWarnings) {overflow-wrap:anywhere}
+@media(max-width:760px) {
+  body.ns-theme #p6info {grid-template-columns:minmax(0,1fr);gap:10px}
+  body.ns-theme #p6 #p2ServerActions,
+  body.ns-theme #p6 #serverStats,
+  body.ns-theme #p6 #serverWarningsDiv {grid-column:1;grid-row:auto}
+  body.ns-theme #p6 #p6info > strong {grid-column:1;grid-row:auto;margin:0 0 -8px}
+  body.ns-theme #p6 #serverStats {grid-template-columns:minmax(0,1fr)}
+}

@@ -1408,3 +1408,16 @@ test('native user-group details stack safely at mobile widths',()=>{
   assert.match(template,/id=MainUserImage/);
   assert.match(template,/onclick=goBack\(\)/);
 });
+
+test('native server administration overview organizes live status responsively',()=>{
+  assert.match(css,/body\.ns-theme #p6info \{[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css,/body\.ns-theme #p6 #p2ServerActions/);
+  assert.match(css,/body\.ns-theme #p6 #serverStats/);
+  assert.match(css,/body\.ns-theme #p6 #serverWarningsDiv/);
+  assert.match(css,/@media\(max-width:760px\)[\s\S]*?body\.ns-theme #p6info \{grid-template-columns:minmax\(0,1fr\)/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/server_showBackupDlg\(\)/);
+  assert.match(template,/server_showRestoreDlg\(\)/);
+  assert.match(template,/id="serverStatsTable"/);
+  assert.match(template,/id="serverWarningsDiv"/);
+});
