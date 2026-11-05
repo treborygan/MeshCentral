@@ -82,7 +82,7 @@
     quietEnd = addTimeControl(times,'Quiet hours end','ns-alert-quiet-end');
     panel.append(times);
     status = create('p','ns-alert-status',notificationStatus());
-    status.setAttribute('aria-live','polite'); panel.append(status);
+    status.setAttribute('role','status'); status.setAttribute('aria-live','polite'); status.setAttribute('aria-atomic','true'); panel.append(status);
     if (anchor && anchor.parentNode === host) host.insertBefore(panel,anchor.nextSibling);
     else host.append(panel);
   }

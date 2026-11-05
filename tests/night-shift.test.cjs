@@ -406,6 +406,7 @@ test('connection alerts are opt-in, device-scoped, deduplicated and quiet-hours 
   assert.match(alerts,/seedFleetStates/);
   assert.match(alerts,/installFleetConnectionHook/);
   assert.match(alerts,/preferences\.e === 1/);
+  assert.match(alerts,/status\.setAttribute\('role','status'\); status\.setAttribute\('aria-live','polite'\); status\.setAttribute\('aria-atomic','true'\)/);
   assert.doesNotMatch(alerts,/setInterval|meshserver\.send|poweraction|runcommands/);
 });
 
