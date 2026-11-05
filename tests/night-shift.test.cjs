@@ -145,10 +145,11 @@ test('upload history observes native acknowledgments and retries through the nat
     querySelectorAll(){return [];}
     insertAdjacentElement(){ }
   }
-  ['p13','p13title','p13filetable','p13files','p13UploadButton'].forEach(id=>{const el=new Element('div');el.id=id;});
+  ['p13','p13title','p13filetable','p13files','p13UploadButton','p13DownloadButton'].forEach(id=>{const el=new Element('div');el.id=id;});
   ids.get('p13UploadButton').disabled=false;
-  const nativeCalls=[];const file={name:'inventory.csv',size:12};
-  const window={uploadFile:{xfiles:[file],xfilePtr:0},p13gotUploadData(message){nativeCalls.push(message.action);},p13doUploadFiles(items){calls.push(items);}};
+  ids.get('p13DownloadButton').disabled=false;
+  const nativeCalls=[],downloads=[];const file={name:'inventory.csv',size:12};
+  const window={currentNode:{_id:'node/a'},uploadFile:{xfiles:[file],xfilePtr:0},p13gotUploadData(message){nativeCalls.push(message.action);},p13doUploadFiles(items){calls.push(items);},p13downloadDeviceFile(path){downloads.push(path);}};
   const document={readyState:'complete',createElement:tag=>new Element(tag),getElementById:id=>ids.get(id)||null,querySelector(){return null;},addEventListener(){}};
   const context={window,document,console,MutationObserver:class{observe(){}},addEventListener(){}};
   vm.runInNewContext(files,context,{timeout:1000});
@@ -161,6 +162,13 @@ test('upload history observes native acknowledgments and retries through the nat
   assert.equal(calls.length,1,'Retry invokes the native upload function once');
   assert.equal(calls[0][0],file,'Retry reuses the selected File object through the native upload function');
   assert.deepEqual(nativeCalls,['uploadstart','uploaderror'],'Native acknowledgment handling still runs');
+  window.p13downloadDeviceFile('folder%2Freport.zip');
+  const downloadRow=history.children[1].children.find(row=>row.children[0].textContent==='report.zip');
+  assert.equal(downloadRow.children[1].textContent,'Requested','Browser downloads are labeled requested, not falsely reported complete');
+  window.currentNode={_id:'node/b'};downloadRow.children[2].click();
+  assert.deepEqual(downloads,['folder%2Freport.zip'],'History cannot replay a download against a different device');
+  window.currentNode={_id:'node/a'};downloadRow.children[2].click();
+  assert.deepEqual(downloads,['folder%2Freport.zip','folder%2Freport.zip'],'Download again uses the native MeshCentral endpoint');
 });
 
 test('quick power and command actions mirror MeshCentral rights and open its native audit flow',()=>{
