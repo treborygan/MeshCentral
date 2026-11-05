@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 12224)
-Total output lines: 335
-
 # Night Shift — install on an existing MeshCentral server
 
 **No migration is required.** Keep config.json, database, certificates, agents, service, Cloudflare Tunnel/Access and existing network routes unchanged.
@@ -175,7 +172,54 @@ No new remote desktop input, terminal command, file transfer, permission change,
 
 ## Mobile masthead source synchronization — 2026-11-05
 
-The authenticated 390×844 review above exposed clipping at the right side of the masthead. The currently installed `custom.css` contains a 110-line mobile usability patch added after the recorded Git source revision; it bounds the account menu and appbar, hides the redundant legacy lo…2224 tokens truncated…ng reviewed security fixes.
+The authenticated 390×844 review above exposed clipping at the right side of the masthead. The currently installed `custom.css` contains a 110-line mobile usability patch added after the recorded Git source revision; it bounds the account menu and appbar, hides the redundant legacy logout text on mobile while retaining native logout in the account menu, and improves narrow-screen card/navigation sizing. This patch was missing from the repository branch.
+
+The patch was synchronized into `public/styles/custom.css` and covered by a regression test. Source adds horizontal safe-area insets to the masthead and account menu. Before deployment, the production root was verified as `C:\ProgramData\MeshCentral`, its `meshcentral-data` directory existed, MeshCentral was running on configured port 9455, and the local root/CSS/JS endpoints returned HTTP 200. The installer was dry-run first and the currently installed asset hashes were recorded in the rollback manifest.
+
+
+## Structural source rollout — 2026-11-05
+
+The 2026-11-05 rollout record states that source label `cd2e4a0c2e4da552feac055557dc09ebef33ede4` was installed on the active MeshCentral 1.3.1 instance at `C:\ProgramData\MeshCentral`. Before installation, the data directory, running MeshCentral process, configured port 9455 listener and existing override paths were confirmed. The installer created rollback snapshot `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-111858-7397b2`; its manifest records the prior CSS hash `D2965A0B9CA93D312D65A0583BBF44D81D6E67CBEE6923438AE3991F38F26E0D` and JS hash `7D50EED58E7B8C4C1C915EE120B0EF3DFA6245B11CF2E03D83BBA896EF275217`.
+
+After installation, MeshCentral, MeshCentralCloudflared and Mesh Agent remained running and the listener stayed on loopback port 9455. Local HTTP returned 200 for `/`, `/styles/custom.css` and `/scripts/custom.js`; the root HTML references both override assets. Installed files and served response bodies match source SHA-256: CSS `4665E4A69543AC0121CB5565B753F387C3EE80C03E1141617F5E3BD2096B55EA`, JS `7B816119705B130193E3B1C1B8FF82F0A91757234A43A2A4A7A40153967A0066`. No service restart or configuration, database, agent, tunnel or network-route change was made. Authenticated visual and feature acceptance has not been performed; deployment is not release acceptance.
+
+## Inventory tag-search update — 2026-11-05
+
+Source commit `f8d8673da6fd67d46adb10cf1cd6d31e0a07c796` adds native device tags to free-text inventory search. The regression test confirms a tag-only query filters to the matching device. Before installing, MeshCentral 1.3.1 and the root/data directory were reconfirmed; the configured `/` and both current override endpoints returned HTTP 200. The installer dry-run completed before the update.
+
+Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-112811-ae369c`. Its manifest records the prior CSS hash `4665E4A69543AC0121CB5565B753F387C3EE80C03E1141617F5E3BD2096B55EA` and JS hash `7B816119705B130193E3B1C1B8FF82F0A91757234A43A2A4A7A40153967A0066`. Installed files and local HTTP response bodies match the new source: CSS `4665E4A69543AC0121CB5565B753F387C3EE80C03E1141617F5E3BD2096B55EA`, JS `60604C6816612F9C885D9E39C9AFAB86BE47B5E7E8090348C4830AE7F46DEB0C`. All three services stayed running; no restart, configuration or data change was made. Authenticated visual and workflow acceptance remains open.
+
+## Keyboard skip-link update — 2026-11-05
+
+Source commit `b41af737` adds a keyboard-first skip link before the native shell. It becomes visible on focus and transfers focus to the currently visible MeshCentral page, including remote desktop, without changing its native navigation or access behavior. Automated coverage verifies focus on both a detail page and a remote-session page; all 43 focused tests passed.
+
+Before installing, MeshCentral 1.3.1, the existing root/data directory, running services and loopback responses for `/`, `/styles/custom.css` and `/scripts/custom.js` were confirmed. The installer dry-run passed. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-113452-badd98`; its manifest records the previous CSS hash `4665E4A69543AC0121CB5565B753F387C3EE80C03E1141617F5E3BD2096B55EA` and JS hash `60604C6816612F9C885D9E39C9AFAB86BE47B5E7E8090348C4830AE7F46DEB0C`.
+
+The rollout record listed installed/local-response SHA-256 values CSS `3A5E7DC408C55F3AE09C0F7D0D558D27CE104F9AB70FA497C302366FB1B341EE` and JS `DC668C469F2F6302292EC6DBAAB692464540F4E1DAA30D7E158D11174D97D5A0`. The next rollback snapshot (`20261105-113912-6273b4`) contains these deployed files; CRLF-normalized contents match the `b41af737` Git blobs. MeshCentral, MeshCentralCloudflared and Mesh Agent remained running; no restart, configuration, database, agent, tunnel or route change was made. Authenticated keyboard and visual acceptance remains open.
+
+## Remote-viewer toolbar keyboard update — 2026-11-05
+
+Recorded source label `e44bc2e7` adds horizontal toolbar semantics, roving tab focus and Left/Right/Home/End navigation. Unavailable native actions are excluded from the focus sequence; Tab continues to enter or leave the toolbar normally. The regression test exercises wrapping, endpoints and skipping the hidden Disconnect control. All 43 focused tests passed.
+
+Preflight reconfirmed MeshCentral 1.3.1, the existing `C:\ProgramData\MeshCentral` data root, running services and HTTP 200 for the root and both overrides. The installer dry-run completed before installation. Rollback snapshot: `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261105-113912-6273b4`; its manifest records the prior CSS hash `3A5E7DC408C55F3AE09C0F7D0D558D27CE104F9AB70FA497C302366FB1B341EE` and JS hash `DC668C469F2F6302292EC6DBAAB692464540F4E1DAA30D7E158D11174D97D5A0`.
+
+Installed files and local HTTP response bodies match source SHA-256: CSS `3A5E7DC408C55F3AE09C0F7D0D558D27CE104F9AB70FA497C302366FB1B341EE`, JS `8F246999A5A22C9D73790EA62F86897496BAD0379C8D9F0A5653BC1042229B24`. MeshCentral, MeshCentralCloudflared and Mesh Agent remained running; no restart, configuration or data change was made. Live visual and remote-session acceptance remain open.
+
+## Device health connection routes — 2026-11-05
+
+The source change replaces the misleading `Agent status` label with native `Connection routes`. Device state now identifies Agent, AMT CIRA, Intel AMT, Relay and MQTT separately, and reports Offline and Unavailable distinctly. It reads the existing native connection bitmask and adds no requests or persisted data. The focused health tests passed; the full Night Shift suite passed 54/54, and bundle consistency and JavaScript syntax checks passed. This source change was not installed on PRN: the verified PRN MeshCentral 1.3.1 package is missing reviewed security changes, so the production release gate remains open pending a supported package update and verification.
+
+## Recording keyboard access — 2026-11-05
+
+Native MeshCentral recording rows already open their detail dialog with Enter. Night Shift now maps Space on the focused row to that same native key handler, prevents page scrolling, and leaves nested links and controls untouched. The non-bubbling keyboard event does not invoke unrelated page shortcuts. The focused regression passed, the full Night Shift suite passed 55/55, and bundle consistency and JavaScript syntax checks passed. Source only; no PRN install was made while the security release gate remains open.
+
+## Socket-state diagnostics update — 2026-11-05
+
+Remote-session diagnostics now wrap MeshCentral's native `meshserver.onStateChanged` callback and schedule a status refresh after each disconnect or reconnect. The wrapper forwards the original `this` and arguments, returns its value, and uses `finally` so native exceptions propagate while the status still refreshes. A regression verifies both state transitions and native callback behavior. The full Night Shift suite passed 55/55, with bundle consistency and JavaScript syntax checks passing. This is source-only; the PRN security release gate remains open.
+
+## WebRTC path diagnostics — 2026-11-05
+
+Connection diagnostics now include the native `RTCPeerConnection.iceConnectionState` and data-channel `readyState`. A wrapper around MeshCentral's `webRtcDesktopReset()` retains a failed/disconnected ICE state after MeshCentral closes the WebRTC objects, while forwarding native arguments, return value and exceptions. Since the native reset does not clear `desktop.webRtcActive`, the transport label now requires the data channel to be open. Retained failures are scoped to the current device and desktop session, provide native Disconnect/reconnect guidance, and clear when that device/session changes or a healthy WebRTC link opens. Tests exercise checking, failed/reset, connected/open, recovery guidance, stale-flag and cross-device states, including native cleanup. The full Night Shift suite passed 55/55; bundle consistency, syntax and whitespace checks passed. Source only; PRN deployment remains gated on the installed package's missing reviewed security fixes.
 
 ## PRN package provenance audit — 2026-11-05
 
@@ -288,4 +332,3 @@ The CodeQL permission fix, its regression test and the PRN UI-mode clarification
 The repository API reports Actions `enabled: true` and `allowed_actions: all`; the Night Shift workflow is `active` at `.github/workflows/night-shift-ui.yml` on default branch `master`. No workflow run exists for current head `d23108fc9f14d7cc5893b699a7a32e6cdd653a67`. Dispatching `Night Shift UI checks` on `feature/night-shift-structural` returns HTTP 422, `Actions has been disabled for this repository`. Reaffirming the repository permission setting with a typed boolean leaves the API state unchanged and dispatch still fails. Older hosted runs for `d6577919` passed both Night Shift UI checks and CodeQL.
 
 GitHub's [repository Actions settings guidance](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository) states that a separate GitHub-controlled disabled state can prevent workflows even when repository settings are changed; support review is required for that state. No support request was sent. Current-head hosted CI remains unverified pending GitHub's review or restoration of Actions execution.
-
