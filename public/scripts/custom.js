@@ -1531,8 +1531,10 @@
     actionButton.type = 'button';
     actionButton.addEventListener('click',function () {
       var state = window.desktop && (Number.isInteger(window.desktop.State) ? window.desktop.State : window.desktop.state);
-      var recoveringDisplay = Number.isInteger(state) && state >= 3 && !($('Desk') && $('Desk').getClientRects && $('Desk').getClientRects().length);
-      var controls = recoveringDisplay ? ['disconnectbutton1','connectbutton1','connectbutton1r','connectbutton1h'] : ['connectbutton1','connectbutton1r','connectbutton1h'];
+      // Connected canvases may be blank or consent-gated. Keep an explicit
+      // recovery path to the native Disconnect control even if a canvas exists.
+      var pendingOrActive = Number.isInteger(state) && state > 0;
+      var controls = pendingOrActive ? ['disconnectbutton1','connectbutton1','connectbutton1r','connectbutton1h'] : ['connectbutton1','connectbutton1r','connectbutton1h'];
       for (var i = 0; i < controls.length; i++) {
         var target = $(controls[i]);
         if (nativeControlAvailable(controls[i])) {
@@ -1601,9 +1603,14 @@
     var active = Number.isInteger(desktopState) && desktopState >= 3;
     var canvas = $('Desk');
     var canvasMounted = !!(canvas && canvas.getClientRects && canvas.getClientRects().length);
-    rows.display.textContent = active ? (canvasMounted ? 'Canvas mounted' : 'Connected; canvas not mounted') : 'No active display session';
+    rows.display.textContent = active ? (canvasMounted ? 'Canvas present; desktop frames not verified' : 'Connected; canvas not mounted') : 'No active display session';
     rows.cloudflare.textContent = 'Not observable after page load';
-    if (actionButton) actionButton.hidden = active && canvasMounted;
+    if (actionButton) {
+      var canDisconnect = nativeControlAvailable('disconnectbutton1');
+      var canConnect = nativeControlAvailable('connectbutton1') || nativeControlAvailable('connectbutton1r') || nativeControlAvailable('connectbutton1h');
+      actionButton.textContent = active && canDisconnect ? 'Show native disconnect control' : 'Show native connection controls';
+      actionButton.hidden = !canDisconnect && !canConnect;
+    }
     if (guidance) {
       var route = window.currentNode && typeof window.currentNode.conn === 'number' ? window.currentNode.conn : null;
       var next = 'Choose a native connection control to start a remote session.';
@@ -1615,7 +1622,7 @@
         : 'No Agent or AMT route is currently reported for this device, and Browser RDP is unavailable. Check the device status and use an enabled native connection method.';
       else if (Number.isInteger(desktopState) && (desktopState === 1 || desktopState === 2)) next = 'The native remote session is still connecting. Wait for its state to change before retrying.';
       else if (active && !canvasMounted) next = 'The session reports connected, but the display canvas is not mounted. Use the native Disconnect control before reconnecting.';
-      else if (active) next = 'The native session is connected. Connection, input, monitor and recording controls remain available in MeshCentral.';
+      else if (active) next = 'The native session reports connected, but a mounted canvas does not prove that desktop frames are arriving. If the view is blank, use the native Disconnect control and check the session logs before reconnecting.';
       else if (window.currentNode && typeof route === 'number') next = 'Device route status is shown above. Start, change or reset the session with MeshCentral’s native controls.';
       guidance.textContent = next;
     }
