@@ -1858,6 +1858,17 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   window.multiDesktop={'node//offline':{State:1,contype:1},'node//online':{State:3,contype:1}};
   window.__NightShiftDiagnostics.refresh();
   window.__NightShiftSessions.refresh();
+  // A remote session can remain in multiDesktop after the current device is
+  // cleared (for example while switching or after an interrupted connection).
+  // The session toolbar must remain usable and assign one sequential tab stop.
+  window.currentNode=null;
+  assert.doesNotThrow(()=>window.__NightShiftSessions.refresh(),'Background sessions without a current device must not throw');
+  const fallbackTabs=ids.get('ns-session-tabs').children.filter(node=>node.classList.contains('ns-session-tab'));
+  assert.equal(fallbackTabs.length,2,'Both background sessions remain available');
+  assert.deepEqual(fallbackTabs.map(node=>node.tabIndex),[0,-1],'The first session is keyboard reachable when none is current');
+  assert.equal(fallbackTabs.filter(node=>node.getAttribute('aria-current')==='true').length,0,'No background session is marked current');
+  window.currentNode=window.nodes[0];
+  window.__NightShiftSessions.refresh();
   const sessionTabs=ids.get('ns-session-tabs');
   assert.ok(sessionTabs,'Remote workspace exposes tabs for native live sessions');
   assert.equal(sessionTabs.parentNode,column,'Open sessions remain available from the shared workspace, outside the hidden remote desktop page');
