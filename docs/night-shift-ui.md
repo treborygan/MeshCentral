@@ -333,3 +333,9 @@ Authenticated narrow-landscape review showed only General through Events in the 
 ### Landscape device tab affordance installed — 2026-11-06
 
 The native device tab strip now receives visible left/right arrows, horizontal touch scrolling and scrollbar cues for coarse pointers through 960 CSS px in both orientations, covering the Redmi 2712×1220 landscape target at 904×407 CSS px/DPR3. Its regression test is green. Installed with rollback snapshot `20261106-202234-9d6d7b`; live asset hashes match source and both routes return 200. Pixel 10 portrait emulation at 412×924 CSS px reloaded with the mobile dock visible. Landscape touch scrolling at the exact target and physical Redmi behavior remain unverified.
+
+### Source-only regression fix — background remote-session tabs (2026-11-06)
+
+When MeshCentral retained entries in `multiDesktop` but `currentNode` was null or no matching device was selected, Night Shift's `sessions.js` render path could reference an undefined `index` variable. This threw `ReferenceError` while building the session toolbar, which could hide otherwise reachable background remote sessions. The fallback loop now receives its own iteration index, assigns `tabIndex=0` only to the first session when none is current, and leaves `aria-current` unset until MeshCentral selects a session. The existing active-session behavior remains unchanged.
+
+A regression in `tests/night-shift.test.cjs` exercises the no-current-device and restoration transitions using the native session mock. Both the component source and generated `public/scripts/custom.js` were updated together. This is a source-level fix only, not proof of live remote-display streaming or Android touch functionality. No PCRN deployment, agent/configuration changes, or remote input actions were performed in this continuation.
