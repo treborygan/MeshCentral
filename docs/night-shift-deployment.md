@@ -463,3 +463,9 @@ The complete local suite now contains 67 tests, including the isolated startup o
 ## Additional authenticated native-route smoke check — 2026-11-06
 
 In the same fresh authenticated browser tab, native My Files, My Users, and My Server pages opened through the existing MeshCentral navigation. The files toolbar, permission-aware user list/actions, and server general/stats/console/trace sections rendered under Night Shift. No management action or data change was submitted. This verifies route reachability and presentation only; it does not qualify upload/download workflows, user/permission changes, server console operations, plugin behavior, or an active terminal session.
+
+## Agent connectivity follow-up — 2026-11-06
+
+A fresh authenticated inventory check shows both registered devices, PCRN and RN14PRO+, offline (2 loaded, 0 reachable, 2 offline). Native My Server statistics report zero Agent Sessions. The server console's `agentstats` counters are all zero and `agentissues` reports no issues; this means the server has no recorded agent handshake errors, not that the agents are connected. On PCRN, Windows reports the `Mesh Agent` service as Automatic/Running, but the process has no TCP connections and the supported `MeshAgent.exe -state` diagnostic says it cannot contact the service. A service restart could not be completed from this non-elevated session; Windows denied service control and the elevation attempt exited unsuccessfully. No agent files, settings, service configuration, MeshCentral configuration/database, or tunnel were changed.
+
+The outstanding live RDP and physical-phone acceptance still needs an agent-connected managed device and a real Android or iOS browser. Do not infer agent connectivity from the Windows service state alone, or infer a healthy connection from the server's empty `agentissues` result.
