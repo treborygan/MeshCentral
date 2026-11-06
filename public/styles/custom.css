@@ -508,6 +508,9 @@ body.ns-theme.ns-shell-ready :is(#p5toolbar,#p9toolbar,#p13toolbar) :is(button,i
   .ns-dock-secondary .ns-dock-action{min-height:30px;padding:4px 10px}
   body.ns-mobile-remote #column_l{padding-bottom:calc(92px + env(safe-area-inset-bottom))!important}
   body.ns-mobile-remote #deskarea0{margin-bottom:86px}
+  /* Keep visible remote actions above the fixed touch dock on high-DPR phones
+     whose landscape CSS width is just over the regular 900px mobile cutoff. */
+  body.ns-shell-ready.ns-mobile-remote .ns-viewer-controls{bottom:calc(110px + env(safe-area-inset-bottom))}
 }
 @media(prefers-reduced-motion:reduce){.ns-theme *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
@@ -1544,7 +1547,7 @@ body.ns-theme #p52recordings .p3usersTable > tbody > tr[tabindex]:focus-visible 
 .ns-capability-open:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
 .ns-capability-open[hidden]{display:none!important}
 .ns-capability-note{margin:.7rem 0 0;color:var(--ns-muted,#a9bac3);font-size:.78rem}
-.ns-viewer-info-toggle{position:fixed;top:calc(1rem + env(safe-area-inset-top));right:1rem;z-index:905;padding:.5rem .8rem;border:1px solid var(--ns-accent,#66d6ac);border-radius:10px;background:rgba(19,30,41,.94);color:var(--ns-text,#eef5f5);box-shadow:0 8px 24px #0005}
+.ns-viewer-info-toggle{position:fixed;top:calc(1rem + env(safe-area-inset-top));right:calc(1rem + clamp(4rem,26vw,15rem));z-index:905;padding:.5rem .8rem;border:1px solid var(--ns-accent,#66d6ac);border-radius:10px;background:rgba(19,30,41,.94);color:var(--ns-text,#eef5f5);box-shadow:0 8px 24px #0005}
 .ns-viewer-controls{position:fixed;right:1rem;bottom:1rem;z-index:904;display:flex;gap:.45rem;padding:.45rem;border:1px solid var(--ns-line,#344652);border-radius:12px;background:rgba(19,30,41,.96);box-shadow:0 10px 28px #0007;opacity:1;transform:translateY(0);transition:opacity .18s,transform .18s}
 .ns-viewer-controls.is-idle{opacity:0;transform:translateY(8px);pointer-events:none}
 .ns-viewer-control{min-height:40px;padding:.5rem .75rem;border:1px solid var(--ns-line,#344652);border-radius:8px;background:var(--ns-surface,#17242e);color:var(--ns-text,#eef5f5);font-size:.82rem}
@@ -1563,7 +1566,7 @@ body.ns-theme #p52recordings .p3usersTable > tbody > tr[tabindex]:focus-visible 
 .ns-viewer-info-close:focus-visible,.ns-viewer-info-details:focus-visible,.ns-viewer-info-toggle:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
 .ns-viewer-info-close:disabled,.ns-viewer-info-details:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:900px){.ns-viewer-controls{display:none!important}}
-@media(max-width:700px){.ns-viewer-info-drawer{top:env(safe-area-inset-top);bottom:calc(125px + env(safe-area-inset-bottom));width:min(24rem,calc(100vw - 1rem));border-radius:0 0 0 16px}.ns-viewer-info-toggle{top:calc(.65rem + env(safe-area-inset-top));right:.65rem}}
+@media(max-width:700px){.ns-viewer-info-drawer{top:env(safe-area-inset-top);bottom:calc(125px + env(safe-area-inset-bottom));width:min(24rem,calc(100vw - 1rem));border-radius:0 0 0 16px}.ns-viewer-info-toggle{top:calc(.65rem + env(safe-area-inset-top))}}
 @media(prefers-reduced-motion:no-preference){.ns-viewer-info-drawer:not([hidden]){animation:ns-viewer-drawer-in .16s ease-out}@keyframes ns-viewer-drawer-in{from{transform:translateX(1rem);opacity:.7}to{transform:translateX(0);opacity:1}}}
 
 /* Native user-group management: keep MeshCentral's table and actions while
@@ -2339,11 +2342,51 @@ body.ns-shell-ready #p10info #p10html .row.mb-1 > .col.col-md-10.col-lg-10 {
   word-break:normal;
 }
 @media(min-width:901px) {
-  body.ns-shell-ready #p10info {
+  /* Native route templates give several content panels viewport-based heights
+     and hidden overflow. Keep the desktop shell as the single vertical scroller
+     so long device/account pages remain reachable. */
+  body.ns-shell-ready #column_l {padding-bottom:72px!important}
+  body.ns-shell-ready #p1,
+  body.ns-shell-ready #p2info,
+  body.ns-shell-ready #p10info,
+  body.ns-shell-ready #p17info {
+    height:auto!important;
+    min-height:0!important;
     max-height:none!important;
-    overflow:visible!important;
+    overflow-x:visible!important;
+    overflow-y:visible!important;
+  }
+  /* Normalize native route heading bars while retaining their original links,
+     buttons, and title content. */
+  body.ns-shell-ready.ns-theme :is(#p10title,#p11title,#p12title,#p13title,#p15title,#p16title,#p17title,#p18title,#p50title,#p60title) {
+    background:var(--ns-canvas)!important;
+    background-image:none!important;
+    color:var(--ns-foreground)!important;
+  }
+  body.ns-shell-ready.ns-theme :is(#p10title,#p11title,#p12title,#p13title,#p15title,#p16title,#p17title,#p18title,#p50title,#p60title) :is(h1,h2,.fs-4) {color:var(--ns-foreground)!important}
+  /* The native server console title uses its own dark text styling. */
+  body.ns-shell-ready.ns-theme #p15title {color:var(--ns-foreground)!important}
+  body.ns-shell-ready.ns-theme #p15title :is(a,button,.fa,.fas,.far) {color:var(--ns-foreground)!important}
+  /* Viewer actions float above the native device tabs, so leave them clearance. */
+  body.ns-shell-ready .ns-viewer-controls {bottom:3.5rem}
+}
+@media(min-width:901px) {
+  body.ns-shell-ready #p10info {
+    height:auto!important;
+    max-height:none!important;
+    overflow-x:visible!important;
+    overflow-y:visible!important;
   }
 }
+/* MeshCentral's `is-mobile` title rules use important declarations and can
+   switch on under touch emulation at desktop-like landscape widths. Keep the
+   audited Console title readable across both portrait and landscape modes. */
+body.is-mobile.ns-theme.ns-shell-ready #p15title {
+  background:var(--ns-canvas)!important;
+  background-image:none!important;
+  color:var(--ns-foreground)!important;
+}
+body.is-mobile.ns-theme.ns-shell-ready #p15title * {color:var(--ns-foreground)!important}
 body.ns-shell-ready #p40 > #serverMainStats {
   position:relative;
   z-index:0;

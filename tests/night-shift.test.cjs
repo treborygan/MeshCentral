@@ -1008,6 +1008,21 @@ test('remote viewer information drawer preserves native details navigation',()=>
   assert.doesNotMatch(viewer,/new\s+WebSocket|meshserver\.send|gotoDevice/);
 });
 
+test('remote viewer Info toggle reserves a responsive slot beside the masthead account controls',()=>{
+  const infoRule=css.match(/\.ns-viewer-info-toggle\{([^}]+)\}/);
+  assert.ok(infoRule,'the fixed Info control has a responsive position rule');
+  assert.match(infoRule[1],/right:calc\(1rem \+ clamp\(4rem,26vw,15rem\)\)/,
+    'a width-scaled account-control reserve keeps Info clear at desktop and landscape widths');
+  const accountReservePx=width=>Math.min(15*16,Math.max(4*16,width*.26));
+  assert.ok(accountReservePx(904)>=219,'the landscape reservation exceeds the measured 219px account control');
+  assert.ok(accountReservePx(1440)>=219,'the wide desktop reservation still clears the account control');
+  assert.ok(accountReservePx(412)>=44,'phone widths reserve at least the avatar and caret control width');
+  const phoneRule=css.match(/@media\(max-width:700px\)\{\.ns-viewer-info-drawer\{[^}]+\}\.ns-viewer-info-toggle\{([^}]+)\}/);
+  assert.ok(phoneRule,'phone drawer and toggle adjustments remain scoped to the narrow viewport');
+  assert.match(phoneRule[1],/top:/);
+  assert.doesNotMatch(phoneRule[1],/right:/,'the phone rule must not move Info back over the account controls');
+});
+
 test('floating desktop viewer controls use only visible native controls and auto-hide',()=>{
   assert.match(viewer,/ns-viewer-controls/);
   assert.match(viewer,/pointermove/);
@@ -1360,6 +1375,13 @@ test('short coarse-pointer phone landscape keeps the remote dock visible above 9
   assert.equal(desktop.byId.get('ns-mobile-dock').hidden,true,'tablet/desktop landscape with a fine pointer keeps native desktop controls');
   assert.match(js,/orientation: landscape.*max-width: 1024px.*max-height: 600px.*pointer: coarse/,'The wider breakpoint is limited to short coarse-pointer landscape screens');
   assert.match(css,/@media\(max-width:1024px\) and \(max-height:600px\) and \(orientation:landscape\) and \(pointer:coarse\)\s*\{[\s\S]*?\.ns-mobile-dock\s*\{[\s\S]*?body\.ns-mobile-remote #column_l\s*\{padding-bottom:calc\(92px/,'The dock is compact and the native remote canvas receives bottom clearance at phone landscape widths');
+  const coarseControls=css.match(/@media\(max-width:1024px\) and \(max-height:600px\) and \(orientation:landscape\) and \(pointer:coarse\)\s*\{([\s\S]*?)\n\}/);
+  assert.ok(coarseControls,'The short coarse-pointer landscape override is present');
+  assert.match(coarseControls[1],/body\.ns-shell-ready\.ns-mobile-remote \.ns-viewer-controls\s*\{bottom:calc\(110px \+ env\(safe-area-inset-bottom\)\)\}/,'Remote viewer actions sit above the touch dock at 977x440 coarse-pointer landscape widths');
+  const coarseSelector='body.ns-shell-ready.ns-mobile-remote .ns-viewer-controls';
+  const laterDesktopSelector='body.ns-shell-ready .ns-viewer-controls';
+  const classSpecificity=selector=>(selector.match(/\.[\w-]+/g)||[]).length;
+  assert.ok(classSpecificity(coarseSelector)>classSpecificity(laterDesktopSelector),'The coarse-landscape offset outranks the later desktop controls rule in the CSS cascade');
 });
 
 test('phone remote workspace puts the live viewer before setup panels',()=>{
@@ -1836,6 +1858,17 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   window.multiDesktop={'node//offline':{State:1,contype:1},'node//online':{State:3,contype:1}};
   window.__NightShiftDiagnostics.refresh();
   window.__NightShiftSessions.refresh();
+  // A remote session can remain in multiDesktop after the current device is
+  // cleared (for example while switching or after an interrupted connection).
+  // The session toolbar must remain usable and assign one sequential tab stop.
+  window.currentNode=null;
+  assert.doesNotThrow(()=>window.__NightShiftSessions.refresh(),'Background sessions without a current device must not throw');
+  const fallbackTabs=ids.get('ns-session-tabs').children.filter(node=>node.classList.contains('ns-session-tab'));
+  assert.equal(fallbackTabs.length,2,'Both background sessions remain available');
+  assert.deepEqual(fallbackTabs.map(node=>node.tabIndex),[0,-1],'The first session is keyboard reachable when none is current');
+  assert.equal(fallbackTabs.filter(node=>node.getAttribute('aria-current')==='true').length,0,'No background session is marked current');
+  window.currentNode=window.nodes[0];
+  window.__NightShiftSessions.refresh();
   const sessionTabs=ids.get('ns-session-tabs');
   assert.ok(sessionTabs,'Remote workspace exposes tabs for native live sessions');
   assert.equal(sessionTabs.parentNode,column,'Open sessions remain available from the shared workspace, outside the hidden remote desktop page');
@@ -1965,14 +1998,19 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(nativeConnect.focused,true,'Connection shortcut focuses the available native Connect control');
   window.desktop={State:3,contype:4,webRtcActive:false};
   nativeStatus.textContent='Connected, RDP';
+  nativeDisconnect.hidden=false;
   window.__NightShiftDiagnostics.refresh();
   assert.equal(diagnostic('session').children[1].textContent,'Browser RDP · Connected','Session transport and state use native MeshCentral values');
-  assert.equal(diagnostic('display').children[1].textContent,'Canvas mounted','Remote-display diagnosis checks the native canvas without intercepting input');
-  assert.equal(showNativeControls.hidden,true,'Native connect shortcut is hidden while the session is active');
+  assert.equal(diagnostic('display').children[1].textContent,'Canvas present; desktop frames not verified','A mounted canvas is not misreported as confirmed desktop frame delivery');
+  assert.equal(showNativeControls.hidden,false,'Native recovery shortcut remains available even with an active canvas');
+  assert.equal(showNativeControls.textContent,'Show native disconnect control','Connected sessions prioritize the native Disconnect recovery path');
+  assert.match(guidance.textContent,/mounted canvas does not prove that desktop frames are arriving/i,'Blank-display guidance distinguishes canvas presence from real video');
+  showNativeControls.click();
+  assert.equal(nativeDisconnect.focused,true,'Recovery shortcut focuses native Disconnect without invoking it');
   window.desktop.State=4;
   window.__NightShiftDiagnostics.refresh();
   assert.equal(diagnostic('session').children[1].textContent,'Browser RDP · Connected','MeshCentral terminal connected state is also treated as active');
-  assert.equal(showNativeControls.hidden,true,'Native connect shortcut stays hidden in state four');
+  assert.equal(showNativeControls.hidden,false,'Native recovery control remains reachable in native connected state four');
   window.navigator.onLine=false;window.meshserver.State=0;
   window.__NightShiftDiagnostics.refresh();
   assert.equal(diagnostic('browser').children[1].textContent,'Offline','Offline browser state is distinguished from the MeshCentral channel');
@@ -2090,6 +2128,30 @@ test('desktop Server General uses the workspace scroller instead of nesting a vi
   assert.match(css,/body\.ns-shell-ready #column_l \{[\s\S]*?overflow-y:auto!important/,'The page workspace remains the single vertical scroll container');
 });
 
+test('desktop native overview, account, and device pages expand into the workspace scroller',()=>{
+  const desktop=css.match(/@media\(min-width:901px\)\s*\{\s*\/\* Native route templates give several content panels[\s\S]*?\n\}/);
+  assert.ok(desktop,'Desktop native panels have a dedicated single-scroll layout rule');
+  for(const id of ['#p1','#p2info','#p10info','#p17info']) assert.ok(desktop[0].includes(`body.ns-shell-ready ${id}`),`${id} clears its native fixed height`);
+  assert.match(desktop[0],/height:auto!important/);
+  assert.match(desktop[0],/max-height:none!important/);
+  assert.match(desktop[0],/overflow-y:visible!important/);
+  assert.match(desktop[0],/#column_l \{padding-bottom:72px!important\}/,'The workspace can scroll the final rows above fixed route tabs');
+});
+
+test('desktop native headings and device console use readable Night Shift colors',()=>{
+  const desktop=css.match(/@media\(min-width:901px\)\s*\{\s*\/\* Native route templates give several content panels[\s\S]*?\n\}/);
+  assert.ok(desktop);
+  for(const id of ['#p10title','#p11title','#p12title','#p13title','#p15title','#p16title','#p17title','#p18title','#p50title','#p60title']) assert.ok(desktop[0].includes(id),`${id} is included in desktop title normalization`);
+  assert.match(desktop[0],/background:var\(--ns-canvas\)!important/);
+  assert.match(desktop[0],/body\.ns-shell-ready\.ns-theme #p15title \{color:var\(--ns-foreground\)!important\}/,'The console title remains legible');
+});
+
+test('desktop floating remote viewer controls clear the fixed device-tab bar',()=>{
+  const desktop=css.match(/@media\(min-width:901px\)\s*\{\s*\/\* Native route templates give several content panels[\s\S]*?\n\}/);
+  assert.ok(desktop);
+  assert.match(desktop[0],/\.ns-viewer-controls \{bottom:3\.5rem\}/);
+});
+
 test('account security settings keep native links and use a responsive desktop workspace',()=>{
   assert.match(css,/@media\(min-width:901px\)[\s\S]*?body\.ns-theme #p2info \{[\s\S]*?grid-template-columns:minmax\(230px/);
   assert.match(css,/body\.ns-theme :is\(#p2AccountSecurity,#p2AccountActions\) \{grid-column:2\/-1/);
@@ -2135,7 +2197,7 @@ test('device detail pages adapt their native fields, notes and status card to mo
   assert.match(css,/@media\(max-width:700px\)[\s\S]*?body\.ns-theme #p10info > table > tbody > tr > td:last-child \{display:flex/);
   assert.match(css,/body\.ns-shell-ready #p10info #p10html \.row\.mb-1 > \.col\.col-md-2\.col-lg-2 \{[\s\S]*?flex:0 0 180px[\s\S]*?word-break:normal/);
   assert.match(css,/body\.ns-shell-ready #p10info #p10html \.row\.mb-1 > \.col\.col-md-10\.col-lg-10 \{[\s\S]*?flex:1 1 0[\s\S]*?min-width:0/);
-  assert.match(css,/@media\(min-width:901px\) \{\s*body\.ns-shell-ready #p10info \{\s*max-height:none!important;\s*overflow:visible!important/);
+  assert.match(css,/@media\(min-width:901px\) \{\s*body\.ns-shell-ready #p10info \{\s*height:auto!important;\s*max-height:none!important;\s*overflow-x:visible!important;\s*overflow-y:visible!important/);
   const template=read('views/default.handlebars');
   assert.match(template,/id=p10html/);
   assert.match(template,/id=p10html2/);
@@ -2341,6 +2403,8 @@ test('mobile themed native page titles override MeshCentral white title bars',()
     assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready :is\(#p4title,#p5title,#p6title,#p41title\) \{background:var\(--ns-canvas\)!important;color:var\(--ns-foreground\)!important\}/,'Night Shift replaces the white title surface and keeps text legible');
   }
   assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready :is\(#p4title,#p5title,#p6title,#p41title\) \.fs-4 \{color:var\(--ns-foreground\)!important\}/);
+  assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready #p15title \{[\s\S]*?background:var\(--ns-canvas\)!important;[\s\S]*?color:var\(--ns-foreground\)!important\}/,'The native Console title overrides upstream white and dark title backgrounds at touch breakpoints');
+  assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready #p15title \* \{color:var\(--ns-foreground\)!important\}/,'Console title text and native controls keep readable contrast in portrait and landscape');
 });
 
 test('mobile device quick actions delegate to MeshCentral route handlers',()=>{
