@@ -1806,7 +1806,7 @@
     }
     var heading = create('span','ns-session-tabs-heading','Sessions');
       panel.insertBefore(heading,announcement);
-    open.forEach(function (entry) {
+    open.forEach(function (entry, index) {
       var name = entry.node.name || entry.node.host || 'Remote device';
       var state = sessionState(entry.session);
       var tab = create('button','ns-session-tab');
