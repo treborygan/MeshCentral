@@ -30,7 +30,11 @@
   };
   const visible = (el) => !!(el && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
   const usable = (el) => !!(visible(el) && !el.disabled && el.getAttribute('aria-disabled') !== 'true');
-  const mobile = () => matchMedia('(max-width: 900px)').matches;
+  // Most phones fall within 900 CSS px in either orientation. A few high-DPR
+  // handsets report a landscape CSS width just above that cutoff, so include
+  // only short, coarse-pointer landscape viewports up to 1024px.
+  const mobile = () => matchMedia('(max-width: 900px)').matches ||
+    matchMedia('(orientation: landscape) and (max-width: 1024px) and (max-height: 600px) and (pointer: coarse)').matches;
   const destinations = [
     ['Devices','LeftMenuMyDevices',1], ['Account','LeftMenuMyAccount',2],
     ['Events','LeftMenuMyEvents',3], ['Files','LeftMenuMyFiles',5],
@@ -745,12 +749,19 @@
   ];
   var routes = [
     ['p11', 'Remote desktop'], ['p12', 'Terminal'], ['p13', 'Device files'],
-    ['p14', 'Intel AMT'], ['p10', 'Device details'], ['p2', 'Account'],
+    ['p14', 'Intel AMT'], ['p15', 'Console'], ['p16', 'Device events'],
+    ['p17', 'Device details'], ['p18', 'Software'], ['p19', 'Plugins'],
+    ['p9', 'Registry'], ['p10', 'Device details'], ['p2', 'Account'],
     ['p3', 'Events'], ['p4', 'Users'], ['p5', 'Server files'],
-    ['p6', 'Server'], ['p1', 'Devices']
+    ['p6', 'Server'], ['p20', 'Group details'], ['p21', 'Group summary'],
+    ['p30', 'User record'], ['p31', 'User events'], ['p40', 'Server Stats'],
+    ['p41', 'Server Trace'], ['p42', 'Server Plugins'], ['p43', 'Plugin admin'],
+    ['p50', 'User Groups'], ['p51', 'User Group'], ['p52', 'Recordings'],
+    ['p60', 'Reports'], ['p1', 'Devices']
   ];
   var appbar, title, breadcrumb, status, dashboard, deviceCount, onlineCount, offlineCount, dashboardNote, shortcuts, deviceTools, remoteState;
   var queued = false;
+  var lastVisiblePage = null;
   function visible(node) {
     return !!(node && node.getClientRects && node.getClientRects().length &&
       getComputedStyle(node).display !== 'none' && getComputedStyle(node).visibility !== 'hidden');
@@ -762,9 +773,14 @@
   function navigate(entry) {
     var native = $(entry.id);
     if (!allowed(native)) return false;
-    // The original element retains MeshCentral's access control and event handlers.
+    // These Modern sidebar anchors bind go() to click, not mouseup. Keep the
+    // native permission checks and handler by activating the original element.
+    if (native && typeof native.click === 'function') {
+      native.click();
+      return true;
+    }
     if (native && typeof native.dispatchEvent === 'function') {
-      native.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      native.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
       return true;
     }
     return false;
@@ -772,7 +788,12 @@
   function deviceAction(entry) {
     var native = $(entry.id);
     if (!allowed(native) || !visible(native)) return false;
-    native.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    // Device tabs bind inline mouseup handlers whose MeshCentral functions are
+    // closure-scoped. Invoke that exact native handler so touch actions retain
+    // its permissions and routing without relying on synthetic event dispatch.
+    var event = new MouseEvent('mouseup', { bubbles: true, cancelable: true, view: window, button: 0, buttons: 0 });
+    if (entry.page !== undefined && typeof native.onmouseup === 'function') native.onmouseup.call(native, event);
+    else native.dispatchEvent(event);
     return true;
   }
   function button(label, cls, onClick, description) {
@@ -794,6 +815,17 @@
   function currentRoute() {
     for (var i = 0; i < routes.length; ++i) {
       if (visible($(routes[i][0]))) return routes[i][1];
+    }
+    // On compact/mobile layouts some native pages can report no client rects
+    // while MeshCentral has already committed the route in its query string.
+    // Use that native route as a label fallback; it does not trigger navigation.
+    var search = window.location && window.location.search;
+    var match = typeof search === 'string' && /(?:^|[?&])viewmode=(\d+)(?:&|$)/.exec(search);
+    if (match) {
+      var view = 'p' + match[1];
+      for (var routeIndex = 0; routeIndex < routes.length; routeIndex++) {
+        if (routes[routeIndex][0] === view) return routes[routeIndex][1];
+      }
     }
     return 'Workspace';
   }
@@ -941,6 +973,25 @@
   function sync() {
     if (!appbar || !document.body) return;
     var route = currentRoute();
+    var activePage = null;
+    for (var pageIndex = 0; pageIndex < routes.length; pageIndex++) {
+      var candidate = $(routes[pageIndex][0]);
+      if (visible(candidate)) { activePage = candidate; break; }
+    }
+    if (activePage && activePage !== lastVisiblePage) {
+      var column = $('column_l');
+      if (column) { column.scrollTop = 0; column.scrollLeft = 0; }
+      activePage.scrollTop = 0;
+      activePage.scrollLeft = 0;
+      if (activePage.querySelectorAll) {
+        var nestedScrollAreas = activePage.querySelectorAll('*');
+        for (var scrollIndex = 0; scrollIndex < nestedScrollAreas.length; scrollIndex++) {
+          nestedScrollAreas[scrollIndex].scrollTop = 0;
+          nestedScrollAreas[scrollIndex].scrollLeft = 0;
+        }
+      }
+      lastVisiblePage = activePage;
+    }
     if (title && title.textContent !== route) title.textContent = route;
     if (breadcrumb) {
       var crumbNodes = [];
@@ -1014,6 +1065,7 @@
     var watcher = new MutationObserver(schedule), watchIds = ['xdevices','deskstatus','connectbutton1','connectbutton1r',
       'disconnectbutton1','MainSubMenuSpan','MainDevDesktop','MainDevTerminal','MainDevFiles','MainDevAmt'];
     for (var pageIndex = 1; pageIndex <= 19; pageIndex++) watchIds.push('p' + pageIndex);
+    routes.forEach(function (route) { if (watchIds.indexOf(route[0]) < 0) watchIds.push(route[0]); });
     watchIds.forEach(function (id) {
       var target = $(id);
       if (target) watcher.observe(target,
@@ -1523,7 +1575,7 @@
   function nativeControlAvailable(id) {
     var target = $(id);
     if (!target || target.disabled || target.getAttribute('aria-disabled') === 'true' || !target.getClientRects || !target.getClientRects().length) return false;
-    for (var parent = target.parentElement || target.parentNode; parent; parent = parent.parentElement || parent.parentNode) {
+    for (var parent = target.parentElement; parent && parent.nodeType === 1; parent = parent.parentElement) {
       var style = getComputedStyle(parent);
       if (parent.hidden || style.display === 'none' || style.visibility === 'hidden') return false;
     }
@@ -3320,6 +3372,17 @@
   if (window.__NightShiftClassicMode) return;
   if (window.__NightShiftServerAdmin) return;
   var root;
+  var memoryObserver;
+  var userSettingsObserver;
+  function normalizeMemoryUnit(text) {
+    return String(text || '').replace(/\bGb\b(?=<\/b>)/g, 'GiB');
+  }
+  function normalizeMemoryDisplay() {
+    var memory = document.getElementById('serverMemoryChartText');
+    if (!memory || typeof memory.innerHTML !== 'string') return;
+    var normalized = normalizeMemoryUnit(memory.innerHTML);
+    if (normalized !== memory.innerHTML) memory.innerHTML = normalized;
+  }
   function enhance() {
     root = document.getElementById('p41events');
     if (!root) return;
@@ -3337,14 +3400,39 @@
       });
     });
   }
+  function enhanceUserSettings() {
+    var settings = document.getElementById('usersListToolbarSettings');
+    if (!settings || settings.getAttribute('data-ns-settings-ready') === '1') return;
+    settings.setAttribute('data-ns-settings-ready','1');
+    settings.setAttribute('role','button');
+    settings.setAttribute('aria-label','User list settings');
+    settings.setAttribute('focusable','true');
+    settings.tabIndex = 0;
+    settings.addEventListener('keydown',function (event) {
+      if (event.target !== settings || (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'Spacebar')) return;
+      event.preventDefault();
+      settings.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,view:window,button:0,buttons:0}));
+    });
+  }
   function boot() {
     enhance();
+    enhanceUserSettings();
+    normalizeMemoryDisplay();
+    var memory = document.getElementById('serverMemoryChartText');
+    if (memory && typeof MutationObserver === 'function' && !memoryObserver) {
+      memoryObserver = new MutationObserver(normalizeMemoryDisplay);
+      memoryObserver.observe(memory,{childList:true,subtree:true,characterData:true});
+    }
     root = document.getElementById('p41events');
     if (root && typeof MutationObserver === 'function') {
       new MutationObserver(enhance).observe(root,{childList:true,subtree:true});
     }
+    if (document.body && typeof MutationObserver === 'function' && !userSettingsObserver) {
+      userSettingsObserver = new MutationObserver(enhanceUserSettings);
+      userSettingsObserver.observe(document.body,{childList:true,subtree:true});
+    }
   }
-  window.__NightShiftServerAdmin = { refresh:enhance };
+  window.__NightShiftServerAdmin = { refresh:function () { enhance(); enhanceUserSettings(); }, normalizeMemoryUnit:normalizeMemoryUnit };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
 })();

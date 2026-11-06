@@ -356,6 +356,8 @@ input:disabled { opacity: .6; cursor: not-allowed; }
 .ns-theme :is(.btn-secondary,.btn-outline-secondary):not(:disabled){background:#273744;border-color:#465460;color:#eaf1ee}
 .ns-theme :is(.btn-secondary,.btn-outline-secondary):not(:disabled):hover{background:#324958;border-color:#607180;color:#fff}
 .ns-theme .btn-danger:not(:disabled){background:#4a2c33;border-color:#77444f;color:#ffd2d7}
+body.ns-theme.ns-shell-ready :is(#p5toolbar,#p9toolbar,#p13toolbar) :is(button,input[type="button"],input[type="submit"]).btn-danger:disabled,
+body.ns-theme.ns-shell-ready :is(#p5toolbar,#p9toolbar,#p13toolbar) :is(button,input[type="button"],input[type="submit"]).btn-outline-danger:disabled {background:#263139!important;border-color:#3b4850!important;color:#91a0a8!important;opacity:.72;box-shadow:none;cursor:not-allowed}
 .ns-theme .btn-link{color:#b6f078}
 .ns-theme :is(.form-control,.form-control-sm,.form-select,.form-select-sm){background:#1c2834;border-color:#415360;color:#f1f5f4}
 .ns-theme :is(.form-control,.form-control-sm,.form-select,.form-select-sm):focus{background:#243540;border-color:#b6f078;color:#fff;box-shadow:0 0 0 3px #b6f07824}
@@ -483,12 +485,27 @@ input:disabled { opacity: .6; cursor: not-allowed; }
   .ns-theme .topbar_td{min-width:65px;padding:7px 9px}
   .ns-search-backdrop{padding-top:max(10px,env(safe-area-inset-top))}
 }
+@media(max-width:900px){
+  body.ns-shell-ready.ns-mobile-remote #p11{display:flex;flex-direction:column}
+  body.ns-shell-ready.ns-mobile-remote #deskarea0{order:1;margin-bottom:12px}
+  body.ns-shell-ready.ns-mobile-remote #ns-session-diagnostics{order:2}
+  body.ns-shell-ready.ns-mobile-remote #ns-connection-profile{order:3}
+}
 @media(max-width:900px) and (orientation:landscape){
   .ns-theme #masthead{min-height:42px;height:42px}
   .ns-mobile-nav-item{min-height:46px}
   .ns-mobile-dock{padding:4px 8px max(4px,env(safe-area-inset-bottom))}
   .ns-dock-action{min-height:36px;padding:6px 11px}
   .ns-dock-secondary .ns-dock-action{min-height:30px;padding:4px 10px}
+  body.ns-mobile-remote #deskarea0{margin-bottom:86px}
+}
+/* High-DPR phones can report a 904px CSS width in landscape. Keep their
+   touch dock and its canvas clearance without promoting desktop/tablets. */
+@media(max-width:1024px) and (max-height:600px) and (orientation:landscape) and (pointer:coarse){
+  .ns-mobile-dock{gap:4px;padding:4px 8px max(4px,env(safe-area-inset-bottom))}
+  .ns-dock-action{min-height:36px;padding:6px 11px}
+  .ns-dock-secondary .ns-dock-action{min-height:30px;padding:4px 10px}
+  body.ns-mobile-remote #column_l{padding-bottom:calc(92px + env(safe-area-inset-bottom))!important}
   body.ns-mobile-remote #deskarea0{margin-bottom:86px}
 }
 @media(prefers-reduced-motion:reduce){.ns-theme *{animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -1067,6 +1084,11 @@ body.ns-shell-ready.ns-native-expanded #MainMenuSpan {display:block}
 
 /* Functional Night Shift secondary navigation. Only native permitted links are added. */
 body.ns-shell-ready #ns-appbar {position:sticky}
+@media(max-width:900px) {
+  /* On narrow screens keep the appbar in normal flow so native page controls
+     cannot scroll underneath a sticky overlay. */
+  body.ns-shell-ready #ns-appbar {position:relative;top:auto}
+}
 .ns-appbar-menu {
   position:absolute;
   top:calc(100% - 4px);
@@ -1359,6 +1381,11 @@ body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
   body.ns-shell-ready .ns-appbar-menu {right:8px;max-width:calc(100vw - 16px)}
   body.ns-shell-ready .ns-device-actions-row {grid-template-columns:minmax(0,1fr)}
   body.ns-theme .ns-mobile-nav-item {font-size:10px}
+  /* The touch dock is horizontally scrollable; show its affordance on phones. */
+  body.ns-theme .ns-dock-row {scrollbar-width:thin;scrollbar-color:#80949f #1a2833}
+  body.ns-theme .ns-dock-row::-webkit-scrollbar {display:block;height:4px}
+  body.ns-theme .ns-dock-row::-webkit-scrollbar-track {background:#1a2833;border-radius:4px}
+  body.ns-theme .ns-dock-row::-webkit-scrollbar-thumb {background:#80949f;border-radius:4px}
 }
 .ns-health-panel{margin:0 0 1rem;padding:1rem;border:1px solid var(--ns-line,#344652);border-radius:14px;background:var(--ns-surface,#17242e);color:var(--ns-text,#eef5f5)}
 .ns-health-title{margin:0 0 .75rem;font-size:1.05rem}
@@ -1370,12 +1397,38 @@ body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
 .ns-health-action:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
 .ns-history-search{display:flex;align-items:center;gap:.5rem;margin-left:auto;padding:.25rem .5rem;max-width:min(32rem,100%);font-size:.82rem;color:var(--ns-muted,#a9bac3)}
 .ns-history-search label{display:flex;align-items:center;gap:.5rem;min-width:0}
+.ns-history-search label>span{flex:0 0 auto;white-space:nowrap}
 .ns-history-search input{min-width:10rem;background:var(--ns-surface,#17242e);color:var(--ns-text,#eef5f5);border-color:var(--ns-line,#344652)}
 .ns-history-search input:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
 .ns-history-clear{flex:0 0 auto;border:1px solid var(--ns-line,#526571);border-radius:6px;padding:.25rem .45rem;background:transparent;color:var(--ns-text,#eef5f5);font-size:.76rem}
 .ns-history-clear:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
 .ns-history-result-status{display:block;width:100%;padding:0 .5rem;color:var(--ns-muted,#a9bac3);font-size:.75rem}
-@media(max-width:600px){.ns-history-search{width:100%;margin:.4rem 0 0;padding:0}.ns-history-search input{flex:1;min-width:0}}
+body.ns-theme #p3title{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;background:var(--ns-canvas)!important;color:var(--ns-foreground)!important}
+body.ns-theme #p3title>.fs-4{flex:0 1 auto;min-width:0;white-space:nowrap}
+body.ns-theme #p3title>.fs-4{color:var(--ns-foreground)!important}
+body.ns-theme #p3title .ns-history-search{order:2;flex:1 1 24rem;width:auto;min-width:min(100%,20rem);max-width:none;margin:0;padding:0}
+body.ns-theme #p3title .ns-history-search label{flex:1 1 auto;white-space:nowrap}
+body.ns-theme #p3title .ns-history-search input{flex:1 1 auto;min-width:8rem}
+body.ns-theme #p3title .ns-history-result-status{order:3;flex:0 0 100%;box-sizing:border-box;padding:0;color:var(--ns-muted,#a9bac3)}
+@media(max-width:600px){body.ns-theme #p3title .ns-history-search{flex-basis:100%;min-width:0;margin:0}body.ns-theme #p3title .ns-history-search input{min-width:0}}
+body.ns-theme #p3 > .pTable,
+body.ns-theme #p3 > .pTable > tbody,
+body.ns-theme #p3 > .pTable > tbody > tr {display:block!important;box-sizing:border-box;width:100%;max-width:100%}
+body.ns-theme #p3 > .pTable td {display:flex!important;align-items:center;justify-content:flex-start!important;flex-wrap:wrap;gap:8px;box-sizing:border-box;width:100%;max-width:100%}
+body.ns-theme #p3 > .pTable td > div {display:flex;align-items:center;flex-wrap:wrap;gap:6px;box-sizing:border-box;width:100%;min-width:0;max-width:100%}
+body.ns-theme #p3 > .pTable label {flex:0 0 auto;white-space:nowrap}
+body.ns-theme #p3 > .pTable select {flex:0 1 12rem;min-width:0;max-width:100%}
+@media(min-width:901px){
+  /* Keep the Events header and filter in document flow with its records. The
+     native event log is tall and independently scrollable; sticky controls
+     otherwise cover rows as that inner list moves behind them. */
+  body.ns-shell-ready #p3title {position:relative;top:auto;z-index:auto}
+  body.ns-shell-ready #p3 > .pTable {position:relative;top:auto;z-index:auto;background:var(--ns-surface)!important;color:var(--ns-foreground)}
+  body.is-mobile.ns-theme.ns-shell-ready #p3title {position:relative!important;top:auto!important;z-index:auto!important}
+  body.ns-shell-ready #p3events {height:auto!important;max-height:none!important;overflow:visible!important}
+}
+body.is-mobile.ns-theme.ns-shell-ready :is(#p4title,#p5title,#p6title,#p41title) {background:var(--ns-canvas)!important;color:var(--ns-foreground)!important}
+body.is-mobile.ns-theme.ns-shell-ready :is(#p4title,#p5title,#p6title,#p41title) .fs-4 {color:var(--ns-foreground)!important}
 body.ns-theme :is(#p3events,#p31events,#p52recordings) {max-width:100%;overscroll-behavior:contain;scrollbar-color:#405563 var(--ns-canvas)}
 body.ns-theme #p3events .p3eventsTable,
 body.ns-theme #p31events .p3eventsTable {width:100%;border-collapse:separate;border-spacing:0 3px}
@@ -2172,6 +2225,8 @@ body.ns-theme #p41events .traceEvent {
 }
 body.ns-theme #p41events .traceEvent:hover {border-color:#526a59;background:#1b2a30}
 body.ns-theme #p41events .traceEvent:focus-visible {outline:2px solid var(--ns-focus);outline-offset:1px}
+body.ns-theme #usersListToolbarSettings {cursor:pointer}
+body.ns-theme #usersListToolbarSettings:focus-visible {outline:2px solid var(--ns-focus);outline-offset:3px;border-radius:3px}
 body.ns-theme #p41events .traceEvent b {color:#b6f078;letter-spacing:.035em}
 @media(max-width:600px) {
   body.ns-theme :is(#p40,#p41) > .areaHead {align-items:stretch;padding:9px}
@@ -2246,6 +2301,7 @@ body.ns-shell-ready #p6 #serverStats .serverStateTableCell td:nth-child(2) {
 body.ns-shell-ready #p6 #serverStats .serverStateTableCell td:nth-child(2) span:first-child {flex:1 1 auto;min-width:0;max-width:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 body.ns-shell-ready #p6 #serverStats .serverStateTableCell td:nth-child(2) span:last-child {position:static;display:block;float:none!important;flex:0 1 auto;width:auto;min-width:0;max-width:48%;margin-left:12px;overflow-wrap:anywhere;text-align:right;transform:none}
 body.ns-shell-ready #p2info {box-sizing:border-box;min-width:0;max-width:100%}
+body.ns-shell-ready #p2meshes > .row {box-sizing:border-box;width:100%;max-width:100%;margin-left:0!important;margin-right:0!important}
 body.ns-shell-ready #p10info #p10html .row.mb-1 {min-width:0}
 body.ns-shell-ready #p10info #p10html .row.mb-1 > .col.col-md-2.col-lg-2 {
   box-sizing:border-box;
@@ -2278,12 +2334,17 @@ body.ns-shell-ready #p40 > #serverMainStats {
   margin-top:12px;
 }
 body.ns-shell-ready #p40 > .areaHead {position:relative;z-index:1}
-body.ns-shell-ready #p40title {
-  position:sticky;
-  top:184px;
-  z-index:5;
-  background:var(--ns-canvas);
+body.ns-shell-ready #p40title {position:relative;top:auto;z-index:auto;margin:0 0 10px;background:transparent}
+body.ns-shell-ready #p40title > .fs-4 {color:var(--ns-foreground)!important}
+@media(min-width:901px) {
+  /* The outer workspace can finish scrolling before this short route's title
+     clears the sticky appbar. Keep it readable below the 74px appbar and leave
+     enough normal-flow room before the chart. */
+  body.ns-shell-ready #p40title {position:sticky;top:76px;z-index:69;margin-bottom:40px}
+  body.ns-shell-ready #p40 > #serverMainStats {margin-top:50px}
 }
+body.ns-shell-ready #p15 #p15agentConsole {box-sizing:border-box;width:100%!important;min-width:0;max-width:100%;overflow:hidden}
+body.ns-shell-ready #p15 #p15agentConsoleText {display:block;box-sizing:border-box;width:100%!important;min-width:0!important;max-width:100%!important;overflow-x:auto!important;white-space:pre}
 body.ns-shell-ready #p15,
 body.ns-shell-ready #consoleTable {box-sizing:border-box;width:100%!important;min-width:0;max-width:100%;table-layout:fixed}
 body.ns-shell-ready #p15 .areaFoot {box-sizing:border-box;width:100%;min-width:0;max-width:100%;overflow-x:hidden}
@@ -2315,7 +2376,9 @@ body.ns-shell-ready #p13toolbar,
 body.ns-shell-ready #p13toolbar > tbody,
 body.ns-shell-ready #p13toolbar > tbody > tr {display:block!important;box-sizing:border-box;width:100%!important;max-width:100%;min-width:0}
 body.ns-shell-ready #p13toolbar tr:nth-child(2) > td {display:flex!important;align-items:center;flex-wrap:wrap;gap:6px;box-sizing:border-box;width:100%!important;min-width:0;max-width:100%;overflow:visible}
-body.ns-shell-ready #p13toolbar tr:nth-child(2) > td > input[type="button"] {flex:1 1 110px;width:auto!important;min-width:0;margin:0 2px 0 0!important}
+body.ns-shell-ready #p13toolbar tr:nth-child(2) > td > div:not(#p13rightOfButtons) {display:flex!important;align-items:center;flex:1 1 100%;flex-wrap:wrap;gap:6px;box-sizing:border-box;width:100%!important;min-width:0;max-width:100%}
+body.ns-shell-ready #p13toolbar tr:nth-child(2) > td > div:not(#p13rightOfButtons) > input[type="button"] {flex:1 1 108px;width:auto!important;min-width:0;margin:0!important}
+body.ns-shell-ready #p13toolbar tr:nth-child(2) > td > div:not(#p13rightOfButtons) > .btn-group {flex:0 1 auto;min-width:0;margin:0!important}
 body.ns-shell-ready #p13toolbar tr:nth-child(3) > td {display:flex!important;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;box-sizing:border-box;width:100%!important;min-width:0;max-width:100%}
 body.ns-shell-ready #p13toolbar tr:nth-child(3) > td > .toright2 {float:none!important;display:flex;flex-wrap:wrap;gap:6px;max-width:100%}
 body.ns-shell-ready #p13toolbar tr:nth-child(3) select {max-width:100%;min-width:0}
@@ -2367,4 +2430,161 @@ body.ns-shell-ready #p60report:empty::before {content:"No report generated yet. 
 @media(max-width:900px) {
   body.ns-shell-ready #column_l {max-height:none;min-height:0}
   body.ns-shell-ready #p10info #p10html .row.mb-1 > .col.col-md-2.col-lg-2 {flex-basis:38%;width:38%;max-width:38%;min-width:120px}
+}
+
+/* Portrait phone follow-up: keep every remote action on-screen and ensure the
+   rendered disabled state matches MeshCentral's native disabled semantics. */
+body.ns-theme.ns-shell-ready :is(#p5toolbar,#p9toolbar,#p13toolbar)
+  :is(button,input[type="button"],input[type="submit"]):is(:disabled,[disabled],[aria-disabled="true"],.disabled) {
+  background:#263139!important;
+  background-image:none!important;
+  border-color:#3b4850!important;
+  color:#91a0a8!important;
+  opacity:.72!important;
+  box-shadow:none!important;
+  filter:saturate(.45);
+  cursor:not-allowed!important;
+}
+body.ns-shell-ready #ns-appbar-title,
+body.ns-shell-ready .ns-appbar-title {background:transparent!important;background-image:none!important;box-shadow:none!important}
+body.ns-theme #p6title #MainMeshImage {
+  box-sizing:border-box;
+  display:block;
+  flex:0 0 38px;
+  width:38px!important;
+  min-width:38px;
+  max-width:38px;
+  height:38px!important;
+  max-height:38px;
+  object-fit:contain;
+}
+@media(max-width:900px) and (orientation:portrait) {
+  body.ns-theme #MainSubMenuSpan:not([style*="display:none"]):not([style*="display: none"]) {
+    display:flex!important;
+    align-items:center;
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    min-height:40px;
+    height:auto;
+    overflow:visible;
+  }
+  body.ns-theme #MainSubMenuSpan > .mobile-submenu-scroll {
+    display:flex!important;
+    align-items:center;
+    box-sizing:border-box;
+    flex:1 1 100%;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    min-height:40px;
+    height:auto;
+    overflow:visible;
+  }
+  body.ns-theme #MainSubMenuSpan .mobile-submenu-arrow {
+    display:flex!important;
+    align-items:center;
+    justify-content:center;
+    box-sizing:border-box;
+    flex:0 0 32px;
+    width:32px;
+    min-width:32px;
+    height:32px;
+    color:#d9e6e4;
+    border:1px solid #344650;
+    border-radius:7px;
+    background:#17232d;
+  }
+  body.ns-theme #MainSubMenuSpan #MainSubMenuScrollInner {
+    display:block!important;
+    box-sizing:border-box;
+    flex:1 1 0px;
+    width:0;
+    min-width:0;
+    max-width:100%;
+    height:auto;
+    min-height:40px;
+    overflow-x:auto!important;
+    overflow-y:visible!important;
+    overscroll-behavior-x:contain;
+    touch-action:pan-x;
+    scrollbar-width:thin!important;
+    scrollbar-color:#526a78 #16212b;
+    -ms-overflow-style:auto;
+  }
+  body.ns-theme #MainSubMenuSpan #MainSubMenuScrollInner::-webkit-scrollbar {display:block!important;height:5px}
+  body.ns-theme #MainSubMenuSpan #MainSubMenuScrollInner::-webkit-scrollbar-thumb {background:#526a78;border-radius:8px}
+  body.ns-theme #MainSubMenuSpan #MainSubMenuScrollInner::-webkit-scrollbar-track {background:#16212b}
+  body.ns-theme #MainSubMenuSpan #MainSubMenu {display:table!important;width:max-content!important;min-width:max-content;table-layout:auto!important}
+  body.ns-theme #MainSubMenuSpan #MainSubMenu .topbar_td {width:auto!important;min-width:65px;white-space:nowrap}
+
+  body.ns-theme .ns-mobile-dock {box-sizing:border-box;max-width:100vw}
+  body.ns-theme .ns-dock-row {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:6px;
+    min-width:0;
+    max-width:100%;
+    overflow:visible;
+  }
+  body.ns-theme .ns-dock-action {
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+    min-height:44px;
+    padding:6px 4px;
+    font-size:clamp(10px,2.8vw,12px);
+    line-height:1.15;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+  body.ns-theme .ns-dock-secondary .ns-dock-action {min-height:44px;padding:5px 4px}
+}
+
+/* The native Software toolbar nests a non-wrapping flex row inside a wrapping
+   areaHead. Allow those live controls to reflow instead of widening column_l. */
+@media(max-width:900px) {
+  body.ns-shell-ready #p18,
+  body.ns-shell-ready #p18toolbar,
+  body.ns-shell-ready #p18info,
+  body.ns-shell-ready #p18html {box-sizing:border-box;width:100%;min-width:0;max-width:100%}
+  body.ns-shell-ready #p18toolbar {display:flex!important;flex-wrap:wrap!important;gap:8px}
+  body.ns-shell-ready #p18toolbar > div {
+    display:flex!important;
+    align-items:center;
+    flex:1 1 100%;
+    flex-wrap:wrap!important;
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    gap:8px;
+  }
+  body.ns-shell-ready #p18toolbar #p18RefreshBtn {flex:0 0 auto;max-width:100%;margin:0!important}
+  body.ns-shell-ready #p18toolbar #p18SearchInput {
+    box-sizing:border-box;
+    flex:1 1 12rem;
+    width:250px!important;
+    min-width:0;
+    max-width:100%;
+  }
+  body.ns-shell-ready #p18toolbar label[for="p18ShowStore"],
+  body.ns-shell-ready #p18toolbar > div > label {
+    box-sizing:border-box;
+    flex:0 1 auto;
+    min-width:0;
+    max-width:100%;
+    margin:0!important;
+    white-space:normal;
+  }
+  body.ns-shell-ready #p18toolbar #p18Status {
+    box-sizing:border-box;
+    flex:1 1 100%;
+    min-width:0;
+    max-width:100%;
+    margin:0!important;
+    overflow-wrap:anywhere;
+  }
+  body.ns-shell-ready #p18html {overflow-x:auto;overscroll-behavior-x:contain}
 }

@@ -87,7 +87,7 @@
   function nativeControlAvailable(id) {
     var target = $(id);
     if (!target || target.disabled || target.getAttribute('aria-disabled') === 'true' || !target.getClientRects || !target.getClientRects().length) return false;
-    for (var parent = target.parentElement || target.parentNode; parent; parent = parent.parentElement || parent.parentNode) {
+    for (var parent = target.parentElement; parent && parent.nodeType === 1; parent = parent.parentElement) {
       var style = getComputedStyle(parent);
       if (parent.hidden || style.display === 'none' || style.visibility === 'hidden') return false;
     }

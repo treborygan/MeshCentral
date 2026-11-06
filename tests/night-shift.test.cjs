@@ -1039,7 +1039,7 @@ test('viewer toolbar stays within the active viewer and delegates fullscreen',()
   assert.equal(controls.hidden,true,'Toolbar hides when the native viewer is inactive');
 });
 
-function createMobileHarness(isMobile = true, classicMode = false, isLandscape = false, nativeTemplate = 'modern') {
+function createMobileHarness(isMobile = true, classicMode = false, isLandscape = false, nativeTemplate = 'modern', isPhoneLandscape = false) {
   let landscapeMode = isLandscape;
   const byId = new Map();
   const documentEvents = {};
@@ -1143,7 +1143,7 @@ function createMobileHarness(isMobile = true, classicMode = false, isLandscape =
   };
   const context = {
     window, document, console,
-    matchMedia: query => ({ matches: query.includes('orientation: landscape') ? landscapeMode : isMobile }),
+    matchMedia: query => ({ matches: query.includes('pointer: coarse') ? isPhoneLandscape && landscapeMode : query.includes('orientation: landscape') ? landscapeMode : isMobile }),
     getComputedStyle: () => ({ visibility: 'visible' }),
     requestAnimationFrame: callback => callback(),
     addEventListener:addWindowEvent, setInterval() { return 1; }, clearTimeout() {}, setTimeout() { return 1; },
@@ -1315,6 +1315,23 @@ test('mobile remote dock delegates controls to MeshCentral handlers and keeps re
   assert.equal(h.window._mobileModifiers.shift,false,'Release all clears a held modifier without remote input permission');
 });
 
+test('short coarse-pointer phone landscape keeps the remote dock visible above 900px',()=>{
+  const phone=createMobileHarness(false,false,true,'modern',true);
+  assert.equal(phone.byId.get('ns-mobile-dock').hidden,false,'904px CSS phone landscape is treated as mobile');
+  assert.equal(phone.byId.get('ns-mobile-nav').hidden,true,'workspace navigation stays out of a remote session');
+  const desktop=createMobileHarness(false,false,true,'modern',false);
+  assert.equal(desktop.byId.get('ns-mobile-dock').hidden,true,'tablet/desktop landscape with a fine pointer keeps native desktop controls');
+  assert.match(js,/orientation: landscape.*max-width: 1024px.*max-height: 600px.*pointer: coarse/,'The wider breakpoint is limited to short coarse-pointer landscape screens');
+  assert.match(css,/@media\(max-width:1024px\) and \(max-height:600px\) and \(orientation:landscape\) and \(pointer:coarse\)\s*\{[\s\S]*?\.ns-mobile-dock\s*\{[\s\S]*?body\.ns-mobile-remote #column_l\s*\{padding-bottom:calc\(92px/,'The dock is compact and the native remote canvas receives bottom clearance at phone landscape widths');
+});
+
+test('phone remote workspace puts the live viewer before setup panels',()=>{
+  assert.match(css,/body\.ns-shell-ready\.ns-mobile-remote #p11\s*\{display:flex;flex-direction:column\}/,'The remote workspace can order its native viewer and setup panels on phones');
+  assert.match(css,/body\.ns-shell-ready\.ns-mobile-remote #deskarea0\s*\{order:1;margin-bottom:12px\}/,'The remote display follows the device title and session strip');
+  assert.match(css,/body\.ns-shell-ready\.ns-mobile-remote #ns-session-diagnostics\s*\{order:2\}/,'Connection diagnostics remain below the phone viewer');
+  assert.match(css,/body\.ns-shell-ready\.ns-mobile-remote #ns-connection-profile\s*\{order:3\}/,'Connection profile controls stay available after the phone viewer');
+});
+
 test('landscape remote view collapses extra controls without hiding native actions or focused controls', () => {
   const h = createMobileHarness(true, false, true);
   const more = h.byId.get('ns-dock-more');
@@ -1412,6 +1429,12 @@ test('mobile masthead stays inside the viewport and respects device safe areas',
   assert.match(css, /body\.ns-theme #topbar #logoutControlSpan2\s*\{display:none!important\}/, 'Legacy logout text cannot overflow the mobile masthead');
 });
 
+test('portrait remote dock wraps every touch control inside the viewport',()=>{
+  assert.match(css,/@media\(max-width:900px\) and \(orientation:portrait\)\s*\{[\s\S]*?body\.ns-theme \.ns-dock-row\s*\{\s*display:grid;\s*grid-template-columns:repeat\(4,minmax\(0,1fr\)\);[\s\S]*?overflow:visible/,'Portrait uses a wrapping grid instead of clipping the remote controls');
+  assert.match(css,/body\.ns-theme \.ns-dock-action\s*\{[\s\S]*?min-width:0;[\s\S]*?min-height:44px;[\s\S]*?white-space:normal/,'Touch actions remain reachable and retain 44px minimum targets');
+  assert.match(css,/body\.ns-theme \.ns-dock-secondary \.ns-dock-action \{min-height:44px/,'Secondary remote actions stay touch sized in portrait');
+});
+
 
 test('Night Shift structural shell uses live DOM data and native navigation', () => {
   const ids = new Map();
@@ -1455,6 +1478,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     querySelectorAll(selector){
       if(selector==='[name="xxdevice1"]')return this.deviceCheckboxes||[];
       if(selector==='[data-detail]')return this.children.flatMap(child=>child.children).filter(child=>child.dataset.detail);
+      if(selector==='*')return this.children.flatMap(child=>[child,...child.querySelectorAll('*')]);
       return [];
     }
     focus(){this.focused=true;}
@@ -1471,10 +1495,15 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     const node=new MockElement('div');node.id=id;parent.append(node);return node;
   };
   add('container');const column=add('column_l');add('masthead');
-  const devices=add('LeftMenuMyDevices');let devicesMouseup=0;devices.addEventListener('mouseup',()=>devicesMouseup++);
-  const events=add('LeftMenuMyEvents');let eventsMouseup=0;events.addEventListener('mouseup',()=>eventsMouseup++);const page=add('p1',column);
-  add('p10',column);
+  const devices=add('LeftMenuMyDevices');let devicesClicks=0;devices.addEventListener('click',()=>devicesClicks++);
+  const events=add('LeftMenuMyEvents');let eventsClicks=0;events.addEventListener('click',()=>eventsClicks++);const page=add('p1',column);
+  const detailsPageForNav=add('p10',column);
   const remotePage=add('p11',column);remotePage.hidden=true;
+  const statsPage=add('p40',column);statsPage.hidden=true;
+  const eventsPage=add('p3',column);eventsPage.hidden=true;
+  const eventHistory=add('p3events',eventsPage);eventHistory.scrollTop=2049;
+  devices.addEventListener('click',()=>{page.hidden=false;eventsPage.hidden=true;statsPage.hidden=true;remotePage.hidden=true;detailsPageForNav.hidden=true;});
+  events.addEventListener('click',()=>{page.hidden=true;eventsPage.hidden=false;statsPage.hidden=true;remotePage.hidden=true;detailsPageForNav.hidden=true;});
   const desktopArea=add('deskarea0',remotePage);
   const nativeStatus=add('deskstatus',remotePage);
   const nativeConnect=add('connectbutton1',remotePage);nativeConnect.disabled=false;
@@ -1485,7 +1514,9 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const nativeGroupAction=add('GroupActionButton',toolbar);nativeGroupAction.disabled=true;
   const list=add('xdevices',page);
   list.deviceCheckboxes=[new MockElement('input'),new MockElement('input')];
-  add('MainDevDesktop');add('MainDevTerminal');add('MainDevFiles');
+  const nativeDesktopTab=add('MainDevDesktop');add('MainDevTerminal');add('MainDevFiles');
+  const deviceRouteCalls=[];
+  nativeDesktopTab.onmouseup=function(event){deviceRouteCalls.push({route:11,event});detailsPageForNav.hidden=true;remotePage.hidden=false;};
   const opened=[];
   const disconnectedSessions=[];
   const compressionUpdates=[];
@@ -1493,9 +1524,11 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   let fullscreenToggles=0;
   const favoriteWrites=[];
   const updatedNativeDevices=[];
+  const shellObservers=[];
   let webRtcResetCalls=0;
   const recentStorage=new Map();
   const window={
+    location:{search:''},
     addEventListener(){},
     stars:{},
     putstore:(key,value)=>favoriteWrites.push({key,value}),
@@ -1534,7 +1567,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
     getComputedStyle:()=>({display:'block',visibility:'visible'}),
     requestAnimationFrame:callback=>callback(),
     addEventListener(){},setInterval(){},setTimeout(){},clearTimeout(){},
-    MutationObserver:class{observe(){}},
+    MutationObserver:class{constructor(callback){this.callback=callback;shellObservers.push(this);}observe(target,options){(this.targets||=[]).push({target,options});}},
     MouseEvent:class{constructor(type,props){this.type=type;Object.assign(this,props);}}
   },{timeout:1000});
   assert.ok(ids.has('ns-appbar'),'Contextual appbar is generated');
@@ -1548,6 +1581,24 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const detailsPage=ids.get('p10');
   assert.equal(detailsPage.focused,true,'Skip link focuses the currently active native page');
   assert.equal(detailsPage.getAttribute('tabindex'),'-1','Skip target is focusable without entering the sequential tab order');
+  assert.ok(shellObservers.length>0,'The shell installs page mutation observers');
+  const eventsRoute=ids.get('p3'),eventList=ids.get('p3events');
+  detailsPage.hidden=true;eventsRoute.hidden=false;
+  column.scrollTop=190;column.scrollLeft=18;eventList.scrollTop=2049;eventList.scrollLeft=40;
+  window.__nightShiftShell.refresh();
+  assert.equal(column.scrollTop,0,'Route changes reset the outer content scroll position');
+  assert.equal(column.scrollLeft,0,'Route changes reset retained horizontal shell scroll');
+  assert.equal(eventList.scrollTop,0,'Route changes reset nested event-history scroll');
+  assert.equal(eventList.scrollLeft,0,'Nested route scroll reset includes horizontal offsets');
+  const remoteNested=ids.get('deskarea0');
+  eventsRoute.hidden=true;remotePage.hidden=false;
+  column.scrollTop=190;remoteNested.scrollTop=500;
+  window.__nightShiftShell.refresh();
+  assert.equal(column.scrollTop,0,'Opening remote desktop resets the retained route scroll');
+  assert.equal(remoteNested.scrollTop,0,'Opening remote desktop resets nested viewer scroll containers');
+  remotePage.hidden=true;statsPage.hidden=false;
+  window.__nightShiftShell.refresh();
+  assert.equal(ids.get('ns-appbar').children[0].children[1].textContent,'Server Stats','Server Stats gets route-specific appbar metadata instead of Workspace');
   const overview=ids.get('ns-overview');
   const count=overview.children[1].children[1].children[1];
   assert.equal(count.textContent,'2','The dashboard counts rendered native device rows');
@@ -1568,11 +1619,42 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   menu.dispatchEvent({type:'click',target:deviceLink});
   assert.equal(menu.hidden,true,'Selecting a section dismisses the secondary menu');
   assert.equal(more.getAttribute('aria-expanded'),'false','Route dismissal updates the expanded state');
-  assert.equal(devicesMouseup,1,'The new navigation dispatches the original MeshCentral mouseup action');
+  assert.equal(devicesClicks,1,'The new navigation activates the native sidebar click handler');
   const eventsLink=menu.children.find(node=>node.dataset.native==='LeftMenuMyEvents');
   assert.ok(eventsLink,'The available native Events action is linked');
   eventsLink.click();
-  assert.equal(eventsMouseup,1,'The Events route dispatches the native MeshCentral mouseup handler');
+  assert.equal(eventsClicks,1,'The Events route invokes its native click handler');
+  column.scrollTop=96;
+  window.__nightShiftShell.refresh();
+  assert.equal(ids.get('ns-appbar').children[0].children[1].textContent,'Events','Native Events activation updates the appbar route');
+  assert.equal(column.scrollTop,0,'Native Events activation resets the outer scroll position');
+  const breadcrumb=ids.get('ns-appbar').children[0].children[0];
+  const workspaceCrumb=breadcrumb.children.find(node=>node.classList.contains('ns-breadcrumb-link')&&node.textContent==='Workspace');
+  assert.ok(workspaceCrumb,'Workspace breadcrumb is a native Devices navigation action');
+  assert.equal(workspaceCrumb.getAttribute('aria-label'),'Open Devices');
+  column.scrollTop=88;
+  workspaceCrumb.click();
+  window.__nightShiftShell.refresh();
+  assert.equal(devicesClicks,2,'Workspace breadcrumb activates the same native Devices click handler as the More menu');
+  assert.equal(ids.get('ns-appbar').children[0].children[1].textContent,'Devices','Workspace breadcrumb returns to the Devices route');
+  assert.equal(column.scrollTop,0,'Workspace breadcrumb navigation resets the outer scroll position');
+  page.hidden=true;detailsPageForNav.hidden=false;remotePage.hidden=true;
+  const desktopQuickAction=ids.get('ns-device-actions').children[1].children.find(node=>node.dataset.detail==='MainDevDesktop');
+  assert.ok(desktopQuickAction,'Device details exposes the Open native Desktop action');
+  desktopQuickAction.click();
+  assert.equal(deviceRouteCalls.length,1,'Touch action invokes the native inline handler exactly once');
+  assert.equal(deviceRouteCalls[0].route,11,'Native inline handler selects Desktop viewmode 11');
+  assert.equal(deviceRouteCalls[0].event.button,0,'The delegated route receives a primary-action mouse event');
+  assert.equal(deviceRouteCalls[0].event.view,window,'The native handler receives an event bound to the current MeshCentral window');
+
+  assert.equal(detailsPageForNav.hidden,true,'The native handler leaves Device details');
+  assert.equal(remotePage.hidden,false,'The native handler opens the Remote desktop route');
+  window.__nightShiftShell.refresh();
+  assert.equal(ids.get('ns-appbar').children[0].children[1].textContent,'Remote desktop','Appbar reflects the native Desktop route after touch activation');
+  page.hidden=true;eventsPage.hidden=true;statsPage.hidden=true;remotePage.hidden=true;detailsPageForNav.hidden=true;
+  window.location.search='?viewmode=40&sitestyle=3';
+  window.__nightShiftShell.refresh();
+  assert.equal(ids.get('ns-appbar').children[0].children[1].textContent,'Server Stats','Appbar uses MeshCentral route state when mobile visibility yields no measurable page rects');
   const inventory=ids.get('ns-live-inventory');
   assert.ok(inventory,'The native device collection is enhanced');
   const controls=inventory.children[1];
@@ -1764,6 +1846,7 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const diagnostic=(kind)=>diagnostics.children.flatMap(node=>node.children).find(node=>node.dataset.kind===kind);
   const guidance=diagnostics.children.find(node=>node.classList.contains('ns-diagnostics-guidance'));
   assert.ok(guidance,'Diagnostics include a live next-step message');
+  assert.match(read('public/scripts/night-shift/diagnostics.js'),/for \(var parent = target\.parentElement; parent && parent\.nodeType === 1; parent = parent\.parentElement\)/,'Native control visibility checks stop at the document element and never pass Document to getComputedStyle');
   assert.match(guidance.textContent,/native controls/i,'Idle session offers the normal native connect path');
   assert.ok(diagnostic('browser'),'Browser diagnostic row is present');
   assert.ok(diagnostic('webrtc'),'Diagnostics show the native WebRTC link separately');
@@ -1923,6 +2006,7 @@ test('account security settings keep native links and use a responsive desktop w
   assert.match(css,/body\.ns-theme #p2meshes \{display:grid;grid-template-columns:repeat\(auto-fit/);
   assert.match(css,/body\.ns-theme #p2meshes > div \{[\s\S]*?width:auto!important/);
   assert.match(css,/body\.ns-shell-ready #p2info \{box-sizing:border-box;min-width:0;max-width:100%\}/);
+  assert.match(css,/body\.ns-shell-ready #p2meshes > \.row \{box-sizing:border-box;width:100%;max-width:100%;margin-left:0!important;margin-right:0!important\}/,'Bootstrap row gutters inside the device-group grid do not exceed the account panel width');
   const template=read('views/default.handlebars');
   assert.match(template,/account_manageAuthApp\(\)/);
   assert.match(template,/account_showChangePassword\(\)/);
@@ -1999,17 +2083,70 @@ test('server statistics and trace views stay responsive and trace rows use nativ
   assert.equal(row.listeners.keydown.length,1,'refresh does not duplicate event handlers');
 });
 
+test('native user-list settings icon is keyboard reachable and preserves its MeshCentral click handler',()=>{
+  assert.match(css,/body\.ns-theme #usersListToolbarSettings:focus-visible \{outline:2px solid var\(--ns-focus\)/);
+  const template=read('views/default.handlebars');
+  const modernTemplate=read('views/default3.handlebars');
+  assert.match(template,/id=usersListToolbarSettings[^>]*onclick="onUsersViewSettings\(\)"/);
+  assert.match(modernTemplate,/id=usersListToolbarSettings[^>]*onclick="onUsersViewSettings\(\)"/);
+  const icon={attributes:{onclick:'onUsersViewSettings()'},listeners:{},nativeActivations:0,tabIndex:-1,
+    getAttribute(name){return this.attributes[name]??null;},
+    setAttribute(name,value){this.attributes[name]=String(value);},
+    addEventListener(name,callback){(this.listeners[name]||=[]).push(callback);},
+    dispatchEvent(event){if(event.type==='click'&&this.attributes.onclick==='onUsersViewSettings()')this.nativeActivations++;return true;}};
+  const body={};
+  const observers=[];
+  const document={readyState:'complete',body,getElementById(id){return id==='usersListToolbarSettings'?icon:null;}};
+  const window={};
+  vm.runInNewContext(serverAdmin,{window,document,MutationObserver:class{constructor(callback){this.callback=callback;observers.push(this);}observe(target,options){this.target=target;this.options=options;}},MouseEvent:class{constructor(type,options){this.type=type;Object.assign(this,options);}}},{timeout:1000});
+  assert.equal(icon.tabIndex,0);
+  assert.equal(icon.attributes.role,'button');
+  assert.equal(icon.attributes['aria-label'],'User list settings');
+  assert.equal(icon.attributes.focusable,'true');
+  assert.equal(observers[0].target,body,'future native route insertion is observed');
+  let prevented=false;
+  icon.listeners.keydown[0]({target:icon,key:'Enter',preventDefault(){prevented=true;}});
+  assert.equal(prevented,true);
+  assert.equal(icon.nativeActivations,1,'Enter dispatches the existing native click action');
+  prevented=false;
+  icon.listeners.keydown[0]({target:icon,key:' ',preventDefault(){prevented=true;}});
+  assert.equal(prevented,true);
+  assert.equal(icon.nativeActivations,2,'Space dispatches the existing native click action');
+  window.__NightShiftServerAdmin.refresh();
+  assert.equal(icon.listeners.keydown.length,1,'refresh does not duplicate the keyboard handler');
+});
+
+test('server memory customization labels binary byte values in GiB without changing the native calculation',()=>{
+  const template=read('views/default3.handlebars');
+  assert.match(template,/round\(bytes \/ 1024 \/ 1024 \/ 1024, 1\)/,'MeshCentral still calculates memory from bytes using binary units');
+  const memory={innerHTML:'<b>3.7 Gb</b> free, <b>15.9 Gb</b> total'};
+  const observers=[];
+  const document={readyState:'complete',getElementById(id){return id==='serverMemoryChartText'?memory:null;}};
+  const window={};
+  vm.runInNewContext(serverAdmin,{window,document,MutationObserver:class{constructor(callback){this.callback=callback;observers.push(this);}observe(target,options){this.target=target;this.options=options;}}},{timeout:1000});
+  assert.equal(memory.innerHTML,'<b>3.7 GiB</b> free, <b>15.9 GiB</b> total','Initial native memory output receives the correct binary unit label');
+  assert.equal(window.__NightShiftServerAdmin.normalizeMemoryUnit('<b>3.7 Gb</b>; network uses Gb/s'),'<b>3.7 GiB</b>; network uses Gb/s','The label conversion is limited to the bold memory value, not rate units');
+  assert.equal(observers.length,1,'Dynamic native memory refreshes are observed');
+  assert.equal(observers[0].options.subtree,true);
+  memory.innerHTML='<b>4.0 Gb</b> free, <b>16.0 Gb</b> total';
+  observers[0].callback();
+  assert.equal(memory.innerHTML,'<b>4.0 GiB</b> free, <b>16.0 GiB</b> total','Later native telemetry refreshes keep the corrected unit');
+});
+
 test('native shell clips inventory overflow and keeps horizontal scrolling local to the table',()=>{
   assert.match(css,/body\.ns-shell-ready #column_l \{[\s\S]*?overflow-x:hidden!important[\s\S]*?overflow-y:auto!important/);
   assert.match(css,/body\.ns-shell-ready #p1 \{[\s\S]*?overflow-x:clip/);
   assert.doesNotMatch(css,/body\.ns-shell-ready #p1\s*\{[^}]*overflow-x:auto/);
   assert.match(css,/body\.ns-shell-ready #p1 #ns-live-inventory select \{max-width:100%;min-width:0\}/);
   assert.match(css,/\.ns-live-table-wrap \{max-width:100%;overflow:auto/);
+  assert.match(css,/@media\(max-width:900px\)\s*\{\s*\/\* On narrow screens keep the appbar in normal flow so native page controls[\s\S]*?body\.ns-shell-ready #ns-appbar \{position:relative;top:auto\}/,'The mobile appbar scrolls in normal flow and cannot overlay the native page content');
 });
 
 test('server statistics separate the plot from controls and empty reports do not create a blank full-height page',()=>{
   assert.match(css,/body\.ns-shell-ready #p40 > #serverMainStats \{[\s\S]*?margin-top:12px/);
-  assert.match(css,/body\.ns-shell-ready #p40title \{[\s\S]*?position:sticky;[\s\S]*?top:184px/);
+  assert.match(css,/body\.ns-shell-ready #p40title \{position:relative;top:auto;z-index:auto;margin:0 0 10px;background:transparent\}/);
+  assert.match(css,/@media\(min-width:901px\)\s*\{[\s\S]*?body\.ns-shell-ready #p40title \{position:sticky;top:76px;z-index:69;margin-bottom:40px\}[\s\S]*?body\.ns-shell-ready #p40 > #serverMainStats \{margin-top:50px\}/,'At desktop widths, the title clears the appbar and the plot retains normal-flow clearance');
+  assert.match(css,/body\.ns-shell-ready #p40title > \.fs-4 \{color:var\(--ns-foreground\)!important\}/,'Server Stats heading overrides the native dark text color on Night Shift canvas');
   assert.match(css,/body\.ns-shell-ready #p60 \{[\s\S]*?height:auto!important[\s\S]*?overflow:visible!important/);
   assert.match(css,/body\.ns-shell-ready #p60report:empty::before \{content:"No report generated yet\. Select Generate Report\.\.\. to begin\."\}/);
   const template=read('views/default.handlebars');
@@ -2038,12 +2175,25 @@ test('server overview state rows and server console footer fit the shell width',
   assert.match(template,/id="id_p15consoleClear"/);
 });
 
+test('device and server console output scroll long lines inside the native output pane',()=>{
+  assert.match(css,/body\.ns-shell-ready #p15 #p15agentConsole \{box-sizing:border-box;width:100%!important;min-width:0;max-width:100%;overflow:hidden\}/);
+  assert.match(css,/body\.ns-shell-ready #p15 #p15agentConsoleText \{display:block;box-sizing:border-box;width:100%!important;min-width:0!important;max-width:100%!important;overflow-x:auto!important;white-space:pre\}/);
+  for (const templatePath of ['views/default.handlebars','views/default3.handlebars']) {
+    const template=read(templatePath);
+    assert.match(template,/id=p15agentConsole[\s\S]*?<pre id=p15agentConsoleText><\/pre>/,'Native console retains its PRE text output container');
+    assert.match(template,/Q\('p15agentConsoleText'\)\.scrollTop = Q\('p15agentConsoleText'\)\.scrollHeight/,'Native output continues following incoming console lines');
+  }
+});
+
 test('native file and registry action toolbars wrap within their workspace',()=>{
+  assert.match(css,/body\.ns-theme\.ns-shell-ready :is\(#p5toolbar,#p9toolbar,#p13toolbar\) :is\(button,input\[type=\"button\"\],input\[type=\"submit\"\]\)\.btn-danger:disabled,[\s\S]*?background:#263139!important;border-color:#3b4850!important;color:#91a0a8!important/,'Disabled destructive file and registry actions are muted while retaining native disabled state');
+  assert.match(css,/\.ns-theme \.btn-danger:not\(:disabled\)\{background:#4a2c33;border-color:#77444f;color:#ffd2d7\}/,'Enabled danger actions retain their intentional danger treatment');
   assert.match(css,/body\.ns-shell-ready :is\(#p5toolbar,#p9toolbar,#p13toolbar\) \{box-sizing:border-box;width:100%;max-width:100%;table-layout:fixed\}/);
   assert.match(css,/body\.ns-shell-ready #p5toolbar #p5filehead > div:not\(#p5rightOfButtons\),[\s\S]*?flex-wrap:wrap/);
   assert.match(css,/body\.ns-shell-ready #p9toolbar #p9toolbar2 > td > div:not\(#p9rightOfButtons\) \{[\s\S]*?flex-wrap:wrap/);
   assert.match(css,/body\.ns-shell-ready #p13toolbar > tbody > tr \{display:block!important;box-sizing:border-box;width:100%!important/);
-  assert.match(css,/body\.ns-shell-ready #p13toolbar tr:nth-child\(2\) > td > input\[type="button"\] \{flex:1 1 110px;width:auto!important;min-width:0/);
+  assert.match(css,/body\.ns-shell-ready #p13toolbar tr:nth-child\(2\) > td > div:not\(#p13rightOfButtons\) \{display:flex!important;align-items:center;flex:1 1 100%;flex-wrap:wrap/);
+  assert.match(css,/body\.ns-shell-ready #p13toolbar tr:nth-child\(2\) > td > div:not\(#p13rightOfButtons\) > input\[type="button"\] \{flex:1 1 108px;width:auto!important;min-width:0/);
   assert.match(css,/body\.ns-shell-ready #p13toolbar tr:nth-child\(3\) > td \{display:flex!important;align-items:center;justify-content:space-between;flex-wrap:wrap/);
   const template=read('views/default.handlebars');
   assert.match(template,/id="p5toolbar"/);
@@ -2052,4 +2202,86 @@ test('native file and registry action toolbars wrap within their workspace',()=>
   assert.match(template,/id=p9DetailsButton[^>]*onclick="p9showSelectedDetails\(\)"/);
   assert.match(template,/id="p13toolbar"/);
   assert.match(template,/id=p13OpenButton[^>]*onclick="p13openfilefolder\(\)"/);
+  const modernTemplate=read('views/default3.handlebars');
+  assert.match(modernTemplate,/id="p13toolbar"[\s\S]*?id=p13FindButton[\s\S]*?id=p13GoToFolderButton[\s\S]*?id=p13OpenButton/);
+  assert.match(modernTemplate,/id=p13GoToFolderButton[^>]*onclick="p13gotofolder\(\)"/);
+});
+
+test('Events header and loaded-record search reflow without squeezing title or filter labels',()=>{
+  assert.match(css,/body\.ns-theme #p3title\{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;/);
+  assert.match(css,/body\.ns-theme #p3title>\.fs-4\{flex:0 1 auto;min-width:0;white-space:nowrap\}/);
+  assert.match(css,/body\.ns-theme #p3title\{[^}]*background:var\(--ns-canvas\)!important;color:var\(--ns-foreground\)!important\}/,'Events title strip matches the dark canvas and theme foreground');
+  assert.match(css,/body\.ns-theme #p3title>\.fs-4\{color:var\(--ns-foreground\)!important\}/,'Events heading overrides the inherited Bootstrap dark text');
+  assert.match(css,/body\.ns-theme #p3title \.ns-history-search\{order:2;flex:1 1 24rem;width:auto;min-width:min\(100%,20rem\)/);
+  assert.match(css,/body\.ns-theme #p3title \.ns-history-search label\{flex:1 1 auto;white-space:nowrap\}/);
+  assert.match(css,/@media\(max-width:600px\)\{body\.ns-theme #p3title \.ns-history-search\{flex-basis:100%;min-width:0/);
+  assert.match(css,/body\.ns-theme #p3 > \.pTable > tbody > tr \{display:block!important;box-sizing:border-box;width:100%;max-width:100%\}/);
+  assert.match(css,/body\.ns-theme #p3 > \.pTable td > div \{display:flex;align-items:center;flex-wrap:wrap;gap:6px/);
+  assert.match(css,/body\.ns-theme #p3 > \.pTable select \{flex:0 1 12rem;min-width:0;max-width:100%\}/);
+  const template=read('views/default3.handlebars');
+  assert.match(template,/id="p3title" class="d-flex align-items-center"[\s\S]*?My Events[\s\S]*?id=p3filterevents[\s\S]*?id=p3events/);
+});
+
+test('desktop Events header and list share outer scrolling without sticky overlap',()=>{
+  assert.match(css,/@media\(min-width:901px\)\s*\{[\s\S]*?body\.ns-shell-ready #p3title \{position:relative;top:auto;z-index:auto\}[\s\S]*?body\.ns-shell-ready #p3 > \.pTable \{position:relative;top:auto;z-index:auto/,'At 1024px desktop width, title and filters remain in normal flow instead of covering the independently scrolling log');
+  assert.match(css,/body\.ns-shell-ready #p3events \{height:auto!important;max-height:none!important;overflow:visible!important\}/,'Native event records join the outer workspace scroll so the header cannot cover the log at either scroll endpoint');
+  assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready #p3title \{position:relative!important;top:auto!important;z-index:auto!important\}/,'MeshCentral is-mobile important positioning is reset for wide viewport emulation');
+  const upstream=read('public/styles/style-bootstrap.css');
+  assert.match(upstream,/body\.is-mobile #p3title,[\s\S]*?background: #fff;[\s\S]*?position: relative !important;[\s\S]*?z-index: 1 !important;/,'Upstream is-mobile title rule is an important conflicting declaration');
+  const template=read('views/default3.handlebars');
+  assert.match(template,/QS\('p3events'\)\['height'\] = 'calc\(100vh - '/,'MeshCentral assigns a fixed event-list height natively, which the wide-screen flow rule must override');
+});
+
+test('mobile themed native page titles override MeshCentral white title bars',()=>{
+  const upstream=read('public/styles/style-bootstrap.css');
+  for(const id of ['p4title','p5title','p6title','p41title']) {
+    assert.ok(upstream.includes('body.is-mobile #'+id),'upstream applies its white title bar to '+id);
+    assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready :is\(#p4title,#p5title,#p6title,#p41title\) \{background:var\(--ns-canvas\)!important;color:var\(--ns-foreground\)!important\}/,'Night Shift replaces the white title surface and keeps text legible');
+  }
+  assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready :is\(#p4title,#p5title,#p6title,#p41title\) \.fs-4 \{color:var\(--ns-foreground\)!important\}/);
+});
+
+test('mobile device quick actions delegate to MeshCentral route handlers',()=>{
+  assert.ok(shell.includes("typeof native.onmouseup === 'function'") && shell.includes('native.onmouseup.call(native, event)'),'Device actions invoke the original native detail-tab handler');
+  const modernTemplate=read('views/default3.handlebars');
+  assert.match(modernTemplate,/id=MainDevDesktop class="topbar_td style3x" onmouseup=go\(11,event\)/,'Desktop authorization and routing remain in the existing native handler');
+});
+
+test('appbar route labels cover native pages outside the six primary workspaces',()=>{
+  const shell=read('public/scripts/night-shift/shell.js');
+  for(const [id,label] of [['p9','Registry'],['p15','Console'],['p18','Software'],['p40','Server Stats'],['p41','Server Trace'],['p42','Server Plugins'],['p43','Plugin admin'],['p60','Reports']]) {
+    assert.match(shell,new RegExp("\\['"+id+"', '"+label.replace(/[.*+?^${}()|[\\]\\]/g,'\\$&')+"'\\]"),id+' has explicit appbar metadata');
+  }
+  const template=read('views/default3.handlebars');
+  assert.match(template,/id="LeftMenuMyEvents"[^>]*onclick=go\(3,event\)/,'Modern Events sidebar route binds MeshCentral navigation to click');
+  assert.match(shell,/if \(native && typeof native\.click === 'function'\)\s*\{\s*native\.click\(\)/,'appbar route links activate the native click handler');
+  assert.match(shell,/new MouseEvent\('click'/,'fallback event type matches native sidebar click binding');
+  assert.match(shell,/routes\.forEach\(function \(route\).*watchIds\.push\(route\[0\]\)/,'route metadata pages are also watched for activation updates');
+});
+
+test('portrait server art, appbar title and device tabs stay within their surfaces',()=>{
+  assert.match(css,/body\.ns-theme #p6title #MainMeshImage\s*\{[\s\S]*?flex:0 0 38px;[\s\S]*?width:38px!important;[\s\S]*?height:38px!important/,'The server image cannot grow into the mobile actions card');
+  assert.match(css,/body\.ns-shell-ready \.ns-appbar-title \{background:transparent!important;background-image:none!important;box-shadow:none!important\}/,'The shell route title stays clean over the appbar surface');
+  const submenu=css.match(/body\.ns-theme #MainSubMenuSpan #MainSubMenuScrollInner\s*\{([^}]+)\}/);
+  assert.ok(submenu,'The actual nested MeshCentral submenu scroll container is targeted');
+  assert.match(submenu[1],/display:block!important/,'The upstream display:contents rule is overridden on the scroll container');
+  assert.match(submenu[1],/flex:1 1 0px/,'The scroll container takes only the space between the native arrow controls');
+  assert.match(submenu[1],/width:0;[\s\S]*?min-width:0;[\s\S]*?overflow-x:auto!important/,'The scroll container is constrained to the viewport and can scroll its wide table');
+  assert.match(submenu[1],/scrollbar-width:thin!important/,'The scroll container exposes a horizontal scroll affordance');
+  const span=css.match(/body\.ns-theme #MainSubMenuSpan:not\(\[style\*="display:none"\]\):not\(\[style\*="display: none"\]\)\s*\{([^}]+)\}/);
+  assert.ok(span,'The native submenu span remains display:none when MeshCentral hides it');
+  assert.match(span[1],/width:100%;[\s\S]*?min-width:0;[\s\S]*?min-height:40px/,'The visible submenu wrapper stays within the available width without a fixed height');
+  const template=read('views/default3.handlebars');
+  assert.match(template,/id=MainSubMenuSpan[\s\S]*?class="mobile-submenu-scroll"[\s\S]*?id="MainSubMenuScrollInner"[\s\S]*?id=MainSubMenu[\s\S]*?mobileSubMenuScroll\('MainSubMenu',1\)/,'The fixed scroll box wraps the native submenu and both native arrow actions');
+  assert.match(css,/body\.ns-theme\.ns-shell-ready :is\(#p5toolbar,#p9toolbar,#p13toolbar\)[\s\S]*?:is\(button,input\[type="button"\],input\[type="submit"\]\):is\(:disabled,\[disabled\],\[aria-disabled="true"\],\.disabled\)[\s\S]*?background:#263139!important/,'The rendered disabled semantics mute available native file actions');
+});
+
+test('Software toolbar reflows its nested native controls on narrow screens',()=>{
+  const software=css.match(/@media\(max-width:900px\)\s*\{\s*body\.ns-shell-ready #p18,[\s\S]*?body\.ns-shell-ready #p18toolbar #p18Status\s*\{([^}]+)\}/);
+  assert.ok(software,'A narrow-screen Software layout rule is present');
+  assert.match(software[0],/body\.ns-shell-ready #p18toolbar > div\s*\{[\s\S]*?flex-wrap:wrap!important/,'The native inner toolbar row may wrap its controls');
+  assert.match(software[0],/body\.ns-shell-ready #p18toolbar #p18SearchInput\s*\{[\s\S]*?min-width:0;[\s\S]*?max-width:100%/,'The fixed-width search field can shrink within the viewport');
+  assert.match(software[1],/flex:1 1 100%;[\s\S]*?min-width:0;[\s\S]*?overflow-wrap:anywhere/,'Live status text has a constrained row and cannot widen the page');
+  const template=read('views/default3.handlebars');
+  assert.match(template,/id="p18toolbar"[\s\S]*?id="p18RefreshBtn"[\s\S]*?id="p18SearchInput"[\s\S]*?id="p18ShowStore"[\s\S]*?id="p18Status"/,'The responsive rule targets the native Software toolbar hierarchy');
 });

@@ -30,7 +30,11 @@
   };
   const visible = (el) => !!(el && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden');
   const usable = (el) => !!(visible(el) && !el.disabled && el.getAttribute('aria-disabled') !== 'true');
-  const mobile = () => matchMedia('(max-width: 900px)').matches;
+  // Most phones fall within 900 CSS px in either orientation. A few high-DPR
+  // handsets report a landscape CSS width just above that cutoff, so include
+  // only short, coarse-pointer landscape viewports up to 1024px.
+  const mobile = () => matchMedia('(max-width: 900px)').matches ||
+    matchMedia('(orientation: landscape) and (max-width: 1024px) and (max-height: 600px) and (pointer: coarse)').matches;
   const destinations = [
     ['Devices','LeftMenuMyDevices',1], ['Account','LeftMenuMyAccount',2],
     ['Events','LeftMenuMyEvents',3], ['Files','LeftMenuMyFiles',5],
