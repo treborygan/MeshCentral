@@ -1961,6 +1961,7 @@ test('device detail pages adapt their native fields, notes and status card to mo
   assert.match(css,/@media\(max-width:700px\)[\s\S]*?body\.ns-theme #p10info > table > tbody > tr > td:last-child \{display:flex/);
   assert.match(css,/body\.ns-shell-ready #p10info #p10html \.row\.mb-1 > \.col\.col-md-2\.col-lg-2 \{[\s\S]*?flex:0 0 180px[\s\S]*?word-break:normal/);
   assert.match(css,/body\.ns-shell-ready #p10info #p10html \.row\.mb-1 > \.col\.col-md-10\.col-lg-10 \{[\s\S]*?flex:1 1 0[\s\S]*?min-width:0/);
+  assert.match(css,/@media\(min-width:901px\) \{\s*body\.ns-shell-ready #p10info \{\s*max-height:none!important;\s*overflow:visible!important/);
   const template=read('views/default.handlebars');
   assert.match(template,/id=p10html/);
   assert.match(template,/id=p10html2/);
@@ -1998,8 +1999,57 @@ test('server statistics and trace views stay responsive and trace rows use nativ
   assert.equal(row.listeners.keydown.length,1,'refresh does not duplicate event handlers');
 });
 
-test('native shell gives clipped workspaces vertical reach and lets inventory scroll horizontally',()=>{
+test('native shell clips inventory overflow and keeps horizontal scrolling local to the table',()=>{
   assert.match(css,/body\.ns-shell-ready #column_l \{[\s\S]*?overflow-x:hidden!important[\s\S]*?overflow-y:auto!important/);
-  assert.match(css,/body\.ns-shell-ready #p1 \{box-sizing:border-box;min-width:0;max-width:100%;overflow-x:auto\}/);
+  assert.match(css,/body\.ns-shell-ready #p1 \{[\s\S]*?overflow-x:clip/);
+  assert.doesNotMatch(css,/body\.ns-shell-ready #p1\s*\{[^}]*overflow-x:auto/);
   assert.match(css,/body\.ns-shell-ready #p1 #ns-live-inventory select \{max-width:100%;min-width:0\}/);
+  assert.match(css,/\.ns-live-table-wrap \{max-width:100%;overflow:auto/);
+});
+
+test('server statistics separate the plot from controls and empty reports do not create a blank full-height page',()=>{
+  assert.match(css,/body\.ns-shell-ready #p40 > #serverMainStats \{[\s\S]*?margin-top:12px/);
+  assert.match(css,/body\.ns-shell-ready #p40title \{[\s\S]*?position:sticky;[\s\S]*?top:184px/);
+  assert.match(css,/body\.ns-shell-ready #p60 \{[\s\S]*?height:auto!important[\s\S]*?overflow:visible!important/);
+  assert.match(css,/body\.ns-shell-ready #p60report:empty::before \{content:"No report generated yet\. Select Generate Report\.\.\. to begin\."\}/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/id="p60title"/);
+  assert.match(template,/onclick=generateReportDialog\(\) value="Generate Report\.\.\."/);
+  assert.match(template,/id=p60report/);
+});
+
+test('server overview state rows and server console footer fit the shell width',()=>{
+  assert.match(css,/body\.ns-shell-ready #p6 #serverStats #serverStatsTable > div > div \{display:block!important;width:100%;max-width:100%;min-width:0\}/);
+  assert.match(css,/body\.ns-shell-ready #p6 #serverStats \.serverStateTableCell \{display:block!important;box-sizing:border-box;width:100%;max-width:100%;table-layout:fixed\}/);
+  assert.match(css,/body\.ns-shell-ready #p6 #serverStats \.serverStateTableCell tr \{display:block!important;width:100%;min-height:24px\}/);
+  assert.match(css,/body\.ns-shell-ready #p6 #serverStats \.serverStateTableCell td:first-child,[\s\S]*?td:last-child \{display:none!important;float:none!important\}/);
+  assert.match(css,/body\.ns-shell-ready #p6 #serverStats \.serverStateTableCell td:nth-child\(2\) \{[\s\S]*?display:flex!important;[\s\S]*?justify-content:space-between/);
+  assert.match(css,/body\.ns-shell-ready #p6 #serverStats \.serverStateTableCell td:nth-child\(2\) span:last-child \{position:static;display:block;float:none!important;flex:0 1 auto/);
+  assert.match(css,/body\.ns-shell-ready #p15 \.areaFoot > table > tbody > tr \{display:flex!important;align-items:center;gap:8px\}/);
+  assert.match(css,/body\.ns-shell-ready #p15 \.areaFoot > table td:first-child \{flex:1 1 0;width:auto!important;min-width:0\}/);
+  assert.match(css,/body\.ns-shell-ready #p15 \.areaFoot > table td:nth-child\(2\) \{display:none!important\}/);
+  assert.match(css,/body\.ns-shell-ready #p15 \.areaFoot > table td:last-child \{flex:0 0 76px;width:76px!important;min-width:76px/);
+  assert.match(css,/body\.ns-shell-ready #p15 #id_p15consoleClear \{display:inline-block!important;box-sizing:border-box;width:68px!important;min-width:68px/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/id="serverStatsTable"/);
+  assert.match(template,/class=serverStateTableCell/);
+  assert.match(template,/<div style=display:inline-block><table class=serverStateTableCell/);
+  assert.match(template,/<span style=float:right>' \+ message\.values\[i\]\[j\]/);
+  assert.match(template,/id="id_p15consoleClear"/);
+});
+
+test('native file and registry action toolbars wrap within their workspace',()=>{
+  assert.match(css,/body\.ns-shell-ready :is\(#p5toolbar,#p9toolbar,#p13toolbar\) \{box-sizing:border-box;width:100%;max-width:100%;table-layout:fixed\}/);
+  assert.match(css,/body\.ns-shell-ready #p5toolbar #p5filehead > div:not\(#p5rightOfButtons\),[\s\S]*?flex-wrap:wrap/);
+  assert.match(css,/body\.ns-shell-ready #p9toolbar #p9toolbar2 > td > div:not\(#p9rightOfButtons\) \{[\s\S]*?flex-wrap:wrap/);
+  assert.match(css,/body\.ns-shell-ready #p13toolbar > tbody > tr \{display:block!important;box-sizing:border-box;width:100%!important/);
+  assert.match(css,/body\.ns-shell-ready #p13toolbar tr:nth-child\(2\) > td > input\[type="button"\] \{flex:1 1 110px;width:auto!important;min-width:0/);
+  assert.match(css,/body\.ns-shell-ready #p13toolbar tr:nth-child\(3\) > td \{display:flex!important;align-items:center;justify-content:space-between;flex-wrap:wrap/);
+  const template=read('views/default.handlebars');
+  assert.match(template,/id="p5toolbar"/);
+  assert.match(template,/id=p5PasteButton[^>]*onclick="p5pasteFile\(\)"/);
+  assert.match(template,/id="p9toolbar"/);
+  assert.match(template,/id=p9DetailsButton[^>]*onclick="p9showSelectedDetails\(\)"/);
+  assert.match(template,/id="p13toolbar"/);
+  assert.match(template,/id=p13OpenButton[^>]*onclick="p13openfilefolder\(\)"/);
 });

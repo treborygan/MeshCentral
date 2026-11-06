@@ -2189,10 +2189,21 @@ body.ns-shell-ready #column_l {
   overscroll-behavior-y:contain;
   scrollbar-gutter:stable;
 }
-body.ns-shell-ready #p1 {box-sizing:border-box;min-width:0;max-width:100%;overflow-x:auto}
+body.ns-shell-ready #p1 {
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+  overflow-x:clip;
+}
+body.ns-shell-ready #p1 > :is(#ns-overview,#p1title,#devListToolbarSpan,#xdevices,#ns-live-inventory) {
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+}
+body.ns-shell-ready #p1 #devListToolbarSpan {width:100%;overflow-x:clip}
 body.ns-shell-ready #p1 #ns-live-inventory,
 body.ns-shell-ready #p1 #ns-live-inventory * {box-sizing:border-box}
-body.ns-shell-ready #p1 #ns-live-inventory {min-width:0;max-width:100%}
+body.ns-shell-ready #p1 #ns-live-inventory {width:100%;min-width:0;max-width:100%;overflow-x:clip}
 body.ns-shell-ready #p1 #ns-live-inventory select {max-width:100%;min-width:0}
 body.ns-shell-ready #p6info {min-width:0;overflow-x:hidden!important;overflow-y:auto!important}
 body.ns-shell-ready #p6 #p2ServerActions > div > div {
@@ -2214,7 +2225,26 @@ body.ns-shell-ready #p6 #p2ServerActions a {
 body.ns-shell-ready #p6 #serverStats {grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
 body.ns-shell-ready #p6 #serverStats > div {min-width:0;max-width:100%;overflow:hidden}
 body.ns-shell-ready #p6 #serverStats .chartViewText {box-sizing:border-box;width:100%;max-width:100%;min-width:0;overflow-wrap:anywhere}
-body.ns-shell-ready #p6 #serverStats #serverStatsTable {overflow:auto;min-width:0}
+body.ns-shell-ready #p6 #serverStats #serverStatsTable {min-width:0;max-width:100%;overflow-x:hidden}
+body.ns-shell-ready #p6 #serverStats #serverStatsTable > div > div {display:block!important;width:100%;max-width:100%;min-width:0}
+body.ns-shell-ready #p6 #serverStats .serverStateTableCell {display:block!important;box-sizing:border-box;width:100%;max-width:100%;table-layout:fixed}
+body.ns-shell-ready #p6 #serverStats .serverStateTableCell tr {display:block!important;width:100%;min-height:24px}
+body.ns-shell-ready #p6 #serverStats .serverStateTableCell td:first-child,
+body.ns-shell-ready #p6 #serverStats .serverStateTableCell td:last-child {display:none!important;float:none!important}
+body.ns-shell-ready #p6 #serverStats .serverStateTableCell td:nth-child(2) {
+  display:flex!important;
+  align-items:center;
+  justify-content:space-between;
+  box-sizing:border-box;
+  float:none!important;
+  width:100%;
+  min-width:0;
+  min-height:24px;
+  padding:0 6px;
+  overflow:hidden;
+}
+body.ns-shell-ready #p6 #serverStats .serverStateTableCell td:nth-child(2) span:first-child {flex:1 1 auto;min-width:0;max-width:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+body.ns-shell-ready #p6 #serverStats .serverStateTableCell td:nth-child(2) span:last-child {position:static;display:block;float:none!important;flex:0 1 auto;width:auto;min-width:0;max-width:48%;margin-left:12px;overflow-wrap:anywhere;text-align:right;transform:none}
 body.ns-shell-ready #p2info {box-sizing:border-box;min-width:0;max-width:100%}
 body.ns-shell-ready #p10info #p10html .row.mb-1 {min-width:0}
 body.ns-shell-ready #p10info #p10html .row.mb-1 > .col.col-md-2.col-lg-2 {
@@ -2236,6 +2266,104 @@ body.ns-shell-ready #p10info #p10html .row.mb-1 > .col.col-md-10.col-lg-10 {
   overflow-wrap:anywhere;
   word-break:normal;
 }
+@media(min-width:901px) {
+  body.ns-shell-ready #p10info {
+    max-height:none!important;
+    overflow:visible!important;
+  }
+}
+body.ns-shell-ready #p40 > #serverMainStats {
+  position:relative;
+  z-index:0;
+  margin-top:12px;
+}
+body.ns-shell-ready #p40 > .areaHead {position:relative;z-index:1}
+body.ns-shell-ready #p40title {
+  position:sticky;
+  top:184px;
+  z-index:5;
+  background:var(--ns-canvas);
+}
+body.ns-shell-ready #p15,
+body.ns-shell-ready #consoleTable {box-sizing:border-box;width:100%!important;min-width:0;max-width:100%;table-layout:fixed}
+body.ns-shell-ready #p15 .areaFoot {box-sizing:border-box;width:100%;min-width:0;max-width:100%;overflow-x:hidden}
+body.ns-shell-ready #p15 .areaFoot > table,
+body.ns-shell-ready #p15 .areaFoot > table > tbody,
+body.ns-shell-ready #p15 .areaFoot > table > tbody > tr {display:block!important;box-sizing:border-box;width:100%!important;max-width:100%;table-layout:fixed}
+body.ns-shell-ready #p15 .areaFoot > table > tbody > tr {display:flex!important;align-items:center;gap:8px}
+body.ns-shell-ready #p15 .areaFoot > table td:first-child {flex:1 1 0;width:auto!important;min-width:0}
+body.ns-shell-ready #p15 .areaFoot > table td:nth-child(2) {display:none!important}
+body.ns-shell-ready #p15 #p15outputselecttd {flex:0 0 auto;width:auto!important;max-width:120px;white-space:nowrap}
+body.ns-shell-ready #p15 .areaFoot > table td:last-child {flex:0 0 76px;width:76px!important;min-width:76px;white-space:nowrap}
+body.ns-shell-ready #p15 #p15consoleText {box-sizing:border-box;width:100%!important;min-width:0;max-width:100%}
+body.ns-shell-ready #p15 #id_p15consoleClear {display:inline-block!important;box-sizing:border-box;width:68px!important;min-width:68px;max-width:100%;padding-inline:8px;white-space:nowrap}
+body.ns-shell-ready :is(#p5toolbar,#p9toolbar,#p13toolbar) {box-sizing:border-box;width:100%;max-width:100%;table-layout:fixed}
+body.ns-shell-ready #p5toolbar #p5filehead,
+body.ns-shell-ready #p9toolbar #p9toolbar2 > td {box-sizing:border-box;min-width:0;max-width:100%;overflow:visible}
+body.ns-shell-ready #p5toolbar #p5filehead > div:not(#p5rightOfButtons),
+body.ns-shell-ready #p9toolbar #p9toolbar2 > td > div:not(#p9rightOfButtons) {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+  min-width:0;
+  max-width:100%;
+}
+body.ns-shell-ready #p5toolbar #p5rightOfButtons,
+body.ns-shell-ready #p9toolbar #p9rightOfButtons {float:none!important;display:flex;flex-wrap:wrap;gap:6px;max-width:100%}
+body.ns-shell-ready #p13toolbar,
+body.ns-shell-ready #p13toolbar > tbody,
+body.ns-shell-ready #p13toolbar > tbody > tr {display:block!important;box-sizing:border-box;width:100%!important;max-width:100%;min-width:0}
+body.ns-shell-ready #p13toolbar tr:nth-child(2) > td {display:flex!important;align-items:center;flex-wrap:wrap;gap:6px;box-sizing:border-box;width:100%!important;min-width:0;max-width:100%;overflow:visible}
+body.ns-shell-ready #p13toolbar tr:nth-child(2) > td > input[type="button"] {flex:1 1 110px;width:auto!important;min-width:0;margin:0 2px 0 0!important}
+body.ns-shell-ready #p13toolbar tr:nth-child(3) > td {display:flex!important;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;box-sizing:border-box;width:100%!important;min-width:0;max-width:100%}
+body.ns-shell-ready #p13toolbar tr:nth-child(3) > td > .toright2 {float:none!important;display:flex;flex-wrap:wrap;gap:6px;max-width:100%}
+body.ns-shell-ready #p13toolbar tr:nth-child(3) select {max-width:100%;min-width:0}
+body.ns-shell-ready #p13toolbar #p13rightOfButtons {float:none!important;display:flex;flex-wrap:wrap;gap:6px;max-width:100%}
+body.ns-shell-ready :is(#p5toolbar,#p9toolbar,#p13toolbar) :is(input[type="button"],button) {box-sizing:border-box;max-width:100%;white-space:normal}
+body.ns-shell-ready #p60 {
+  box-sizing:border-box;
+  min-width:0;
+  min-height:0!important;
+  max-width:100%;
+  height:auto!important;
+  max-height:none!important;
+  overflow:visible!important;
+}
+body.ns-shell-ready #p60title {
+  min-height:49px;
+  margin:0 0 12px;
+  padding:5px 0 12px;
+  border-bottom:1px solid var(--ns-border);
+  color:var(--ns-foreground);
+}
+body.ns-shell-ready #p60title h1 {margin:0;font-size:1.2rem;font-weight:720;letter-spacing:-.02em}
+body.ns-shell-ready #p60 .pTable {
+  box-sizing:border-box;
+  width:100%;
+  margin:0 0 14px;
+  border:1px solid var(--ns-border);
+  border-radius:12px;
+  background:var(--ns-surface);
+}
+body.ns-shell-ready #p60 .pTable td {padding:10px}
+body.ns-shell-ready #p60report {
+  box-sizing:border-box;
+  min-width:0;
+  max-width:100%;
+  overflow:visible!important;
+}
+body.ns-shell-ready #p60report:empty {
+  display:block;
+  margin-top:12px;
+  padding:22px;
+  border:1px dashed #344753;
+  border-radius:12px;
+  background:var(--ns-surface);
+  color:var(--ns-muted);
+  text-align:center;
+}
+body.ns-shell-ready #p60report:empty::before {content:"No report generated yet. Select Generate Report... to begin."}
 @media(max-width:900px) {
   body.ns-shell-ready #column_l {max-height:none;min-height:0}
   body.ns-shell-ready #p10info #p10html .row.mb-1 > .col.col-md-2.col-lg-2 {flex-basis:38%;width:38%;max-width:38%;min-width:120px}
