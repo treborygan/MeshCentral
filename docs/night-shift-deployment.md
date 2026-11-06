@@ -470,6 +470,16 @@ A fresh authenticated inventory check shows both registered devices, PCRN and RN
 
 The outstanding live RDP and physical-phone acceptance still needs an agent-connected managed device and a real Android or iOS browser. Do not infer agent connectivity from the Windows service state alone, or infer a healthy connection from the server's empty `agentissues` result.
 
+## Authenticated connected-session mobile control check — 2026-11-06
+
+This check supersedes the earlier disconnected-session result above. The PCRN Mesh Agent was actively connected, and the authenticated inventory showed it reachable. On the native Desktop route, selecting the existing `RDP-Tcp#0 - PCRN/Robert` session in MeshCentral's session chooser established the browser desktop session. MeshCentral reported `Connected, WebRTC`; the Night Shift session diagnostics showed the Agent route, connected MeshAgent desktop, and mounted remote canvas. No remote keystrokes, clipboard data, or power/file actions were sent. The session was disconnected at the end of the check.
+
+With the connected session, the responsive dock's trackpad mode, right-click mode, on-screen keyboard visibility, fit/native zoom mode, and fullscreen state each toggled on and back off through their live native handlers. No keyboard text or special key was sent, and no pointer gesture was made against the remote machine. At an emulated 853×395 CSS landscape viewport, the primary dock collapsed extra controls behind More; expanding it exposed zoom, special keys, text/clipboard actions, Settings, and Fullscreen. Fullscreen moved the remote canvas into the visible region, but its measured rendered size remained only about 106×224 CSS pixels; this is not acceptable evidence of a usable mobile remote display and needs a canvas sizing investigation. The viewport was reset to portrait after the check.
+
+This was an authenticated desktop browser using an emulated mobile viewport, not a physical Android/iOS device. Touch gesture feel, real mobile keyboard/IME delivery, pinch zoom and pan, orientation changes on hardware, and visible/usable remote desktop sizing remain open acceptance gates. Browser RDP was not tested because its native credentials prompt was canceled without entering credentials.
+
+The same deployment also replaced the generic Inter-first stack with `Avenir Next`, `Segoe UI Variable`, and `Segoe UI` fallbacks after the design hook flagged Inter as overused. The web-only installer created rollback snapshot `C:\ProgramData\MeshCentral\meshcentral-web\.night-shift-backups\20261106-100444-4e394b`; installed CSS and JS SHA-256 hashes matched source. MeshCentral, Mesh Agent and MeshCentralCloudflared remained running. This changed no server configuration, database, agent, tunnel, or service.
+
 ## Authenticated PCRN desktop session attempt — 2026-11-06
 
 After the supported `meshagent64-Pcrn.exe -state` diagnostic reported its active connection to `wss://agent-rdp.treborygan.dev:443/agent.ashx`, a fresh authenticated Night Shift browser session showed one reachable device. Its native details page reported `Agent connected`, the active user `PCRN\Robert`, and Remote desktop available. This supersedes the prior inventory-only statement that the device was offline; it does not establish that a remote display session works.
