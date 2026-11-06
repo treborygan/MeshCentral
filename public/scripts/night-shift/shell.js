@@ -121,11 +121,17 @@
     }
     var menu = create('nav', 'ns-appbar-menu'); menu.hidden = true;
     menu.setAttribute('aria-label', 'Additional MeshCentral sections');
+    var nativeMenu;
+    function closeMenu() {
+      if (menu.hidden) return;
+      menu.hidden = true;
+      nativeMenu.setAttribute('aria-expanded', 'false');
+    }
     entries.forEach(function (entry) { if (allowed($(entry.id))) menu.append(link(entry, 'ns-shell-action')); });
     menu.append(button('Classic UI','ns-shell-action',function () {
       if (window.__nightShiftUI && typeof window.__nightShiftUI.enableClassic === 'function') window.__nightShiftUI.enableClassic();
     },'Switch to the native Classic MeshCentral UI'));
-    var nativeMenu = button('More', 'ns-shell-more', function () {
+    nativeMenu = button('More', 'ns-shell-more', function () {
       menu.hidden = !menu.hidden;
       nativeMenu.setAttribute('aria-expanded', menu.hidden ? 'false' : 'true');
     }, 'Open additional MeshCentral sections');
@@ -134,10 +140,14 @@
     appbar.append(left, right, menu);
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape' && !menu.hidden) {
-        menu.hidden = true; nativeMenu.setAttribute('aria-expanded', 'false');
+        closeMenu();
         nativeMenu.focus();
       }
     });
+    document.addEventListener('click', function (event) {
+      if (!menu.hidden && !appbar.contains(event.target)) closeMenu();
+    });
+    menu.addEventListener('click', closeMenu);
     host.insertBefore(appbar, host.firstChild);
   }
   function metric(name, value, note) {

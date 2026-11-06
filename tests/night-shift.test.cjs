@@ -1458,13 +1458,14 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
       return [];
     }
     focus(){this.focused=true;}
+    contains(node){for(let current=node;current;current=current.parentNode)if(current===this)return true;return false;}
   }
   const body=new MockElement('body');
   const document={
     body,documentElement:new MockElement('html'),readyState:'complete',visibilityState:'visible',
     createElement:tag=>new MockElement(tag),
     getElementById:id=>ids.get(id)||null,
-    querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){}
+    querySelector:()=>null,querySelectorAll:()=>[],events:{},addEventListener(name,handler){(this.events[name]||=[]).push(handler);}
   };
   const add=(id,parent=body)=>{
     const node=new MockElement('div');node.id=id;parent.append(node);return node;
@@ -1555,9 +1556,18 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(menu.hidden,true,'Additional navigation starts closed');
   more.click();
   assert.equal(menu.hidden,false,'More opens actionable navigation');
+  const outsideClick={target:devices};
+  document.events.click.forEach(handler=>handler(outsideClick));
+  assert.equal(menu.hidden,true,'Clicking native page content dismisses More');
+  assert.equal(more.getAttribute('aria-expanded'),'false','Outside dismissal updates the expanded state');
+  more.click();
+  assert.equal(menu.hidden,false,'More can reopen after outside dismissal');
   const deviceLink=menu.children.find(node=>node.dataset.native==='LeftMenuMyDevices');
   assert.ok(deviceLink,'The available native Devices action is linked');
   deviceLink.click();
+  menu.dispatchEvent({type:'click',target:deviceLink});
+  assert.equal(menu.hidden,true,'Selecting a section dismisses the secondary menu');
+  assert.equal(more.getAttribute('aria-expanded'),'false','Route dismissal updates the expanded state');
   assert.equal(devicesMouseup,1,'The new navigation dispatches the original MeshCentral mouseup action');
   const eventsLink=menu.children.find(node=>node.dataset.native==='LeftMenuMyEvents');
   assert.ok(eventsLink,'The available native Events action is linked');
@@ -1898,6 +1908,8 @@ test('native server administration overview organizes live status responsively',
   assert.match(css,/body\.ns-theme #p6 #serverStats/);
   assert.match(css,/body\.ns-theme #p6 #serverWarningsDiv/);
   assert.match(css,/@media\(max-width:760px\)[\s\S]*?body\.ns-theme #p6info \{grid-template-columns:minmax\(0,1fr\)/);
+  assert.match(css,/body\.ns-shell-ready #p6 #p2ServerActions > div > div \{[\s\S]*?display:flex[\s\S]*?width:auto/);
+  assert.match(css,/body\.ns-shell-ready #p6 #serverStats \.chartViewText \{[\s\S]*?overflow-wrap:anywhere/);
   const template=read('views/default.handlebars');
   assert.match(template,/server_showBackupDlg\(\)/);
   assert.match(template,/server_showRestoreDlg\(\)/);
@@ -1910,6 +1922,7 @@ test('account security settings keep native links and use a responsive desktop w
   assert.match(css,/body\.ns-theme :is\(#p2AccountSecurity,#p2AccountActions\) \{grid-column:2\/-1/);
   assert.match(css,/body\.ns-theme #p2meshes \{display:grid;grid-template-columns:repeat\(auto-fit/);
   assert.match(css,/body\.ns-theme #p2meshes > div \{[\s\S]*?width:auto!important/);
+  assert.match(css,/body\.ns-shell-ready #p2info \{box-sizing:border-box;min-width:0;max-width:100%\}/);
   const template=read('views/default.handlebars');
   assert.match(template,/account_manageAuthApp\(\)/);
   assert.match(template,/account_showChangePassword\(\)/);
@@ -1946,6 +1959,8 @@ test('device detail pages adapt their native fields, notes and status card to mo
   assert.match(css,/body\.ns-theme #p10info > table > tbody > tr > td#notesPanel/);
   assert.match(css,/body\.ns-theme #p10info #MainComputerImage/);
   assert.match(css,/@media\(max-width:700px\)[\s\S]*?body\.ns-theme #p10info > table > tbody > tr > td:last-child \{display:flex/);
+  assert.match(css,/body\.ns-shell-ready #p10info #p10html \.row\.mb-1 > \.col\.col-md-2\.col-lg-2 \{[\s\S]*?flex:0 0 180px[\s\S]*?word-break:normal/);
+  assert.match(css,/body\.ns-shell-ready #p10info #p10html \.row\.mb-1 > \.col\.col-md-10\.col-lg-10 \{[\s\S]*?flex:1 1 0[\s\S]*?min-width:0/);
   const template=read('views/default.handlebars');
   assert.match(template,/id=p10html/);
   assert.match(template,/id=p10html2/);
@@ -1981,4 +1996,10 @@ test('server statistics and trace views stay responsive and trace rows use nativ
   assert.equal(row.clicks,1,'Space delegates to the existing trace detail click handler');
   window.__NightShiftServerAdmin.refresh();
   assert.equal(row.listeners.keydown.length,1,'refresh does not duplicate event handlers');
+});
+
+test('native shell gives clipped workspaces vertical reach and lets inventory scroll horizontally',()=>{
+  assert.match(css,/body\.ns-shell-ready #column_l \{[\s\S]*?overflow-x:hidden!important[\s\S]*?overflow-y:auto!important/);
+  assert.match(css,/body\.ns-shell-ready #p1 \{box-sizing:border-box;min-width:0;max-width:100%;overflow-x:auto\}/);
+  assert.match(css,/body\.ns-shell-ready #p1 #ns-live-inventory select \{max-width:100%;min-width:0\}/);
 });

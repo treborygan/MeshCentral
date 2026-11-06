@@ -509,6 +509,7 @@ input:disabled { opacity: .6; cursor: not-allowed; }
 }
 
 
+
 /* Night Shift mobile-layout correction.
  * MeshCentral's default3 template does not declare a device-width viewport.
  * The JS correction aligns CSS and JS at 900 CSS pixels. */
@@ -2178,4 +2179,64 @@ body.ns-theme #p41events .traceEvent b {color:#b6f078;letter-spacing:.035em}
   body.ns-theme :is(#p40,#p41) > .areaHead select {flex:1 1 42%;min-width:0}
   body.ns-theme :is(#p40,#p41) > .areaHead input[type="button"] {flex:1 1 42%}
   body.ns-theme #p40log {flex:0 0 auto}
+}
+
+/* Live review corrections: make shell workspaces scrollable inside the fixed
+   MeshCentral desktop frame, and prevent native-width content from being clipped. */
+body.ns-shell-ready #column_l {
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior-y:contain;
+  scrollbar-gutter:stable;
+}
+body.ns-shell-ready #p1 {box-sizing:border-box;min-width:0;max-width:100%;overflow-x:auto}
+body.ns-shell-ready #p1 #ns-live-inventory,
+body.ns-shell-ready #p1 #ns-live-inventory * {box-sizing:border-box}
+body.ns-shell-ready #p1 #ns-live-inventory {min-width:0;max-width:100%}
+body.ns-shell-ready #p1 #ns-live-inventory select {max-width:100%;min-width:0}
+body.ns-shell-ready #p6info {min-width:0;overflow-x:hidden!important;overflow-y:auto!important}
+body.ns-shell-ready #p6 #p2ServerActions > div > div {
+  display:flex;
+  align-items:center;
+  width:auto;
+  min-width:0;
+  gap:8px;
+  margin:0!important;
+}
+body.ns-shell-ready #p6 #p2ServerActions > div > div > .p2AccountActions {flex:0 0 18px;width:18px}
+body.ns-shell-ready #p6 #p2ServerActions a {
+  display:inline-flex;
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:normal;
+  word-break:normal;
+}
+body.ns-shell-ready #p6 #serverStats {grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+body.ns-shell-ready #p6 #serverStats > div {min-width:0;max-width:100%;overflow:hidden}
+body.ns-shell-ready #p6 #serverStats .chartViewText {box-sizing:border-box;width:100%;max-width:100%;min-width:0;overflow-wrap:anywhere}
+body.ns-shell-ready #p6 #serverStats #serverStatsTable {overflow:auto;min-width:0}
+body.ns-shell-ready #p2info {box-sizing:border-box;min-width:0;max-width:100%}
+body.ns-shell-ready #p10info #p10html .row.mb-1 {min-width:0}
+body.ns-shell-ready #p10info #p10html .row.mb-1 > .col.col-md-2.col-lg-2 {
+  box-sizing:border-box;
+  flex:0 0 180px;
+  width:180px;
+  max-width:180px;
+  min-width:0;
+  white-space:normal;
+  word-break:normal;
+  overflow-wrap:normal;
+  vertical-align:top;
+}
+body.ns-shell-ready #p10info #p10html .row.mb-1 > .col.col-md-10.col-lg-10 {
+  flex:1 1 0;
+  width:auto;
+  max-width:none;
+  min-width:0;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+@media(max-width:900px) {
+  body.ns-shell-ready #column_l {max-height:none;min-height:0}
+  body.ns-shell-ready #p10info #p10html .row.mb-1 > .col.col-md-2.col-lg-2 {flex-basis:38%;width:38%;max-width:38%;min-width:120px}
 }
