@@ -295,3 +295,39 @@ The live desktop Users page exposed the native settings glyph as a non-focusable
 ### Device and Server Console long-line overflow — 2026-11-06
 
 Live desktop review at 1440×900 found `#p15agentConsoleText` wider than its native console pane, expanding the page's horizontal scroll area past the viewport in both Device → Console (`viewmode=15`) and Server → Console (`viewmode=115`). Night Shift now bounds the console cell and `<pre>` to the available `#p15` width while keeping `white-space:pre` and `overflow-x:auto` on the `<pre>`, so long output remains readable through local horizontal scrolling without widening the page. Focused source contracts cover both native template variants and the existing auto-follow behavior. The fix is source-only and awaits live desktop verification and deployment review.
+
+### Server General nested scroll clips Memory at the sticky tab boundary — 2026-11-06
+
+Current authenticated Chrome review reproduced a scroll-dependent text clip on Server → General (`viewmode=6`). At the top, the Memory and Server State labels render normally. At the lower scroll position, the Memory value is reduced to a narrow visible sliver immediately below the sticky Server subtab row, while the Server State rows remain in view; scrolling back up restores the normal reading position. The browser screenshot was 1148×505 pixels; viewport CSS dimensions were not independently measured in this CUA pass. Source inspection found upstream sets a viewport-sized `#p6info` height/overflow box while the Night Shift outer workspace `#column_l` is also scrollable. On desktop widths the source now clears `#p6info`'s native height, max-height and nested overflow so the workspace is the single vertical scroller. A focused contract checks the native height assignment, desktop override and outer scroller. This source fix is not deployed and still needs a same-route live scroll retest.
+
+### Disabled Users group action appears active — 2026-11-06
+
+On the authenticated My Users page (`viewmode=4`) with no matching users selected, the native `UsersGroupActionButton` is disabled in the accessibility tree but renders with a bright red fill. This makes a selection-only action look active and contributes to the "button does nothing" confusion. Night Shift now gives the disabled device, user and user-group bulk-action buttons a muted surface treatment while preserving their native disabled state and the active primary style after a selection. A focused CSS/template regression covers all three controls. Source-only; live visual recheck remains pending.
+
+### More menu clipping at short viewport heights — 2026-11-06
+
+In the authenticated desktop browser screenshot at 1148×505, the appbar More popover showed its six workspace links while the final “Switch to the native Classic MeshCentral UI” action extended below the viewport. Scrolling over the menu did not reveal the last action, although it remained in the accessibility tree; Escape closed the menu. The popover now caps its height against the viewport, scrolls internally, contains scroll chaining and displays a thin scrollbar. Native route handlers and the Classic UI action are unchanged. This source change is uninstalled and still needs a same-height live check.
+
+### Device Console title overlap while scrolling — 2026-11-06
+
+An authenticated desktop review at a 1148×505 browser screenshot size found the native Device → Console title/back row (`#p15title`) scrolling behind the persistent Night Shift appbar. At the lower scroll position, the title was partially clipped near the fixed device subtab row even though the console output area and input/clear row remained reachable. On desktop widths, `#p15title` now sticks below the appbar with an opaque canvas surface and a z-index beneath the appbar, preserving MeshCentral's native back action and console controls. A focused source contract checks the offset, layering, and retained native controls. Source-only; same-height live scroll recheck and deployment remain pending.
+
+### Desktop audit fixes live retest — 2026-11-06
+
+The Server General nested-scroll fix, disabled bulk-action styling, short-height More menu scroller and Device Console sticky title were installed together through the existing CSS/JS override installer. On the authenticated page at the available 1148×505 screenshot size, the Memory value and Server State rows were readable while scrolling, disabled Users Group Action was visibly subdued, the More popover scrolled to the Classic UI action, and the Device Console title/back row stayed fully visible while scrolling to its input. The title fix preserves the native console actions. This desktop pass does not verify a live RDP session, remote input, or physical Redmi behavior; portrait and landscape mobile acceptance remain open.
+
+### Device Details refresh feedback — 2026-11-06
+
+The native `refreshDetails()` handler sends MeshCentral's existing `msg/sysinfo` request but exposes no immediate completion or failure signal. The Night Shift layer now adds an accessible status beside the native title: it reports that details are being requested, changes to a “no response yet” retry hint after 12 seconds without a native details update, and reports a response only when MeshCentral calls `updateDeviceDetails` for the same active device. It does not replace the native request handler or report a synthetic success/failure. A focused test covers pending state, timeout wording, preserved handler, and observed response. The CSS/JS assets are installed and served with matching source hashes; live visual and delayed-response behavior remain to verify.
+
+### Approved Concept B typography alignment — 2026-11-06
+
+The approved concept HTML specifies `Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif`. A later source commit changed the theme to Avenir Next/Segoe UI Variable after the design hook flagged Inter, but this was not an approved concept change and the deployed page was observed using that Avenir-first stack. The source CSS now matches the approved Inter-first stack; no remote font import or extra font asset was added. A regression test ties the theme declaration to the approved concept file. The correction is installed and served with matching source hashes; reload the page to see it. No service restart was required.
+
+### Landscape phone device-tab discoverability — 2026-11-06
+
+Authenticated narrow-landscape review showed only General through Events in the device submenu; Details and Console were off-screen and swiping did not move the strip. The visible arrows and horizontal scroller were only styled in the portrait `max-width:900px` rule, while the Redmi's 2712×1220 physical target maps to about 904×407 CSS px at DPR3. The submenu now exposes native arrow buttons, horizontal touch scrolling, and a visible scrollbar on coarse pointers through 960 CSS px in both orientations. The remote dock's portrait-only grid remains portrait-scoped. A source regression covers this breakpoint; authenticated 904×407 live retest remains pending and the source change is not deployed.
+
+### Landscape device tab affordance installed — 2026-11-06
+
+The native device tab strip now receives visible left/right arrows, horizontal touch scrolling and scrollbar cues for coarse pointers through 960 CSS px in both orientations, covering the Redmi 2712×1220 landscape target at 904×407 CSS px/DPR3. Its regression test is green. Installed with rollback snapshot `20261106-202234-9d6d7b`; live asset hashes match source and both routes return 200. Pixel 10 portrait emulation at 412×924 CSS px reloaded with the mobile dock visible. Landscape touch scrolling at the exact target and physical Redmi behavior remain unverified.

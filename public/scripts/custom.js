@@ -2158,6 +2158,7 @@
   if (window.__NightShiftHealth) return;
   var $ = function (id) { return document.getElementById(id); };
   var panel, values = {}, lastNodeId = null, sampleTimer = null, latestSample = null;
+  var refreshStatus = null, refreshTimer = null, pendingRefreshNode = null;
   function create(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -2241,9 +2242,19 @@
     if (!node) {
       lastNodeId = null; latestSample = null;
       if (sampleTimer !== null) { clearTimeout(sampleTimer); sampleTimer = null; }
+      if (pendingRefreshNode !== null) {
+        pendingRefreshNode = null;
+        if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
+        setRefreshStatus('');
+      }
       Object.keys(values).forEach(function (key) { values[key].textContent = 'Unavailable'; }); return;
     }
     if (lastNodeId !== node._id) {
+      if (pendingRefreshNode !== null && pendingRefreshNode !== node._id) {
+        pendingRefreshNode = null;
+        if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
+        setRefreshStatus('');
+      }
       lastNodeId = node._id;
       latestSample = null;
       if (sampleTimer !== null) { clearTimeout(sampleTimer); sampleTimer = null; }
@@ -2319,9 +2330,59 @@
     wrappedClear.__nightShiftHealthHook = true;
     window.deviceDetailsStatsClear = wrappedClear;
   }
+  function setRefreshStatus(text) {
+    var title = $('p17title');
+    if (!refreshStatus && title && title.parentNode) {
+      refreshStatus = create('div', 'ns-health-refresh-status');
+      refreshStatus.id = 'ns-details-refresh-status';
+      refreshStatus.setAttribute('role', 'status');
+      refreshStatus.setAttribute('aria-live', 'polite');
+      refreshStatus.setAttribute('aria-atomic', 'true');
+      refreshStatus.hidden = true;
+      title.parentNode.insertBefore(refreshStatus, title.nextSibling);
+    }
+    if (refreshStatus) {
+      refreshStatus.textContent = text;
+      refreshStatus.hidden = !text;
+    }
+  }
+  function finishDetailsRefresh(node) {
+    if (!pendingRefreshNode || !node || node._id !== pendingRefreshNode) return;
+    pendingRefreshNode = null;
+    if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
+    setRefreshStatus('Device details response received.');
+  }
+  function installRefreshFeedback() {
+    var control = document.querySelector('#devListToolbarViewIcons3 [title="Refresh details information."]');
+    if (control && !control.__nightShiftRefreshFeedback) {
+      control.addEventListener('click', function () {
+        var node = window.currentNode;
+        if (!node || !node._id || typeof window.refreshDetails !== 'function') return;
+        pendingRefreshNode = node._id;
+        if (refreshTimer !== null) clearTimeout(refreshTimer);
+        setRefreshStatus('Refreshing device details…');
+        refreshTimer = setTimeout(function () {
+          refreshTimer = null;
+          if (pendingRefreshNode === node._id) setRefreshStatus('No device details response yet. You can retry.');
+        }, 12000);
+      }, true);
+      control.__nightShiftRefreshFeedback = true;
+    }
+    var nativeUpdate = window.updateDeviceDetails;
+    if (typeof nativeUpdate === 'function' && !nativeUpdate.__nightShiftRefreshFeedback) {
+      var wrappedUpdate = function (node) {
+        var result = nativeUpdate.apply(this, arguments);
+        finishDetailsRefresh(node || window.currentNode);
+        return result;
+      };
+      wrappedUpdate.__nightShiftRefreshFeedback = true;
+      window.updateDeviceDetails = wrappedUpdate;
+    }
+  }
   function boot() {
     if (!$('p17')) return;
     installClearHook();
+    installRefreshFeedback();
     update();
     var graphControl = document.querySelector('#devListToolbarViewIcons3 [title="Show device CPU and memory usage."]');
     if (graphControl) graphControl.addEventListener('click',function () {

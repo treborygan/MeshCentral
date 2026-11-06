@@ -32,7 +32,7 @@ body.night,
 .night body {
   background: var(--ns-canvas);
   color: var(--ns-foreground);
-  font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", sans-serif;
+  font-family: Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
@@ -356,6 +356,7 @@ input:disabled { opacity: .6; cursor: not-allowed; }
 .ns-theme :is(.btn-secondary,.btn-outline-secondary):not(:disabled){background:#273744;border-color:#465460;color:#eaf1ee}
 .ns-theme :is(.btn-secondary,.btn-outline-secondary):not(:disabled):hover{background:#324958;border-color:#607180;color:#fff}
 .ns-theme .btn-danger:not(:disabled){background:#4a2c33;border-color:#77444f;color:#ffd2d7}
+body.ns-theme.ns-shell-ready :is(#GroupActionButton,#UsersGroupActionButton,#UsersGroupsGroupActionButton):disabled {background:#263139!important;background-image:none!important;border-color:#3b4850!important;color:#91a0a8!important;opacity:.72;box-shadow:none;cursor:not-allowed}
 body.ns-theme.ns-shell-ready :is(#p5toolbar,#p9toolbar,#p13toolbar) :is(button,input[type="button"],input[type="submit"]).btn-danger:disabled,
 body.ns-theme.ns-shell-ready :is(#p5toolbar,#p9toolbar,#p13toolbar) :is(button,input[type="button"],input[type="submit"]).btn-outline-danger:disabled {background:#263139!important;border-color:#3b4850!important;color:#91a0a8!important;opacity:.72;box-shadow:none;cursor:not-allowed}
 .ns-theme .btn-link{color:#b6f078}
@@ -1094,6 +1095,12 @@ body.ns-shell-ready #ns-appbar {position:sticky}
   top:calc(100% - 4px);
   right:18px;
   width:min(280px,calc(100vw - 32px));
+  max-height:min(420px,calc(100vh - 190px));
+  max-height:min(420px,calc(100dvh - 190px));
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  scrollbar-width:thin;
+  scrollbar-color:#7c919c #1a2833;
   display:grid;
   gap:5px;
   background:#1a2833;
@@ -1395,6 +1402,7 @@ body.ns-shell-ready.ns-cards-enabled #ns-live-inventory {margin-top:4px}
 .ns-health-value{overflow-wrap:anywhere;font-size:.95rem}
 .ns-health-action{margin-top:.7rem;padding:.55rem .8rem;border:1px solid var(--ns-accent,#66d6ac);border-radius:9px;background:transparent;color:inherit}
 .ns-health-action:focus-visible{outline:2px solid var(--ns-accent,#66d6ac);outline-offset:2px}
+.ns-health-refresh-status{margin:4px 0 8px;padding:6px 10px;border:1px solid var(--ns-line,#344652);border-radius:8px;background:var(--ns-surface,#17242e);color:var(--ns-muted,#a9bac3);font-size:.82rem;line-height:1.35}
 .ns-history-search{display:flex;align-items:center;gap:.5rem;margin-left:auto;padding:.25rem .5rem;max-width:min(32rem,100%);font-size:.82rem;color:var(--ns-muted,#a9bac3)}
 .ns-history-search label{display:flex;align-items:center;gap:.5rem;min-width:0}
 .ns-history-search label>span{flex:0 0 auto;white-space:nowrap}
@@ -2261,6 +2269,14 @@ body.ns-shell-ready #p1 #ns-live-inventory * {box-sizing:border-box}
 body.ns-shell-ready #p1 #ns-live-inventory {width:100%;min-width:0;max-width:100%;overflow-x:clip}
 body.ns-shell-ready #p1 #ns-live-inventory select {max-width:100%;min-width:0}
 body.ns-shell-ready #p6info {min-width:0;overflow-x:hidden!important;overflow-y:auto!important}
+/* The native template assigns #p6info a viewport-height scroll box. On the
+   themed desktop the outer workspace is already the scroll container and the
+   sticky appbar sits above it; the second box lets Memory slide underneath the
+   server tabs at the end of the scroll. Keep the native content in normal flow
+   so #column_l provides one continuous scroll region. */
+@media(min-width:901px) {
+  body.ns-shell-ready #p6info {height:auto!important;max-height:none!important;overflow-x:visible!important;overflow-y:visible!important}
+}
 body.ns-shell-ready #p6 #p2ServerActions > div > div {
   display:flex;
   align-items:center;
@@ -2345,6 +2361,11 @@ body.ns-shell-ready #p40title > .fs-4 {color:var(--ns-foreground)!important}
 }
 body.ns-shell-ready #p15 #p15agentConsole {box-sizing:border-box;width:100%!important;min-width:0;max-width:100%;overflow:hidden}
 body.ns-shell-ready #p15 #p15agentConsoleText {display:block;box-sizing:border-box;width:100%!important;min-width:0!important;max-width:100%!important;overflow-x:auto!important;white-space:pre}
+@media(min-width:901px) {
+  /* Keep the native console title/back control below the persistent shell bar
+     when the tall console viewport is scrolled inside the workspace. */
+  body.ns-shell-ready #p15title {position:sticky;top:76px;z-index:69;min-height:46px;padding-block:4px;background:var(--ns-canvas)}
+}
 body.ns-shell-ready #p15,
 body.ns-shell-ready #consoleTable {box-sizing:border-box;width:100%!important;min-width:0;max-width:100%;table-layout:fixed}
 body.ns-shell-ready #p15 .areaFoot {box-sizing:border-box;width:100%;min-width:0;max-width:100%;overflow-x:hidden}
@@ -2458,7 +2479,7 @@ body.ns-theme #p6title #MainMeshImage {
   max-height:38px;
   object-fit:contain;
 }
-@media(max-width:900px) and (orientation:portrait) {
+@media(max-width:960px) and (pointer:coarse) {
   body.ns-theme #MainSubMenuSpan:not([style*="display:none"]):not([style*="display: none"]) {
     display:flex!important;
     align-items:center;
@@ -2518,7 +2539,8 @@ body.ns-theme #p6title #MainMeshImage {
   body.ns-theme #MainSubMenuSpan #MainSubMenuScrollInner::-webkit-scrollbar-track {background:#16212b}
   body.ns-theme #MainSubMenuSpan #MainSubMenu {display:table!important;width:max-content!important;min-width:max-content;table-layout:auto!important}
   body.ns-theme #MainSubMenuSpan #MainSubMenu .topbar_td {width:auto!important;min-width:65px;white-space:nowrap}
-
+}
+@media(max-width:900px) and (orientation:portrait) {
   body.ns-theme .ns-mobile-dock {box-sizing:border-box;max-width:100vw}
   body.ns-theme .ns-dock-row {
     display:grid;

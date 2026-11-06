@@ -431,6 +431,42 @@ test('device health expires CPU and memory values after native graph samples sto
   assert.equal(cpu.textContent,'Unavailable');assert.equal(memory.textContent,'Unavailable');
 });
 
+test('native device-details refresh shows pending, timeout, and response feedback without replacing its handler',()=>{
+  assert.match(css,/\.ns-health-refresh-status\{[^}]*font-size:\.82rem/,'The live response hint has a compact visible treatment');
+  const ids=new Map(),timers=new Map(),calls=[];let nextTimer=0;
+  class Element {
+    constructor(){this.children=[];this.attributes={};this.events={};this.parentNode=null;this.textContent='';this.hidden=false;}
+    set id(value){this._id=value;ids.set(value,this);} get id(){return this._id||'';}
+    get nextSibling(){if(!this.parentNode)return null;const siblings=this.parentNode.children;return siblings[siblings.indexOf(this)+1]||null;}
+    append(...nodes){nodes.forEach(node=>{node.parentNode=this;this.children.push(node);});}
+    insertBefore(node,anchor){node.parentNode=this;const index=this.children.indexOf(anchor);this.children.splice(index<0?this.children.length:index,0,node);}
+    setAttribute(name,value){this.attributes[name]=String(value);}
+    addEventListener(name,fn){(this.events[name]||=[]).push(fn);}
+  }
+  const parent=new Element(),title=new Element();title.id='p17title';parent.append(title);
+  const host=new Element();host.id='p17info';parent.append(host);const page=new Element();page.id='p17';
+  const refreshControl=new Element();
+  const nativeRefresh=function(){calls.push('native refresh');};
+  const nativeUpdate=function(node){calls.push(['native update',node._id]);};
+  const window={currentNode:{_id:'node/a',conn:1},refreshDetails:nativeRefresh,updateDeviceDetails:nativeUpdate,addEventListener(){}};
+  const document={readyState:'complete',getElementById:id=>ids.get(id)||null,querySelector:selector=>selector.includes('Refresh details information')?refreshControl:null,addEventListener(){},createElement:()=>new Element()};
+  const setTimeout=(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay});return id;};
+  const clearTimeout=id=>timers.delete(id);
+  vm.runInNewContext(health,{window,document,Date,isFinite,setTimeout,clearTimeout},{timeout:1000});
+  assert.equal(window.refreshDetails,nativeRefresh,'The native click handler is not replaced');
+  refreshControl.events.click[0]();
+  const status=ids.get('ns-details-refresh-status');
+  assert.equal(status.attributes.role,'status');assert.equal(status.attributes['aria-live'],'polite');
+  assert.equal(status.textContent,'Refreshing device details…');assert.equal(status.hidden,false);
+  assert.ok([...timers.values()].some(timer=>timer.delay===12000),'A bounded wait explains when no response arrives');
+  window.refreshDetails();assert.deepEqual(calls,['native refresh'],'The original MeshCentral refresh action still runs');
+  const timeout=[...timers.entries()].find(([,timer])=>timer.delay===12000);timeout[1].fn();timers.delete(timeout[0]);
+  assert.equal(status.textContent,'No device details response yet. You can retry.','Timeout does not claim that the request failed');
+  window.updateDeviceDetails(window.currentNode,{windows:{}});
+  assert.deepEqual(calls,['native refresh',['native update','node/a']]);
+  assert.equal(status.textContent,'Device details response received.','A native details update is the only success signal');
+});
+
 test('elapsed uptime formatting is deterministic and rejects future boot dates',()=>{
   const window={};
   const document={readyState:'loading',addEventListener(){}};
@@ -1367,6 +1403,13 @@ test('desktop viewport keeps the mobile navigation and remote dock out of view',
   assert.equal(h.byId.get('connectbutton1r').hidden, false, 'native desktop RDP control remains available');
 });
 
+test('Night Shift uses the approved Concept B typography stack',()=>{
+  assert.match(css,/font-family:\s*Inter,\s*"Segoe UI",\s*-apple-system,\s*BlinkMacSystemFont,\s*Arial,\s*sans-serif/,'The live theme follows Concept B without adding a remote font dependency');
+  assert.doesNotMatch(css,/font-family:\s*"Avenir Next"/,'The later unapproved font substitution does not drift from the approved concept');
+  const approved=read('docs/night-shift-acceptance/Concept-B-Night-Shift-Approved.html');
+  assert.match(approved,/font-family:Inter,"Segoe UI",-apple-system,BlinkMacSystemFont,Arial,sans-serif/,'The reference concept supplies the typography stack');
+});
+
 test('modern, responsive and fallback selectors remain present', () => {
   for (const token of [
     '--ns-accent','#page_leftbar','#deskarea0','#DeskParent',
@@ -2002,6 +2045,14 @@ test('native user administration keeps its permission-aware search and bulk cont
   assert.match(template,/gotoUser/);
 });
 
+test('disabled bulk-action buttons are visually muted across device, user and group lists',()=>{
+  assert.match(css,/body\.ns-theme\.ns-shell-ready :is\(#GroupActionButton,#UsersGroupActionButton,#UsersGroupsGroupActionButton\):disabled \{background:#263139!important;background-image:none!important;border-color:#3b4850!important;color:#91a0a8!important;opacity:\.72;box-shadow:none;cursor:not-allowed\}/);
+  const template=read('views/default3.handlebars');
+  for(const id of ['GroupActionButton','UsersGroupActionButton','UsersGroupsGroupActionButton']) {
+    assert.match(template,new RegExp(`id=${id}[^>]*disabled="disabled"`),`${id} remains natively disabled until a selection exists`);
+  }
+});
+
 test('native user-group details stack safely at mobile widths',()=>{
   assert.match(css,/body\.ns-theme #p51info > table/);
   assert.match(css,/body\.ns-theme #MainUserImage \{float:none!important/);
@@ -2026,6 +2077,17 @@ test('native server administration overview organizes live status responsively',
   assert.match(template,/server_showRestoreDlg\(\)/);
   assert.match(template,/id="serverStatsTable"/);
   assert.match(template,/id="serverWarningsDiv"/);
+});
+
+test('desktop Server General uses the workspace scroller instead of nesting a viewport-sized Memory panel',()=>{
+  const template=read('views/default3.handlebars');
+  assert.match(template,/QS\('p6info'\)\['height'\]\s*=\s*'calc\(100vh - '\s*\+\s*\(-50 \+ xh \+ xh2\)/,'Upstream assigns p6info a fixed viewport-based height');
+  const desktopRule=css.match(/@media\(min-width:901px\)\s*\{\s*body\.ns-shell-ready #p6info \{([^}]+)\}\s*\}/);
+  assert.ok(desktopRule,'Desktop clears the native p6info height and nested scroll');
+  assert.match(desktopRule[1],/height:auto!important/);
+  assert.match(desktopRule[1],/max-height:none!important/);
+  assert.match(desktopRule[1],/overflow-x:visible!important;overflow-y:visible!important/);
+  assert.match(css,/body\.ns-shell-ready #column_l \{[\s\S]*?overflow-y:auto!important/,'The page workspace remains the single vertical scroll container');
 });
 
 test('account security settings keep native links and use a responsive desktop workspace',()=>{
@@ -2213,6 +2275,18 @@ test('device and server console output scroll long lines inside the native outpu
   }
 });
 
+test('desktop device console title and back control stay below the sticky appbar while scrolling',()=>{
+  const consoleTitle=css.match(/@media\(min-width:901px\)\s*\{\s*\/\* Keep the native console title\/back control below the persistent shell bar[\s\S]*?body\.ns-shell-ready #p15title \{([^}]+)\}\s*\}/);
+  assert.ok(consoleTitle,'The desktop native console title has a dedicated sticky treatment');
+  assert.match(consoleTitle[1],/position:sticky/);
+  assert.match(consoleTitle[1],/top:76px/,'The native title clears the persistent appbar');
+  assert.match(consoleTitle[1],/z-index:69/,'The title stays above console content but below the appbar');
+  assert.match(consoleTitle[1],/background:var\(--ns-canvas\)/,'Scrolled console content cannot show through the title row');
+  const template=read('views/default3.handlebars');
+  assert.match(template,/<div id="p15title" class="d-flex align-items-center">[\s\S]*?id="p15BackButton"/,'The native title treatment keeps MeshCentral back navigation in place');
+  assert.match(template,/id=p15consoleText[\s\S]*?id="id_p15consoleClear"/,'The native console input and clear controls remain present');
+});
+
 test('native file and registry action toolbars wrap within their workspace',()=>{
   assert.match(css,/body\.ns-theme\.ns-shell-ready :is\(#p5toolbar,#p9toolbar,#p13toolbar\) :is\(button,input\[type=\"button\"\],input\[type=\"submit\"\]\)\.btn-danger:disabled,[\s\S]*?background:#263139!important;border-color:#3b4850!important;color:#91a0a8!important/,'Disabled destructive file and registry actions are muted while retaining native disabled state');
   assert.match(css,/\.ns-theme \.btn-danger:not\(:disabled\)\{background:#4a2c33;border-color:#77444f;color:#ffd2d7\}/,'Enabled danger actions retain their intentional danger treatment');
@@ -2287,9 +2361,20 @@ test('appbar route labels cover native pages outside the six primary workspaces'
   assert.match(shell,/routes\.forEach\(function \(route\).*watchIds\.push\(route\[0\]\)/,'route metadata pages are also watched for activation updates');
 });
 
-test('portrait server art, appbar title and device tabs stay within their surfaces',()=>{
+test('appbar More menu scrolls inside the viewport when short landscape height clips its last action',()=>{
+  const menu=css.match(/\.ns-appbar-menu\s*\{([^}]+)\}/);
+  assert.ok(menu,'The additional sections popover has a dedicated layout rule');
+  assert.match(menu[1],/max-height:min\(420px,calc\(100vh - 190px\)\)/,'A viewport-height fallback limits the popover height');
+  assert.match(menu[1],/max-height:min\(420px,calc\(100dvh - 190px\)\)/,'Dynamic viewport height accounts for mobile browser chrome');
+  assert.match(menu[1],/overflow-y:auto/,'All native section actions remain reachable by scrolling within the popover');
+  assert.match(menu[1],/overscroll-behavior-y:contain/,'Scrolling the menu does not chain into the page behind it');
+  assert.match(menu[1],/scrollbar-width:thin;[\s\S]*?scrollbar-color:#7c919c #1a2833/,'The clipped menu has a visible scroll affordance');
+});
+
+test('mobile server art, appbar title and device tabs stay within their surfaces in portrait and landscape',()=>{
   assert.match(css,/body\.ns-theme #p6title #MainMeshImage\s*\{[\s\S]*?flex:0 0 38px;[\s\S]*?width:38px!important;[\s\S]*?height:38px!important/,'The server image cannot grow into the mobile actions card');
   assert.match(css,/body\.ns-shell-ready \.ns-appbar-title \{background:transparent!important;background-image:none!important;box-shadow:none!important\}/,'The shell route title stays clean over the appbar surface');
+  assert.match(css,/@media\(max-width:960px\) and \(pointer:coarse\)\s*\{\s*body\.ns-theme #MainSubMenuSpan:not\(/,'The tab scroller and visible arrows apply in both orientations on coarse-pointer phones, including the 904px landscape target');
   const submenu=css.match(/body\.ns-theme #MainSubMenuSpan #MainSubMenuScrollInner\s*\{([^}]+)\}/);
   assert.ok(submenu,'The actual nested MeshCentral submenu scroll container is targeted');
   assert.match(submenu[1],/display:block!important/,'The upstream display:contents rule is overridden on the scroll container');
