@@ -1,0 +1,93 @@
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$installer = Join-Path $repoRoot 'scripts\Install-NightShift.ps1'
+$tempRoot = [IO.Path]::GetFullPath((Join-Path ([IO.Path]::GetTempPath()) ('nightshift-installer-test-' + [guid]::NewGuid().ToString('N'))))
+$tempPrefix = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+if (-not $tempRoot.StartsWith($tempPrefix, [StringComparison]::OrdinalIgnoreCase)) { throw 'Refusing to create test fixture outside the temporary directory.' }
+
+function Assert-Equal([object]$Actual, [object]$Expected, [string]$Message) {
+  if ($Actual -cne $Expected) { throw "$Message (expected '$Expected', got '$Actual')" }
+}
+
+function New-Fixture([string]$Name) {
+  $root = Join-Path $tempRoot $Name
+  New-Item -ItemType Directory -Force -Path (Join-Path $root 'meshcentral-data') | Out-Null
+  return $root
+}
+
+try {
+  New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
+  $tokens = $null; $parseErrors = $null
+  [System.Management.Automation.Language.Parser]::ParseFile($installer, [ref]$tokens, [ref]$parseErrors) | Out-Null
+  if ($parseErrors.Count -gt 0) { throw ($parseErrors | Out-String) }
+  Write-Output 'INSTALLER_PARSE=PASS'
+
+  $existingRoot = New-Fixture 'existing-overrides'
+  $existingPublic = Join-Path $existingRoot 'meshcentral-web\public'
+  New-Item -ItemType Directory -Force -Path (Join-Path $existingPublic 'styles') | Out-Null
+  New-Item -ItemType Directory -Force -Path (Join-Path $existingPublic 'scripts') | Out-Null
+  $oldCss = 'Night Shift prior CSS marker'
+  $oldJs = 'Night Shift prior JS marker'
+  [IO.File]::WriteAllText((Join-Path $existingPublic 'styles\custom.css'), $oldCss)
+  [IO.File]::WriteAllText((Join-Path $existingPublic 'scripts\custom.js'), $oldJs)
+  $unrelated = Join-Path $existingPublic 'custom.conf'
+  [IO.File]::WriteAllText($unrelated, 'unchanged sentinel')
+  $dataSentinel = Join-Path $existingRoot 'meshcentral-data\sentinel'
+  [IO.File]::WriteAllText($dataSentinel, 'data unchanged')
+
+  $outsideRoot = New-Fixture 'unrelated-override'
+  $outsidePath = Join-Path $outsideRoot 'meshcentral-web\public\styles\custom.css'
+  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $outsidePath) | Out-Null
+  [IO.File]::WriteAllText($outsidePath, 'third-party customization')
+  $refused = $false
+  try { & $installer -MeshRoot $outsideRoot -SourceRoot $repoRoot -Confirm:$false | Out-Null }
+  catch { $refused = $true }
+  if (-not $refused) { throw 'Installer accepted an unrelated existing customization without -ReplaceExisting.' }
+  Assert-Equal ([IO.File]::ReadAllText($outsidePath)) 'third-party customization' 'Refused install changed the unrelated file'
+  Write-Output 'UNRELATED_OVERRIDE_PROTECTION=PASS'
+
+  & $installer -MeshRoot $existingRoot -SourceRoot $repoRoot -WhatIf -ReplaceExisting | Out-Null
+  if (Test-Path -LiteralPath (Join-Path $existingRoot 'meshcentral-web\.night-shift-backups')) { throw 'WhatIf created a backup directory.' }
+  Write-Output 'WHATIF=PASS'
+
+  & $installer -MeshRoot $existingRoot -SourceRoot $repoRoot -ReplaceExisting -Confirm:$false | Out-Null
+  $installedCss = Join-Path $existingPublic 'styles\custom.css'
+  $installedJs = Join-Path $existingPublic 'scripts\custom.js'
+  Assert-Equal (Get-FileHash -LiteralPath $installedCss -Algorithm SHA256).Hash (Get-FileHash -LiteralPath (Join-Path $repoRoot 'public\styles\custom.css') -Algorithm SHA256).Hash 'Installed CSS hash mismatch'
+  Assert-Equal (Get-FileHash -LiteralPath $installedJs -Algorithm SHA256).Hash (Get-FileHash -LiteralPath (Join-Path $repoRoot 'public\scripts\custom.js') -Algorithm SHA256).Hash 'Installed JS hash mismatch'
+  Assert-Equal ([IO.File]::ReadAllText($unrelated)) 'unchanged sentinel' 'Installer changed an unrelated web file'
+  Assert-Equal ([IO.File]::ReadAllText($dataSentinel)) 'data unchanged' 'Installer changed MeshCentral data'
+  $backupRoot = Join-Path $existingRoot 'meshcentral-web\.night-shift-backups'
+  $backup = Get-ChildItem -LiteralPath $backupRoot -Directory | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1
+  if (-not $backup) { throw 'Installer did not create a rollback snapshot.' }
+  $manifest = Get-Content -LiteralPath (Join-Path $backup.FullName 'manifest.json') -Raw | ConvertFrom-Json
+  Assert-Equal $manifest.files.Count 2 'Rollback manifest file count mismatch'
+  foreach ($entry in $manifest.files) {
+    $backupFile = Join-Path $backup.FullName $entry.relative
+    Assert-Equal (Get-FileHash -LiteralPath $backupFile -Algorithm SHA256).Hash $entry.sha256 "Backup hash mismatch for $($entry.relative)"
+  }
+  & $installer -MeshRoot $existingRoot -RollbackFrom $backup.FullName -Confirm:$false | Out-Null
+  Assert-Equal ([IO.File]::ReadAllText($installedCss)) $oldCss 'Rollback did not restore CSS'
+  Assert-Equal ([IO.File]::ReadAllText($installedJs)) $oldJs 'Rollback did not restore JavaScript'
+  Write-Output 'EXISTING_FILE_INSTALL_ROLLBACK=PASS'
+
+  $newRoot = New-Fixture 'new-overrides'
+  & $installer -MeshRoot $newRoot -SourceRoot $repoRoot -Confirm:$false | Out-Null
+  $newPublic = Join-Path $newRoot 'meshcentral-web\public'
+  $newBackup = Get-ChildItem -LiteralPath (Join-Path $newRoot 'meshcentral-web\.night-shift-backups') -Directory | Select-Object -First 1
+  if (-not $newBackup) { throw 'Installer did not create rollback snapshot for new overrides.' }
+  & $installer -MeshRoot $newRoot -RollbackFrom $newBackup.FullName -Confirm:$false | Out-Null
+  if ((Test-Path -LiteralPath (Join-Path $newPublic 'styles\custom.css')) -or (Test-Path -LiteralPath (Join-Path $newPublic 'scripts\custom.js'))) {
+    throw 'Rollback left newly created override files behind.'
+  }
+  Write-Output 'NEW_FILE_ROLLBACK=PASS'
+}
+finally {
+  if (Test-Path -LiteralPath $tempRoot) {
+    $resolved = (Resolve-Path -LiteralPath $tempRoot).Path
+    if (-not $resolved.StartsWith($tempPrefix, [StringComparison]::OrdinalIgnoreCase)) { throw 'Refusing to remove fixture outside the temporary directory.' }
+    Remove-Item -LiteralPath $resolved -Recurse -Force
+  }
+}

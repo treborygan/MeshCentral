@@ -1083,7 +1083,8 @@
                 <input id="softKeyboard" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"
                     type="text" inputmode="text"
                     style="position:fixed;opacity:0;width:1px;height:1px;left:-9999px;top:-9999px"
-                    oninput="onSoftKeyboardInput(this)"
+                    oninput="onSoftKeyboardInput(this, event)"
+                    oncompositionend="onSoftKeyboardCompositionEnd(this, event)"
                     onblur="onSoftKeyboardFocusChange(false)"
                     onfocus="onSoftKeyboardFocusChange(true)" />
                 <!-- Trackpad cursor -->
@@ -3795,7 +3796,7 @@
                                     if ((navigator.clipboard != null) && (message.data != deskLastClipboardReceived) && document.hasFocus()) {
                                         deskLastClipboardReceived = message.data;
                                         deskLastClipboardSent = message.data; // prevent echo back to remote
-                                        navigator.clipboard.writeText(message.data).then(function () { }).catch(function (err) { });
+                                        navigator.clipboard.writeText(message.data).then(function () { }).catch(function (err) { console.log(err); if (window.__nightShiftUI) window.__nightShiftUI.notifyClipboardError(); });
                                     }
                                 }
                             } else if ((message.type === 'setclip') && (xxdialogTag === 'clipboard') && (currentNode != null) && (currentNode._id == message.nodeid)) {
@@ -9898,7 +9899,7 @@
             if (desktop == null || desktop.State != 3) return;
             if (desktop.m.getClipboard) {
                 var text = desktop.m.getClipboard();
-                if ((text != null) && (navigator.clipboard != null)) { navigator.clipboard.writeText(text).then(function () { }).catch(function (err) { console.log(err); }) } // Put remote clipboard data into our clipboard
+                if ((text != null) && (navigator.clipboard != null)) { navigator.clipboard.writeText(text).then(function () { }).catch(function (err) { console.log(err); if (window.__nightShiftUI) window.__nightShiftUI.notifyClipboardError(); }) } // Put remote clipboard data into our clipboard
             } else {
                 meshserver.send({ action: 'msg', type: 'getclip', nodeid: currentNode._id, tag: 2 });
             }
@@ -9916,7 +9917,7 @@
                 try {
                     navigator.clipboard.readText().then(function (text) {
                         if (desktop.m.setClipboard) { desktop.m.setClipboard(text); } else { meshserver.send({ action: 'msg', type: 'setclip', nodeid: currentNode._id, data: text }); }
-                    }).catch(function (err) { console.log(err); });
+                    }).catch(function (err) { console.log(err); if (window.__nightShiftUI) window.__nightShiftUI.notifyClipboardError(); });
                 } catch (ex) { console.log(ex); }
             }
             return true;
@@ -12728,11 +12729,17 @@
             for (var mod in ids) { var b = Q(ids[mod]); if (b) b.classList.toggle('armed', !!_mobileModifiers[mod]); }
         }
 
+        function mobileModifiersSupported() {
+            var actions = desktop && desktop.m && desktop.m.KeyAction;
+            return !!(desktop && desktop.m && typeof desktop.m.SendKeyMsgKC === 'function' && actions &&
+                typeof actions.DOWN === 'number' && typeof actions.UP === 'number' && typeof actions.EXDOWN === 'number' && typeof actions.EXUP === 'number');
+        }
+
         function _releaseMobileModifiers() {
             var dm = desktop && desktop.m;
             for (var mod in _mobileModifiers) {
                 if (_mobileModifiers[mod]) {
-                    if (dm) dm.SendKeyMsgKC((mod === 'ctrl' || mod === 'alt') ? dm.KeyAction.EXUP : dm.KeyAction.UP, _modKeyCodes[mod]);
+                    if (mobileModifiersSupported()) dm.SendKeyMsgKC((mod === 'ctrl' || mod === 'alt') ? dm.KeyAction.EXUP : dm.KeyAction.UP, _modKeyCodes[mod]);
                     _mobileModifiers[mod] = false;
                 }
             }
@@ -12740,11 +12747,12 @@
         }
 
         function toggleMobileModifier(mod) {
-            if (!desktop || !desktop.m || !Q('DeskControl').checked) return;
+            if (!mobileModifiersSupported() || !Q('DeskControl').checked || !_modKeyCodes.hasOwnProperty(mod)) return false;
             _mobileModifiers[mod] = !_mobileModifiers[mod];
             var dm = desktop.m, ext = (mod === 'ctrl' || mod === 'alt');
             dm.SendKeyMsgKC(_mobileModifiers[mod] ? (ext ? dm.KeyAction.EXDOWN : dm.KeyAction.DOWN) : (ext ? dm.KeyAction.EXUP : dm.KeyAction.UP), _modKeyCodes[mod]);
             _updateMobileModifierUI();
+            return true;
         }
 
         // Mobile soft-keyboard: focusing #softKeyboard shows the OS keyboard.
@@ -12752,11 +12760,29 @@
         // Mobile keyboards fire 'input' instead of keypress -> SendKeyUnicode.
         var mobileKbdGotKeypress = false;
         var _mobileKbdEnabled = false;
+        var mobileKbdCompositionCommitPending = false;
 
-        function onSoftKeyboardInput(el) {
+        function onSoftKeyboardInput(el, inputEvent) {
+            if (inputEvent && inputEvent.isComposing) return;
+            if (mobileKbdCompositionCommitPending) { el.value = ''; return; }
             if (!desktop || !desktop.m || !Q('DeskControl').checked) { el.value = ''; return; }
             if (mobileKbdGotKeypress) { el.value = ''; return; } // desktop keyboard — already handled by keypress
             var str = el.value; el.value = '';
+            sendMobileKeyboardText(str);
+        }
+
+        function onSoftKeyboardCompositionEnd(el, compositionEvent) {
+            var text = (compositionEvent && typeof compositionEvent.data === 'string') ? compositionEvent.data : el.value;
+            el.value = '';
+            mobileKbdCompositionCommitPending = true;
+            setTimeout(function () {
+                mobileKbdCompositionCommitPending = false;
+                sendMobileKeyboardText(text);
+            }, 0);
+        }
+
+        function sendMobileKeyboardText(str) {
+            if (!desktop || !desktop.m || !Q('DeskControl').checked) return;
             var anyMod = _mobileModifiers.ctrl || _mobileModifiers.shift || _mobileModifiers.alt;
             if (str && desktop.m.SendKeyUnicode) {
                 for (var i = 0; i < str.length; i++) {

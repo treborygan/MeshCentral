@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-11-05T14:21:16.707Z",
+        "reason": "Approved Night Shift Concept B specifies Inter; retain this intentional type choice as scoped design guidance."
+      }
+    ]
+  }
+}
