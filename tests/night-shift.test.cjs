@@ -1436,6 +1436,19 @@ test('portrait remote dock wraps every touch control inside the viewport',()=>{
   assert.match(css,/body\.ns-theme \.ns-dock-secondary \.ns-dock-action \{min-height:44px/,'Secondary remote actions stay touch sized in portrait');
 });
 
+test('Redmi Note 14 Pro+ portrait target uses the complete mobile remote layout',()=>{
+  const physical={width:1220,height:2712},deviceScaleFactor=3;
+  const cssViewport={width:Math.round(physical.width/deviceScaleFactor),height:Math.round(physical.height/deviceScaleFactor)};
+  assert.deepEqual(cssViewport,{width:407,height:904},'The target device dimensions map to an approximately 407x904 CSS-pixel viewport at 3x');
+  assert.ok(cssViewport.width<=900,'The target stays inside the mobile CSS breakpoint');
+  assert.match(js,/\(max-width: 900px\)/,'Mobile controls activate at the target CSS viewport width');
+  assert.match(css,/@media\(max-width:900px\) and \(orientation:portrait\)/,'Portrait-specific reflow applies at the target CSS viewport width');
+  const phone=createMobileHarness(true,false,false);
+  assert.equal(phone.byId.get('ns-mobile-dock').hidden,false,'The complete remote dock is present in portrait');
+  assert.equal(phone.byId.get('ns-dock-more').hidden,true,'Portrait exposes remote actions without requiring an extra expansion step');
+  assert.equal(phone.byId.get('ns-dock-secondary').hidden,false,'Portrait keeps zoom, fullscreen and other secondary controls visible');
+});
+
 test('portrait native remote keyboard and input row wraps within the canvas panel',()=>{
   const rule=css.match(/@media\(max-width:900px\) and \(orientation:portrait\)\s*\{\s*body\.ns-shell-ready\.ns-mobile-remote #deskarea4\s*\{[\s\S]*?body\.ns-shell-ready\.ns-mobile-remote #deskarea4 #deskarea4Icons > span\[role="button"\]\s*\{[\s\S]*?max-width:100%;\s*\}\s*\}/);
   assert.ok(rule,'Portrait remote footer has a targeted responsive rule');
