@@ -2588,3 +2588,103 @@ body.ns-theme #p6title #MainMeshImage {
   }
   body.ns-shell-ready #p18html {overflow-x:auto;overscroll-behavior-x:contain}
 }
+
+/* Keep the native remote keyboard and input-permission controls fully
+   reachable when the portrait canvas is narrower than its inherited row. */
+@media(max-width:900px) and (orientation:portrait) {
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 {
+    display:flex!important;
+    flex-wrap:wrap!important;
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    gap:6px;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 > div:first-child {
+    display:flex!important;
+    flex:1 1 100%;
+    flex-wrap:wrap!important;
+    align-items:center;
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    gap:6px;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #deskkeys {
+    flex:1 1 100%;
+    box-sizing:border-box;
+    width:100%!important;
+    min-width:0;
+    max-width:100%;
+    margin:0!important;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 :is(#DeskWD,#DeskESC,#DeskClip,#DeskType,#DeskSoftKbdBtn) {
+    flex:0 1 auto;
+    min-width:0;
+    max-width:100%;
+    min-height:44px;
+    margin:0!important;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #DeskControlSpan {
+    display:inline-flex!important;
+    align-items:center;
+    flex:0 0 auto;
+    min-height:44px;
+    max-width:100%;
+    margin:0!important;
+    white-space:nowrap;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #DeskControlSpan #DeskControl {
+    float:none;
+    width:20px;
+    height:20px;
+    margin:0 6px 0 0!important;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #DeskControlSpan label {margin:0!important}
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #deskarea4Icons {
+    display:flex!important;
+    flex:1 1 100%;
+    flex-wrap:wrap!important;
+    align-items:center;
+    justify-content:flex-start;
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    margin:0!important;
+    gap:6px;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #DeskMonitorSelectionSpan {
+    flex:1 1 100%;
+    min-width:0;
+    max-width:100%;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #DeskMonitorSelectionSpan :is(select,button,input) {
+    box-sizing:border-box;
+    min-width:0;
+    max-width:100%;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #DeskLatency,
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #DeskTimer {
+    box-sizing:border-box;
+    flex:0 1 70px;
+    min-width:0;
+    max-width:100%;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #DeskToolsButton {
+    min-height:44px;
+    margin:0!important;
+  }
+  body.ns-shell-ready.ns-mobile-remote #deskarea4 #deskarea4Icons > span[role="button"] {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    box-sizing:border-box;
+    flex:0 0 44px;
+    width:44px;
+    min-height:44px;
+    max-width:100%;
+  }
+}

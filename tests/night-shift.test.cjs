@@ -25,6 +25,7 @@ const mobileControls = read('public/scripts/night-shift/mobile-controls.js');
 const nativeCompat = read('public/scripts/night-shift/native-compat.js');
 const shell = read('public/scripts/night-shift/shell.js');
 const sessionsSource = read('public/scripts/night-shift/sessions.js');
+const softwareTimeout = read('public/scripts/night-shift/software-timeout.js');
 
 test('CodeQL workflow grants SARIF upload permission and uses supported actions',()=>{
   const workflow=read('.github/workflows/codeql-analysis.yml');
@@ -1435,6 +1436,20 @@ test('portrait remote dock wraps every touch control inside the viewport',()=>{
   assert.match(css,/body\.ns-theme \.ns-dock-secondary \.ns-dock-action \{min-height:44px/,'Secondary remote actions stay touch sized in portrait');
 });
 
+test('portrait native remote keyboard and input row wraps within the canvas panel',()=>{
+  const rule=css.match(/@media\(max-width:900px\) and \(orientation:portrait\)\s*\{\s*body\.ns-shell-ready\.ns-mobile-remote #deskarea4\s*\{[\s\S]*?body\.ns-shell-ready\.ns-mobile-remote #deskarea4 #deskarea4Icons > span\[role="button"\]\s*\{[\s\S]*?max-width:100%;\s*\}\s*\}/);
+  assert.ok(rule,'Portrait remote footer has a targeted responsive rule');
+  assert.match(rule[0],/body\.ns-shell-ready\.ns-mobile-remote #deskarea4\s*\{[\s\S]*?flex-wrap:wrap!important;[\s\S]*?min-width:0;[\s\S]*?max-width:100%/,'The native footer may wrap without widening the 360px canvas panel');
+  assert.match(rule[0],/body\.ns-shell-ready\.ns-mobile-remote #deskarea4 > div:first-child\s*\{[\s\S]*?flex-wrap:wrap!important;[\s\S]*?width:100%;[\s\S]*?min-width:0/,'The nested native action row wraps within the footer');
+  assert.match(rule[0],/body\.ns-shell-ready\.ns-mobile-remote #deskarea4 #deskkeys\s*\{[\s\S]*?flex:1 1 100%;[\s\S]*?width:100%!important;[\s\S]*?max-width:100%/,'The shortcut selector stays inside the panel');
+  assert.match(rule[0],/body\.ns-shell-ready\.ns-mobile-remote #deskarea4 :is\(#DeskWD,#DeskESC,#DeskClip,#DeskType,#DeskSoftKbdBtn\)\s*\{[\s\S]*?min-height:44px/,'Native keyboard/clipboard/type controls keep touch targets while wrapping');
+  assert.match(rule[0],/body\.ns-shell-ready\.ns-mobile-remote #deskarea4 #deskarea4Icons\s*\{[\s\S]*?flex-wrap:wrap!important;[\s\S]*?width:100%;[\s\S]*?min-width:0;[\s\S]*?max-width:100%/,'The second native status/action row also wraps within the footer width');
+  assert.match(rule[0],/body\.ns-shell-ready\.ns-mobile-remote #deskarea4 #DeskMonitorSelectionSpan\s*\{[\s\S]*?flex:1 1 100%;[\s\S]*?max-width:100%/,'The monitor picker cannot widen the second row');
+  assert.match(rule[0],/body\.ns-shell-ready\.ns-mobile-remote #deskarea4 #deskarea4Icons > span\[role="button"\]\s*\{[\s\S]*?flex:0 0 44px;[\s\S]*?width:44px;[\s\S]*?min-height:44px/,'Native icon actions retain usable touch targets while wrapping');
+  const template=read('views/default3.handlebars');
+  assert.match(template,/id=deskarea4 class="areaFoot d-flex flex-wrap"[\s\S]*?id="deskkeys"[\s\S]*?id="DeskWD"[\s\S]*?id="DeskControlSpan"[\s\S]*?onclick="toggleKvmControl\(\)"[\s\S]*?id="deskarea4Icons"[\s\S]*?id="DeskLatency"[\s\S]*?id=DeskToolsButton/,'Native handlers and both footer rows remain present and are the controls being reflowed');
+});
+
 
 test('Night Shift structural shell uses live DOM data and native navigation', () => {
   const ids = new Map();
@@ -2284,4 +2299,58 @@ test('Software toolbar reflows its nested native controls on narrow screens',()=
   assert.match(software[1],/flex:1 1 100%;[\s\S]*?min-width:0;[\s\S]*?overflow-wrap:anywhere/,'Live status text has a constrained row and cannot widen the page');
   const template=read('views/default3.handlebars');
   assert.match(template,/id="p18toolbar"[\s\S]*?id="p18RefreshBtn"[\s\S]*?id="p18SearchInput"[\s\S]*?id="p18ShowStore"[\s\S]*?id="p18Status"/,'The responsive rule targets the native Software toolbar hierarchy');
+});
+
+test('Software loading timeout releases the native retry guard and yields to native results',()=>{
+  const nativeTemplate = read('views/default3.handlebars');
+  assert.match(nativeTemplate,/var installedAppsLoading = false;/,'the native in-flight flag remains the retry gate');
+  assert.match(nativeTemplate,/id="p18RefreshBtn"[^>]*onclick="loadInstalledApps\(\)"/,'the existing Refresh button keeps its native handler');
+  assert.match(nativeTemplate,/meshserver\.send\(\{ action: 'software', nodeid: currentNode\._id, type: 'installedapps'\}\)/,'retry continues through MeshCentral software transport');
+  const timers = new Map(); let nextTimer = 0; const observers = [];
+  function element(text = '') {
+    return { textContent:text, innerHTML:text, children:[], addEventListener(){}, setAttribute(){},
+      append(child){this.children.push(child);}, replaceChildren(...children){this.children=children;},
+      get firstChild(){return this.children[0] || null;}, removeChild(){this.children.shift();} };
+  }
+  const status = element('Loading desktop apps…'); const content = element('Loading installed software…'); const refresh = element();
+  let retryCalls = 0;
+  refresh.click = () => { retryCalls++; windowState.installedAppsLoading = true; status.textContent = 'Loading desktop apps…'; observerCheck(); };
+  const elements = {p18Status:status,p18html:content,p18RefreshBtn:refresh};
+  const document = {readyState:'complete',getElementById:id=>elements[id] || null};
+  const windowState = {installedAppsLoading:true,installedAppsLoadingType:1,loadInstalledApps:()=>refresh.click(),
+    setTimeout(fn,delay){const id=++nextTimer;timers.set(id,{fn,delay});return id;},clearTimeout(id){timers.delete(id);}};
+  const context = {window:windowState,document,MutationObserver:class {constructor(fn){this.fn=fn;observers.push(this);} observe(){}},
+    setTimeout(fn,delay){const id=++nextTimer;timers.set(id,{fn,delay});return id;},clearTimeout(id){timers.delete(id);}};
+  let observerCheck = () => observers.forEach(observer=>observer.fn());
+  vm.runInNewContext(softwareTimeout,context);
+  assert.ok(observers.length,'the native Software status is observed');
+  const runOnlyTimer = () => {const [id,timer]=timers.entries().next().value;timers.delete(id);timer.fn();return timer.delay;};
+
+  assert.equal(runOnlyTimer(),30000,'a conservative timeout allows slow software enumeration');
+  assert.match(content.textContent,/device agent did not return usable software data/i,'timeout explains the native agent did not return usable data');
+  assert.match(content.textContent,/Refresh/i,'timeout gives a clear retry instruction');
+  assert.equal(windowState.installedAppsLoading,false,'timeout clears only the native in-flight guard');
+  assert.equal(windowState.installedAppsLoadingType,1,'the native request type remains available for a late response');
+  refresh.click();
+  assert.equal(retryCalls,1,'the existing native Refresh button starts a new request');
+  assert.equal(windowState.installedAppsLoading,true,'native retry owns the loading state again');
+
+  for (const result of ['Installed software', 'No installed software found.', 'ERROR: Access denied']) {
+    status.textContent='Loading desktop apps…'; content.textContent='Loading installed software…';
+    windowState.installedAppsLoading=true; windowState.installedAppsLoadingType=1; observerCheck();
+    const active=[...timers.entries()].find(([,timer])=>timer.delay===30000);
+    status.textContent=result; content.textContent=result; observerCheck();
+    assert.equal(timers.has(active[0]),false,'native success, empty, or error status cancels the timeout without replacing the response');
+    assert.equal(content.textContent,result,'completed native response remains authoritative');
+    timers.delete(active[0]);
+  }
+
+  status.textContent='Loading desktop apps…'; content.textContent='Loading installed software…';
+  windowState.installedAppsLoading=true;windowState.installedAppsLoadingType=1;observerCheck();
+  const late=[...timers.entries()].find(([,timer])=>timer.delay===30000);
+  late[1].fn();
+  content.textContent='Native app table (late response)';status.textContent='';observerCheck();
+  assert.equal(content.textContent,'Native app table (late response)','a late native response replaces the timeout message');
+  windowState.installedAppsLoading=false;
+  assert.equal(windowState.installedAppsLoading,false,'late native handler remains able to complete its state');
 });

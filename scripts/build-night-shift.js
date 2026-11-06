@@ -19,6 +19,7 @@ const components = [
   'public/scripts/night-shift/alerts.js',
   'public/scripts/night-shift/pwa.js',
   'public/scripts/night-shift/capabilities.js',
+  'public/scripts/night-shift/software-timeout.js',
   'public/scripts/night-shift/viewer.js',
   'public/scripts/night-shift/server-admin.js'
 ];
