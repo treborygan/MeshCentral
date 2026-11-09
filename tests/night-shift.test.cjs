@@ -1944,6 +1944,13 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.ok(closeArchive,'Background session tabs expose an explicit disconnect action');
   closeArchive.click();
   assert.deepEqual(disconnectedSessions,['node//offline'],'Disconnect delegates to MeshCentral native rights checks');
+  const focusedClose=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close')&&node.dataset.sessionId==='node//offline');
+  focusedClose.focus();
+  delete window.multiDesktop['node//offline'];
+  window.__NightShiftSessions.refresh();
+  const survivingSession=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab'));
+  assert.equal(document.activeElement,survivingSession,'When a focused session closes, focus moves to a surviving session tab');
+  assert.equal(survivingSession.tabIndex,0,'The surviving session tab becomes the sole roving tab stop');
   window.desktop={State:3,contype:1,m:{displays:{'0':'Display 1','1':'Display 2'},SetDisplay:index=>monitorSelections.push(index),SendCompressionLevel:(encoding,quality,scaling,framerate)=>compressionUpdates.push({encoding,quality,scaling,framerate})}};
   window.__NightShiftProfiles.refresh();
   const profilePanel=ids.get('ns-connection-profile');
