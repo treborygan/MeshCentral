@@ -172,3 +172,12 @@ Physical Redmi testing, exact 904×407 landscape acceptance, and real RDP frame/
 ### 2026-11-09 live route retry
 
 The latest authenticated PCRN Desktop accessibility state reports the Agent route and enabled native Agent/RDP Connect controls, with no active session or display. This supersedes the earlier observation of an unavailable route. Computer-use input remained unsafe because its screenshot showed a different Chrome `New tab` surface than the authenticated page represented by the accessibility tree; the attempted click failed before input. The current route is available at the UI level, but live connection, consent, frames, and input remain unverified. Current-head CI and local regression/installer/pinned-source checks pass. Installed 1.3.1 security provenance remains blocked by the two absent reviewed markers. See [the current deployment evidence](night-shift-deployment.md#authenticated-route-and-browser-bridge-retry--2026-11-09).
+
+
+### 2026-11-09 authenticated response retry
+
+A fresh authenticated browser binding verified the original PCRN record from its Mesh Agent Windows 64-bit service details; another inventory record also named PCRN reports Mesh Agent Assistant with Restricted/Desktop Toolbar consent and is a separate device. On the original target, Details Refresh reached `Device details response received.` and Last details update advanced to 4:13:11 PM. Software populated successfully after about 30 seconds, reporting 434/434 desktop applications. These results replace the earlier unverified Details-response and Software-enumeration status for this target.
+
+The same target's Desktop view reports Browser Online, control channel Connected, and Device route Agent. Clicking native Agent Connect left the state Disconnected; WebRTC stayed inactive and no remote session or display became active. No frames or input were verified. The Desktop transport issue remains unresolved; the positive Details and Software results do not explain it. No deployment or service/configuration change was made. PR #4 remains open and draft. Physical Redmi testing, exact responsive viewports, remaining feature/role acceptance, and the read-only production security-provenance gate remain open. See [the deployment evidence](night-shift-deployment.md#authenticated-pcrn-response-and-session-retry--2026-11-09).
+
+This entry supersedes the preceding route-retry and acceptance-matrix statements for Details and Software, and corrects the earlier browser-bridge mismatch as resolved. The remote session itself remains unestablished.
