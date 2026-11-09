@@ -115,6 +115,28 @@ try {
   } finally { [IO.File]::WriteAllText($manifestFile, $manifestText) }
   Write-Output 'ROLLBACK_DUPLICATE_MANIFEST_PRECHECK=PASS'
 
+  # Fail the second apply after CSS has changed. The rollback transaction
+  # must compensate CSS and leave the current JavaScript untouched.
+  $interrupted = $false
+  try {
+    & {
+      function Copy-Item {
+        param([string]$LiteralPath, [string]$Destination, [switch]$Force)
+        if ($Destination -eq $installedJs -and [IO.Path]::GetFileName($LiteralPath) -eq 'restore-custom.js') {
+          throw 'Injected second-asset restore failure'
+        }
+        Microsoft.PowerShell.Management\Copy-Item -LiteralPath $LiteralPath -Destination $Destination -Force:$Force
+      }
+      & $installer -MeshRoot $existingRoot -RollbackFrom $backup.FullName -Confirm:$false | Out-Null
+    }
+  } catch {
+    if ($_.ToString() -like '*Injected second-asset restore failure*') { $interrupted = $true } else { throw }
+  }
+  if (-not $interrupted) { throw 'The interrupted second-asset restore did not fail as expected.' }
+  Assert-Equal ([IO.File]::ReadAllText($installedCss)) $currentCss 'Interrupted restore did not compensate CSS'
+  Assert-Equal ([IO.File]::ReadAllText($installedJs)) $currentJs 'Interrupted restore changed JavaScript'
+  Write-Output 'INTERRUPTED_ROLLBACK_RECOVERY=PASS'
+
   & $installer -MeshRoot $existingRoot -RollbackFrom $backup.FullName -Confirm:$false | Out-Null
   Assert-Equal ([IO.File]::ReadAllText($installedCss)) $oldCss 'Verified rollback did not restore original CSS'
   Assert-Equal ([IO.File]::ReadAllText($installedJs)) $oldJs 'Verified rollback did not restore original JavaScript'
