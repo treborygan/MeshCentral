@@ -1597,12 +1597,12 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
       if(selector==='*')return this.children.flatMap(child=>[child,...child.querySelectorAll('*')]);
       return [];
     }
-    focus(){this.focused=true;}
+    focus(){this.focused=true;document.activeElement=this;}
     contains(node){for(let current=node;current;current=current.parentNode)if(current===this)return true;return false;}
   }
   const body=new MockElement('body');
   const document={
-    body,documentElement:new MockElement('html'),readyState:'complete',visibilityState:'visible',
+    body,documentElement:new MockElement('html'),readyState:'complete',visibilityState:'visible',activeElement:null,
     createElement:tag=>new MockElement(tag),
     getElementById:id=>ids.get(id)||null,
     querySelector:()=>null,querySelectorAll:()=>[],events:{},addEventListener(name,handler){(this.events[name]||=[]).push(handler);}
@@ -1924,8 +1924,20 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.doesNotMatch(sessionsSource,/panel\.replaceChildren\(/,'Rerendering leaves the live region mounted for reliable announcements');
   assert.match(sessionAnnouncement.textContent,/2 remote sessions\./,'Newly opened sessions are announced after the initial render');
   window.multiDesktop['node//offline'].State=3;
+  currentSessionTab.focus();
   window.__NightShiftSessions.refresh();
+  const refreshedCurrentTab=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab')&&node.getAttribute('aria-current')==='true');
+  assert.notEqual(refreshedCurrentTab,currentSessionTab,'A session update rebuilds the session tab element');
+  assert.equal(document.activeElement,refreshedCurrentTab,'Session-tab focus is restored after the native state rerender');
+  assert.equal(refreshedCurrentTab.tabIndex,0,'The restored session remains the single roving tab stop');
   assert.match(sessionAnnouncement.textContent,/Archive: Connected\./,'A background session state change names the session that changed');
+  const archiveClose=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close')&&node.dataset.sessionId==='node//offline');
+  archiveClose.focus();
+  window.multiDesktop['node//offline'].State=4;
+  window.__NightShiftSessions.refresh();
+  const refreshedArchiveClose=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close')&&node.dataset.sessionId==='node//offline');
+  assert.equal(document.activeElement,refreshedArchiveClose,'Disconnect-action focus is restored after a session-state rerender');
+  assert.equal(refreshedArchiveClose.tabIndex,0,'The restored disconnect action remains keyboard reachable');
   archiveTab.click();
   assert.equal(opened.at(-1),'node//offline','Switching a tab delegates to native gotoDevice permissions and routing');
   const closeArchive=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close'));

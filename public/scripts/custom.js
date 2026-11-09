@@ -1786,6 +1786,14 @@
     if (!page || !area) return;
     build();
     if (!panel) return;
+    var focused = document.activeElement;
+    var restoreFocus = null;
+    if (focused && panel.contains && panel.contains(focused) && focused.dataset && focused.dataset.sessionId) {
+      restoreFocus = {
+        id:focused.dataset.sessionId,
+        close:!!(focused.classList && focused.classList.contains('ns-session-tab-close'))
+      };
+    }
     var open = sessions();
     Array.prototype.slice.call(panel.children || []).forEach(function (child) {
       if (child !== announcement) panel.removeChild(child);
@@ -1840,6 +1848,7 @@
         var close = create('button','ns-session-tab-close','×');
         close.type = 'button';
         close.tabIndex = -1;
+        close.dataset.sessionId = entry.id;
         close.setAttribute('aria-label','Disconnect ' + name);
         close.title = 'Disconnect ' + name;
         close.addEventListener('click',function (event) {
@@ -1851,6 +1860,25 @@
       }
     });
     if (announcement.parentNode !== panel) panel.append(announcement);
+    if (restoreFocus) {
+      var controls = Array.prototype.filter.call(panel.children,function (child) {
+        return child.classList && (child.classList.contains('ns-session-tab') || child.classList.contains('ns-session-tab-close'));
+      });
+      var target = controls.find(function (control) {
+        return control.dataset.sessionId === restoreFocus.id &&
+          control.classList.contains(restoreFocus.close ? 'ns-session-tab-close' : 'ns-session-tab');
+      });
+      if (!target) target = controls.find(function (control) {
+        return control.dataset.sessionId === restoreFocus.id && control.classList.contains('ns-session-tab');
+      });
+      if (!target) target = controls.find(function (control) {
+        return control.classList.contains('ns-session-tab') && control.getAttribute('aria-current') === 'true';
+      }) || controls.find(function (control) { return control.classList.contains('ns-session-tab'); });
+      if (target) {
+        controls.forEach(function (control) { control.tabIndex = control === target ? 0 : -1; });
+        target.focus();
+      }
+    }
   }
   function schedule() {
     if (queued) return;
