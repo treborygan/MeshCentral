@@ -213,3 +213,7 @@ On the exact original PCRN Windows 64-bit Mesh Agent record, native Agent Connec
 ### 2026-11-09 Details refresh replacement lifecycle
 
 Added a regression case for a replaced Details title/toolbar: delegated native Refresh clicks attach status feedback to the new Details title, repeated clicks keep one timeout, and a late response for the previous device cannot complete the current device's request. `health.js` now recreates its status element when the title moves to a replacement subtree. The native refresh/update functions remain intact. Local bundle, syntax, all 97 tests, installer/rollback fixture, pinned-source reproducibility/security fixture, and `git diff --check` pass. Local and hosted checks passed; candidate `e54f696c35bd436671f24ccc0d150c8e5edcfe27` was installed to the two frontend override assets and live Details response feedback was verified. See the deployment record for hashes and backup evidence.
+
+### 2026-11-09 native desktop retry
+
+A new native MeshAgent session connected immediately (`Connected, WebRTC`) and showed desktop content in a capture at 11 seconds. At 41 seconds the same desktop image remained visible, so frame continuity is still unverified; Night Shift's diagnostic labels remained conservative. Native Disconnect returned the session to Disconnected with no active session/display. Console history was empty and counters (2 errors, 3 warnings) could not be attributed. No remote input or source/production change occurred. See [deployment evidence](night-shift-deployment.md#native-desktop-retry--2026-11-09-1824-0100).
