@@ -2249,7 +2249,7 @@
     if (!node) {
       lastNodeId = null; latestSample = null;
       if (sampleTimer !== null) { clearTimeout(sampleTimer); sampleTimer = null; }
-      if (pendingRefreshNode !== null) {
+      if (pendingRefreshNode !== null || refreshStatus) {
         pendingRefreshNode = null;
         if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
         setRefreshStatus('');
@@ -2257,7 +2257,7 @@
       Object.keys(values).forEach(function (key) { values[key].textContent = 'Unavailable'; }); return;
     }
     if (lastNodeId !== node._id) {
-      if (pendingRefreshNode !== null && pendingRefreshNode !== node._id) {
+      if ((pendingRefreshNode !== null && pendingRefreshNode !== node._id) || (lastNodeId !== null && refreshStatus)) {
         pendingRefreshNode = null;
         if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
         setRefreshStatus('');
@@ -2339,7 +2339,7 @@
   }
   function setRefreshStatus(text) {
     var title = $('p17title');
-    if (!refreshStatus && title && title.parentNode) {
+    if (title && title.parentNode && (!refreshStatus || refreshStatus.parentNode !== title.parentNode)) {
       refreshStatus = create('div', 'ns-health-refresh-status');
       refreshStatus.id = 'ns-details-refresh-status';
       refreshStatus.setAttribute('role', 'status');

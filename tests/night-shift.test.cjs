@@ -433,7 +433,7 @@ test('device health expires CPU and memory values after native graph samples sto
 
 test('native device-details refresh shows pending, timeout, and response feedback without replacing its handler',()=>{
   assert.match(css,/\.ns-health-refresh-status\{[^}]*font-size:\.82rem/,'The live response hint has a compact visible treatment');
-  const ids=new Map(),timers=new Map(),calls=[];let nextTimer=0;
+  const ids=new Map(),timers=new Map(),calls=[],documentEvents={};let nextTimer=0,activeControl;
   class Element {
     constructor(){this.children=[];this.attributes={};this.events={};this.parentNode=null;this.textContent='';this.hidden=false;}
     set id(value){this._id=value;ids.set(value,this);} get id(){return this._id||'';}
@@ -445,11 +445,11 @@ test('native device-details refresh shows pending, timeout, and response feedbac
   }
   const parent=new Element(),title=new Element();title.id='p17title';parent.append(title);
   const host=new Element();host.id='p17info';parent.append(host);const page=new Element();page.id='p17';
-  const refreshControl=new Element();
+  const refreshControl=new Element();activeControl=refreshControl;
   const nativeRefresh=function(){calls.push('native refresh');};
   const nativeUpdate=function(node){calls.push(['native update',node._id]);};
   const window={currentNode:{_id:'node/a',conn:1},refreshDetails:nativeRefresh,updateDeviceDetails:nativeUpdate,addEventListener(){}};
-  const document={readyState:'complete',getElementById:id=>ids.get(id)||null,querySelector:selector=>selector.includes('Refresh details information')?refreshControl:null,addEventListener(){},createElement:()=>new Element()};
+  const document={readyState:'complete',getElementById:id=>ids.get(id)||null,querySelector:selector=>selector.includes('Refresh details information')?activeControl:null,addEventListener:(name,fn)=>{(documentEvents[name]||=[]).push(fn);},createElement:()=>new Element()};
   const setTimeout=(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay});return id;};
   const clearTimeout=id=>timers.delete(id);
   vm.runInNewContext(health,{window,document,Date,isFinite,setTimeout,clearTimeout},{timeout:1000});
@@ -465,6 +465,29 @@ test('native device-details refresh shows pending, timeout, and response feedbac
   window.updateDeviceDetails(window.currentNode,{windows:{}});
   assert.deepEqual(calls,['native refresh',['native update','node/a']]);
   assert.equal(status.textContent,'Device details response received.','A native details update is the only success signal');
+
+  // MeshCentral can replace the page title and native toolbar when changing
+  // devices without reloading this script. The delegated refresh hook should
+  // bind the new control, and feedback must be attached to the new title.
+  const replacementParent=new Element(),replacementTitle=new Element();replacementTitle.id='p17title';replacementParent.append(replacementTitle);
+  const replacementControl=new Element();activeControl=replacementControl;window.currentNode={_id:'node/b',conn:1};
+  window.__NightShiftHealth.refresh();
+  assert.equal(ids.get('ns-details-refresh-status').textContent,'','Changing devices clears the previous device response message');
+  assert.equal(ids.get('ns-details-refresh-status').parentNode,replacementParent,'Route-change feedback is attached to the replacement title');
+  const documentClick=documentEvents.click[0];
+  const dispatchReplacementClick=()=>documentClick({target:{closest(selector){return selector.includes('Refresh details information')?replacementControl:null;}}});
+  dispatchReplacementClick();
+  const replacementStatus=ids.get('ns-details-refresh-status');
+  assert.equal(replacementStatus.textContent,'Refreshing device details…','A replacement native toolbar still starts feedback');
+  assert.equal(replacementStatus.parentNode,replacementParent,'Feedback is moved to the replacement details title');
+  const refreshTimers=[...timers.entries()].filter(([,timer])=>timer.delay===12000);
+  assert.equal(refreshTimers.length,1,'The replacement request has one active timeout');
+  window.updateDeviceDetails({_id:'node/a'},{windows:{}});
+  assert.equal(replacementStatus.textContent,'Refreshing device details…','A late response from the previous device cannot complete the new request');
+  dispatchReplacementClick();
+  assert.equal([...timers.values()].filter(timer=>timer.delay===12000).length,1,'Repeated refresh replaces rather than duplicates its timer');
+  window.updateDeviceDetails(window.currentNode,{windows:{}});
+  assert.equal(replacementStatus.textContent,'Device details response received.','The current device native response completes the replacement request');
 });
 
 test('elapsed uptime formatting is deterministic and rejects future boot dates',()=>{
