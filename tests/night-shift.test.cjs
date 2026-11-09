@@ -475,6 +475,12 @@ test('native device-details refresh shows pending, timeout, and response feedbac
   assert.equal(ids.get('ns-details-refresh-status').textContent,'','Changing devices clears the previous device response message');
   assert.equal(ids.get('ns-details-refresh-status').parentNode,replacementParent,'Route-change feedback is attached to the replacement title');
   const documentClick=documentEvents.click[0];
+  // A reordered toolbar may put an unrelated action first. Positional
+  // guessing must never report a refresh that the user did not request.
+  const otherAction={closest(selector){return selector==='#devListToolbarViewIcons3'?{firstElementChild:this}:null;}};
+  documentClick({target:otherAction});
+  assert.equal(ids.get('ns-details-refresh-status').textContent,'','An unrelated first toolbar action does not start refresh feedback');
+  assert.equal([...timers.values()].filter(timer=>timer.delay===12000).length,0,'An unrelated toolbar click schedules no refresh timeout');
   const dispatchReplacementClick=()=>documentClick({target:{closest(selector){return selector.includes('Refresh details information')?replacementControl:null;}}});
   dispatchReplacementClick();
   const replacementStatus=ids.get('ns-details-refresh-status');
@@ -922,17 +928,21 @@ test('alert delivery failures retain the in-page notice and explain browser fall
 
 test('fleet connection alerts observe native device updates only for opted-in devices',()=>{
   const alertsSource=read('public/scripts/night-shift/alerts.js'),notifications=[],nativeCalls=[];
-  const nodes=[{_id:'node/a',name:'Allowed',conn:0},{_id:'node/b',name:'Muted',conn:0}];
+  const nodes=[{_id:'node/a',name:'Allowed',conn:0},{_id:'node/b',name:'Muted',conn:0},{_id:'node/c',name:'By ID',conn:0}];
   class Notification { constructor(title,options){notifications.push({title,options});} }
   Notification.permission='granted';
-  const window={nodes,Notification,getstore:key=>key==='nsAlerts.node/a'?'{"e":1}':'{}',updateDeviceViewDevice(node){nativeCalls.push(node._id);}};
+  const window={nodes,Notification,getstore:key=>(key==='nsAlerts.node/a'||key==='nsAlerts.node/c')?'{"e":1}':'{}',updateDeviceViewDevice(node){nativeCalls.push(typeof node==='string'?node:node._id);}};
   const document={readyState:'complete',getElementById(){return null;},addEventListener(){}};
   vm.runInNewContext(alertsSource,{window,document,console,Date,MutationObserver:undefined},{timeout:1000});
   nodes[0].conn=1;window.updateDeviceViewDevice(nodes[0]);
   nodes[1].conn=1;window.updateDeviceViewDevice(nodes[1]);
-  assert.equal(notifications.length,1,'Only a device with its own saved alert preference produces a notification');
+  nodes[2].conn=1;window.updateDeviceViewDevice('node/c');
+  window.updateDeviceViewDevice('node/c');
+  window.updateDeviceViewDevice('node/missing');
+  assert.equal(notifications.length,2,'Only opted-in devices alert; unchanged states and unknown node IDs are ignored');
   assert.match(notifications[0].options.body,/Allowed connection: agent/);
-  assert.deepEqual(nativeCalls,['node/a','node/b'],'The original MeshCentral view updater still runs for both devices');
+  assert.match(notifications[1].options.body,/By ID connection: agent/,'Native node-ID updates are resolved before alert evaluation');
+  assert.deepEqual(nativeCalls,['node/a','node/b','node/c','node/c','node/missing'],'All native calls retain their original object or string argument');
 });
 
 test('PWA install shortcut uses native browser installability and user gesture',()=>{
@@ -1951,6 +1961,14 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   const survivingSession=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab'));
   assert.equal(document.activeElement,survivingSession,'When a focused session closes, focus moves to a surviving session tab');
   assert.equal(survivingSession.tabIndex,0,'The surviving session tab becomes the sole roving tab stop');
+  survivingSession.focus();
+  window.currentNode=null;window.desktop=null;
+  delete window.multiDesktop['node//online'];
+  window.__NightShiftSessions.refresh();
+  assert.equal(sessionTabs.hidden,true,'The empty session toolbar is hidden after the final session closes');
+  assert.equal(document.activeElement,nativeConnect,'Focus transfers to an available native connection action after final-session removal');
+  window.currentNode=window.nodes[0];window.multiDesktop['node//online']={State:3,contype:1};
+  window.__NightShiftSessions.refresh();
   window.desktop={State:3,contype:1,m:{displays:{'0':'Display 1','1':'Display 2'},SetDisplay:index=>monitorSelections.push(index),SendCompressionLevel:(encoding,quality,scaling,framerate)=>compressionUpdates.push({encoding,quality,scaling,framerate})}};
   window.__NightShiftProfiles.refresh();
   const profilePanel=ids.get('ns-connection-profile');
