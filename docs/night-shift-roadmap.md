@@ -165,4 +165,6 @@ Hosted Night Shift UI checks (run 86) and CodeQL (run 135) passed for the preced
 
 At source head `f3769efe5ca666bac13782f957c7fb6a5e6612fe`, hosted Night Shift UI checks (run 87) and CodeQL (run 137) passed. The CSS/JS frontend override was installed through the backup-first script; source, installed and loopback-served hashes match. The app needs a cache-bypassing browser reload before live feedback acceptance. Device session/frame/input acceptance and physical Redmi testing remain open; no remote session was started.
 
+The authenticated Software route waited 31 seconds, then displayed `No response` and stated that the device agent returned no usable software data. No retry was sent. This confirms the loading timeout reaches its explicit no-response state; it does not establish why the agent response is missing.
+
 Physical Redmi testing, exact 904×407 landscape acceptance, and real RDP frame/input acceptance remain open. No remote session was started and no installation or service change was made. See [the deployment record](night-shift-deployment.md#authenticated-browser-acceptance-recheck--2026-11-09) for the live findings.
