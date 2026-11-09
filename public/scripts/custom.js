@@ -1781,6 +1781,21 @@
     var node = findNode(id);
     if (node && typeof window.toggleKvmDevice === 'function') window.toggleKvmDevice(node);
   }
+  function focusAfterLastSession() {
+    // The final tab may be removed while it owns focus. Prefer the native
+    // reconnect action, then a persistent page navigation/workspace target.
+    ['connectbutton1','connectbutton1r','connectbutton1h','LeftMenuMyDevices','ns-search-trigger','column_l'].some(function (id) {
+      var target = $(id);
+      if (!target || typeof target.focus !== 'function' || target.disabled || target.hidden) return false;
+      for (var parent = target.parentElement || target.parentNode; parent && parent.nodeType === 1; parent = parent.parentElement || parent.parentNode) {
+        if (parent.hidden) return false;
+      }
+      if (target.getClientRects && !target.getClientRects().length) return false;
+      if (id === 'column_l' && typeof target.setAttribute === 'function') target.setAttribute('tabindex','-1');
+      target.focus();
+      return true;
+    });
+  }
   function render() {
     var page = $('p11'), area = $('deskarea0');
     if (!page || !area) return;
@@ -1825,6 +1840,7 @@
     previousSessions = snapshot;
     if (!open.length) {
       if (announcement.parentNode !== panel) panel.append(announcement);
+      if (restoreFocus) focusAfterLastSession();
       return;
     }
     var heading = create('span','ns-session-tabs-heading','Sessions');
@@ -2407,7 +2423,8 @@
     }, 12000);
   }
   function installRefreshFeedback() {
-    var selector = '#devListToolbarViewIcons3 [title="Refresh details information."]';
+    // Identify refresh semantically; never infer it from toolbar position.
+    var selector = '#devListToolbarViewIcons3 [title="Refresh details information."], #devListToolbarViewIcons3 [onclick*="refreshDetails"]';
     var control = typeof document.querySelector === 'function' ? document.querySelector(selector) : null;
     if (control && !control.__nightShiftRefreshFeedback) {
       control.addEventListener('click', beginDetailsRefreshFeedback, true);
@@ -2419,14 +2436,6 @@
       document.addEventListener('click', function (event) {
         var target = event.target;
         var delegatedControl = target && typeof target.closest === 'function' ? target.closest(selector) : null;
-        if (!delegatedControl && target && typeof target.closest === 'function') {
-          // Some toolbar renderers can replace the original labeled child.
-          // The first toolbar icon is the refresh action, so recognize clicks
-          // anywhere inside that rendered icon if its label no longer matches.
-          var toolbar = target.closest('#devListToolbarViewIcons3');
-          var firstControl = toolbar && toolbar.firstElementChild;
-          if (firstControl && (firstControl === target || firstControl.contains(target))) delegatedControl = firstControl;
-        }
         if (!delegatedControl || delegatedControl.__nightShiftRefreshFeedback) return;
         beginDetailsRefreshFeedback();
       }, true);
@@ -3122,11 +3131,18 @@
       if (node && typeof node._id === 'string') fleetStates[node._id] = state(node);
     });
   }
+  function resolveFleetNode(value) {
+    var id = typeof value === 'string' ? value : value && value._id;
+    if (typeof id !== 'string' || !Array.isArray(window.nodes)) return null;
+    // Only track devices in MeshCentral's currently authorized inventory.
+    return window.nodes.find(function (node) { return node && node._id === id; }) || null;
+  }
   function installFleetConnectionHook() {
     var nativeUpdate = window.updateDeviceViewDevice;
     if (fleetHookInstalled || typeof nativeUpdate !== 'function') return;
-    window.updateDeviceViewDevice = function (node) {
-      if (node && typeof node._id === 'string') {
+    window.updateDeviceViewDevice = function (nodeRef) {
+      var node = resolveFleetNode(nodeRef);
+      if (node) {
         var current = state(node), previous = fleetStates[node._id];
         fleetStates[node._id] = current;
         if (previous !== undefined && previous !== 'unknown' && previous !== current) {
