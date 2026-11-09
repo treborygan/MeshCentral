@@ -224,9 +224,9 @@
         var target = event.target;
         var delegatedControl = target && typeof target.closest === 'function' ? target.closest(selector) : null;
         if (!delegatedControl && target && typeof target.closest === 'function') {
-          // Font Awesome may replace the native <i> with an SVG and move its
-          // title/handler attributes. The first toolbar icon is the refresh
-          // action, so recognize clicks anywhere inside that rendered icon.
+          // Some toolbar renderers can replace the original labeled child.
+          // The first toolbar icon is the refresh action, so recognize clicks
+          // anywhere inside that rendered icon if its label no longer matches.
           var toolbar = target.closest('#devListToolbarViewIcons3');
           var firstControl = toolbar && toolbar.firstElementChild;
           if (firstControl && (firstControl === target || firstControl.contains(target))) delegatedControl = firstControl;
