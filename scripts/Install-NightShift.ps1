@@ -51,27 +51,114 @@ if ($RollbackFrom) {
   $manifestFile = Join-Path $path 'manifest.json'
   if (-not (Test-Path -LiteralPath $manifestFile -PathType Leaf)) { throw 'Rollback manifest missing.' }
   $manifest = Get-Content -LiteralPath $manifestFile -Raw | ConvertFrom-Json
+  if ($manifest.schema -ne 1 -or @($manifest.files).Count -ne $assets.Count) {
+    throw 'Rollback manifest must contain exactly two version-1 web overrides.'
+  }
+
+  # Validate every entry and digest before altering either live override.
+  $plan = @{}
+  $allow = @('styles\custom.css','scripts\custom.js')
   foreach ($entry in $manifest.files) {
-    if ($entry.relative -notin @('styles\custom.css','scripts\custom.js')) { throw 'Unexpected path in backup manifest.' }
-    $dest = Join-Path $targetBase $entry.relative
-    if ($PSCmdlet.ShouldProcess($dest, 'Restore original web override')) {
-      if ($entry.existed) {
-        $original = Join-Path $path $entry.relative
-        if (-not (Test-Path -LiteralPath $original -PathType Leaf)) { throw "Original backup missing: $original" }
-        New-Item -ItemType Directory -Force -Path (Split-Path -Parent $dest) | Out-Null
-        Copy-Item -LiteralPath $original -Destination $dest -Force
-      } else {
-        Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue
+    if ($entry.relative -notin $allow -or $plan.ContainsKey([string]$entry.relative)) {
+      throw 'Rollback manifest contains an unexpected or duplicate asset.'
+    }
+    if ($entry.existed -isnot [bool]) { throw 'Rollback manifest has an invalid existed flag.' }
+    $source = Join-Path $path $entry.relative
+    if ($entry.existed) {
+      if ($entry.sha256 -isnot [string] -or $entry.sha256 -notmatch '^[0-9a-fA-F]{64}$') {
+        throw "Rollback manifest is missing a valid digest for $($entry.relative)."
+      }
+      if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
+        throw "Original backup missing: $source"
+      }
+      if ((Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -ne $entry.sha256) {
+        throw "Original backup failed SHA-256 verification: $source"
+      }
+    } elseif ($null -ne $entry.sha256) {
+      throw "New override has an unexpected backup digest: $($entry.relative)"
+    }
+    $plan[[string]$entry.relative] = @{ Existed = [bool]$entry.existed; Source = $source; Sha256 = $entry.sha256 }
+  }
+  if ($plan.Count -ne $assets.Count) { throw 'Rollback manifest is missing a required asset.' }
+  if (-not $PSCmdlet.ShouldProcess($targetBase, 'Restore both Night Shift web overrides')) { return }
+
+  # Prepare both replacements and a compensating snapshot of each current file.
+  # An error while preparing the second file leaves both live files untouched.
+  $transaction = Join-Path $backupsDir ('.rollback-transaction-' + [guid]::NewGuid().ToString('N'))
+  try {
+    New-Item -ItemType Directory -Path $transaction -Force | Out-Null
+    $restore = @()
+    foreach ($asset in $assets) {
+      $relative = Join-Path $asset.Directory $asset.Name
+      $target = Join-Path $targetBase $relative
+      if ((Test-Path -LiteralPath $target) -and -not (Test-Path -LiteralPath $target -PathType Leaf)) {
+        throw "Rollback target is not a regular file: $target"
+      }
+      $wasPresent = Test-Path -LiteralPath $target -PathType Leaf
+      $previous = Join-Path $transaction ('previous-' + $asset.Name)
+      $previousHash = $null
+      if ($wasPresent) {
+        Copy-Item -LiteralPath $target -Destination $previous -Force
+        $previousHash = (Get-FileHash -LiteralPath $previous -Algorithm SHA256).Hash
+      }
+      $expected = $plan[$relative]
+      $staged = Join-Path $transaction ('restore-' + $asset.Name)
+      if ($expected.Existed) {
+        Copy-Item -LiteralPath $expected.Source -Destination $staged -Force
+        if ((Get-FileHash -LiteralPath $staged -Algorithm SHA256).Hash -ne $expected.Sha256) {
+          throw "Staged rollback asset failed SHA-256 verification: $relative"
+        }
+      }
+      $restore += [pscustomobject]@{
+        Target = $target; WasPresent = $wasPresent; Previous = $previous
+        PreviousHash = $previousHash; Existed = $expected.Existed
+        Stage = $staged; ExpectedHash = $expected.Sha256
       }
     }
+
+    $changed = @()
+    try {
+      foreach ($entry in $restore) {
+        $changed += $entry
+        if ($entry.Existed) {
+          New-Item -ItemType Directory -Force -Path (Split-Path -Parent $entry.Target) | Out-Null
+          Copy-Item -LiteralPath $entry.Stage -Destination $entry.Target -Force
+          if ((Get-FileHash -LiteralPath $entry.Target -Algorithm SHA256).Hash -ne $entry.ExpectedHash) {
+            throw "Restored web override failed verification: $($entry.Target)"
+          }
+        } elseif (Test-Path -LiteralPath $entry.Target -PathType Leaf) {
+          Remove-Item -LiteralPath $entry.Target -Force
+        }
+      }
+    } catch {
+      $originalError = $_
+      $recoveryErrors = @()
+      foreach ($entry in $changed) {
+        try {
+          if ($entry.WasPresent) {
+            Copy-Item -LiteralPath $entry.Previous -Destination $entry.Target -Force
+            if ((Get-FileHash -LiteralPath $entry.Target -Algorithm SHA256).Hash -ne $entry.PreviousHash) {
+              throw 'Current-file recovery SHA-256 mismatch.'
+            }
+          } elseif (Test-Path -LiteralPath $entry.Target -PathType Leaf) {
+            Remove-Item -LiteralPath $entry.Target -Force
+          }
+        } catch { $recoveryErrors += "$($entry.Target): $_" }
+      }
+      if ($recoveryErrors.Count) {
+        throw "Rollback failed and current-file recovery was incomplete: $($recoveryErrors -join '; '). Original error: $originalError"
+      }
+      throw $originalError
+    }
+  } finally {
+    if (Test-Path -LiteralPath $transaction -PathType Container) {
+      Remove-Item -LiteralPath $transaction -Recurse -Force
+    }
   }
-  if (-not $WhatIfPreference) {
-    Write-Host "Night Shift overrides rolled back from: $path"
-    Write-Host 'Refresh browser cache to see the restored design.'
-  }
+  Write-Host "Night Shift overrides rolled back from: $path"
+  Write-Host 'Refresh browser cache to see the restored design.'
   return
 }
-
 $checked = @()
 foreach ($asset in $assets) {
   $p = Get-AssetPaths $asset
