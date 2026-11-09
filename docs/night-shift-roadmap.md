@@ -205,3 +205,7 @@ At that earlier checkpoint, PR #4 was at `1581bb0cf567eb742a76cec3090b274ff3af64
 ### 2026-11-09 PR and session-state retry
 
 The current PR #4 head is `cd07ce275bc4b70d6d15e39fffb9753bbb8c9e97` (documentation-only commits after runtime head `4565c7aa08d769bd6e34e0df16cba55b156e2a64`). A fresh GitHub status snapshot reports the Night Shift UI workflow and CodeQL checks successful. In the authenticated Devices workspace, four live inventory records remained exposed in accessibility state and no active session tab/Desktop view was present. This does not establish the prior delayed session's frame continuity or a specific disconnect transition. No device was opened or connected. See [the deployment record](night-shift-deployment.md#pr-and-session-state-retry--2026-11-09).
+
+### 2026-11-09 original Agent desktop retry
+
+On the exact original PCRN Windows 64-bit Mesh Agent record, native Agent Connect reached Connected immediately and screenshots showed the desktop at approximately 1 and 24 seconds. No remote input was sent. Night Shift's diagnostic labels stayed conservative (`WebRTC Not active`; canvas present, frames unverified), so the captures do not prove continuous frame delivery or establish why that label differs from native `Connected, WebRTC`. The native Disconnect control returned the route to Disconnected with no active session/display. The prior startup delay did not recur and remains unexplained. See [the detailed deployment evidence](night-shift-deployment.md#original-agent-desktop-retry--2026-11-09-1743-0100).
