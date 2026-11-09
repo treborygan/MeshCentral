@@ -794,3 +794,7 @@ No source, installed frontend, production service, backend, agent, or security c
 ## Production security provenance recheck — 2026-11-09
 
 The installed MeshCentral 1.3.1 lockfile tarball integrity and five audited file byte-matches verified again. `MESHRIGHT_NOFILES` and `force2factorPending` remain absent, so the production security-provenance gate is still blocked. The Nov 4 pinned candidate includes the Nov 2 file-download permission patch, but it predates upstream Nov 7's `compression` 1.8.2 CVE-2026-87776 fix and the Nov 9 server/agent command-rights checks. The existing Nov 4 candidate must be refreshed and its dependency/security diff reviewed before any backend replacement; no production package or configuration change was made. See [the pinned-source security record](night-shift-pinned-source-build.md#production-provenance-and-upstream-delta-recheck--2026-11-09-1658-0100).
+
+## Authenticated tablet layout check — 2026-11-09 17:03 +01:00
+
+On the signed-in live Devices workspace, Chrome's iPad Pro 13 preset rendered at 1032×1376 portrait and 1376×1032 after rotation. The portrait view retained the desktop navigation rail and showed a three-column inventory grid; landscape expanded the grid and kept workspace shortcuts, filters and inventory controls visible. No obvious horizontal page overflow appeared in either screenshot. This was browser emulation, not physical iPad hardware. No device was selected, no session was active, and no device action was taken. Other tablet models and physical tablet acceptance remain open.
