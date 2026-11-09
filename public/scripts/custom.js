@@ -1561,18 +1561,26 @@
     if (!desktop) return 'No active session';
     var transport = desktop.contype === 1 ? 'MeshAgent desktop' :
       (desktop.contype === 2 ? 'Intel AMT KVM' : (desktop.contype === 4 ? 'Browser RDP' : 'Native transport'));
-    var channel = window.webRtcDesktop && window.webRtcDesktop.webchannel;
+    var channel = desktop.webchannel;
     if (desktop.webRtcActive && channel && channel.readyState === 'open') transport += ' · WebRTC';
     var state = Number.isInteger(desktop.State) ? desktop.State : desktop.state;
     return transport + ' · ' + (stateNames[state] || 'State unavailable');
   }
   function webRtcStatus() {
-    var session = window.webRtcDesktop;
-    if (!session) return lastWebRtcFailure ? 'ICE ' + lastWebRtcFailure.state + ' · link reset by MeshCentral' : 'Not active';
-    var peer = session.webrtc, channel = session.webchannel, parts = [];
-    if (peer && typeof peer.iceConnectionState === 'string') parts.push('ICE ' + peer.iceConnectionState);
-    if (channel && typeof channel.readyState === 'string') parts.push('data channel ' + channel.readyState);
-    return parts.length ? parts.join(' · ') : 'Negotiating';
+    var desktop = window.desktop, softKvm = window.webRtcDesktop, links = [];
+    function describe(session, label, active) {
+      if (!session) return;
+      var peer = session.webrtc, channel = session.webchannel, details = [];
+      if (peer && typeof peer.iceConnectionState === 'string') details.push('ICE ' + peer.iceConnectionState);
+      if (channel && typeof channel.readyState === 'string') details.push('data channel ' + channel.readyState);
+      if (active || details.length) links.push(label + (details.length ? ' · ' + details.join(' · ') : ' active'));
+    }
+    // MeshCentral has two WebRTC paths: the Agent redirect uses `desktop`,
+    // while `webRtcDesktop` is the optional software KVM data-channel path.
+    describe(desktop, 'Agent WebRTC', !!(desktop && desktop.webRtcActive));
+    describe(softKvm, 'Soft-KVM WebRTC', !!(softKvm && softKvm.webRtcActive));
+    if (links.length) return links.join(' | ');
+    return lastWebRtcFailure ? 'ICE ' + lastWebRtcFailure.state + ' · link reset by MeshCentral' : 'Not active';
   }
   function nativeControlAvailable(id) {
     var target = $(id);

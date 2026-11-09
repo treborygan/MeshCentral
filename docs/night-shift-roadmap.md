@@ -217,3 +217,7 @@ Added a regression case for a replaced Details title/toolbar: delegated native R
 ### 2026-11-09 native desktop retry
 
 A new native MeshAgent session connected immediately (`Connected, WebRTC`) and showed desktop content in a capture at 11 seconds. At 41 seconds the same desktop image remained visible, so frame continuity is still unverified; Night Shift's diagnostic labels remained conservative. Native Disconnect returned the session to Disconnected with no active session/display. Console history was empty and counters (2 errors, 3 warnings) could not be attributed. No remote input or source/production change occurred. See [deployment evidence](night-shift-deployment.md#native-desktop-retry--2026-11-09-1824-0100).
+
+### 2026-11-09 Agent WebRTC diagnostic correction
+
+Installed MeshCentral source confirms that its native `Connected, WebRTC` label reads the Agent redirect's `desktop.webRtcActive`, while `webRtcDesktop` belongs to the optional Soft-KVM path. Night Shift now reports those links separately and checks the Agent redirect's own peer/channel. Regression coverage protects both paths. This resolves the confirmed diagnostic mismatch only; live frame activity, controlled screen-change evidence, and root cause remain unverified. The exact DPR-3 browser attempt did not produce a fresh runtime measurement, and the authenticated page ended disconnected. Production remains unchanged and the package security gate remains blocked. See [deployment evidence](night-shift-deployment.md#agent-webrtc-diagnostic-correction--2026-11-09).
