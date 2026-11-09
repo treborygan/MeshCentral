@@ -2388,6 +2388,18 @@
       }, true);
       document.__nightShiftRefreshFeedbackDelegated = true;
     }
+    // MeshCentral invokes this global from the native refresh icon's inline
+    // handler. Hook the invocation directly as a fallback for icon DOM that
+    // does not expose a matching click target after Font Awesome rendering.
+    var nativeRefresh = window.refreshDetails;
+    if (typeof nativeRefresh === 'function' && !nativeRefresh.__nightShiftRefreshFeedback) {
+      var wrappedRefresh = function () {
+        beginDetailsRefreshFeedback();
+        return nativeRefresh.apply(this, arguments);
+      };
+      wrappedRefresh.__nightShiftRefreshFeedback = true;
+      window.refreshDetails = wrappedRefresh;
+    }
     var nativeUpdate = window.updateDeviceDetails;
     if (typeof nativeUpdate === 'function' && !nativeUpdate.__nightShiftRefreshFeedback) {
       var wrappedUpdate = function (node) {
