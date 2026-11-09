@@ -2400,9 +2400,11 @@
     }
   }
   function boot() {
+    // Install the delegated handler on every route. The browser may load
+    // Devices first and navigate to Details later without reloading this file.
+    installRefreshFeedback();
     if (!$('p17')) return;
     installClearHook();
-    installRefreshFeedback();
     update();
     var graphControl = document.querySelector('#devListToolbarViewIcons3 [title="Show device CPU and memory usage."]');
     if (graphControl) graphControl.addEventListener('click',function () {
