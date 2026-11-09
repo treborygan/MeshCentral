@@ -158,3 +158,9 @@ The current PR #3 branch head c5a5e039 has no associated Actions run. Repository
 GitHub Actions now runs successfully on PR #3 head `f57de8bb67244e03538d870adf86831b997ff4ce`. The Night Shift UI checks and CodeQL PR run passed, as did the push-triggered UI and CodeQL runs; CodeQL analysis and SARIF upload completed. The previous disabled-dispatch condition is no longer blocking current-head verification.
 
 The same head adds a feature-detected adapter for the older installed MeshCentral 1.3.1 touch handlers. The web-only deployment releases remote drags on touchcancel, multitouch and permission loss, preserves native double-click and cursor-shape behavior, and leaves the installed backend/template untouched. Deployment hashes, backup and rollback command are recorded in [the deployment log](night-shift-deployment.md). Authenticated Chrome and real-device RDP acceptance remain open.
+
+## Authenticated browser acceptance recheck — 2026-11-09
+
+Current-head hosted Night Shift UI checks (run 84) and CodeQL (run 131) pass for PR #4 head `186f732192e7f65d61f8ac823bffa7f8e28693ff`; the PR remains open and draft. A signed-in browser loaded the live device inventory and opened PCRN Device Details and the Server Console route. Device Details refresh did not show the expected pending or retry hint in the captured review, and its displayed last-update timestamp remained unchanged after 13 seconds. The Server Console pane rendered blank; no command was entered or output cleared. These observations do not establish whether native details or console data arrived.
+
+Physical Redmi testing, exact 904×407 landscape acceptance, and real RDP frame/input acceptance remain open. No remote session was started and no installation or service change was made. See [the deployment record](night-shift-deployment.md#authenticated-browser-acceptance-recheck--2026-11-09) for the live findings.
