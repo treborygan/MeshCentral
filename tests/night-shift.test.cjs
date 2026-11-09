@@ -433,7 +433,7 @@ test('device health expires CPU and memory values after native graph samples sto
 
 test('native device-details refresh shows pending, timeout, and response feedback without replacing its handler',()=>{
   assert.match(css,/\.ns-health-refresh-status\{[^}]*font-size:\.82rem/,'The live response hint has a compact visible treatment');
-  const ids=new Map(),timers=new Map(),calls=[];let nextTimer=0;
+  const ids=new Map(),timers=new Map(),calls=[],documentEvents={};let nextTimer=0,activeControl;
   class Element {
     constructor(){this.children=[];this.attributes={};this.events={};this.parentNode=null;this.textContent='';this.hidden=false;}
     set id(value){this._id=value;ids.set(value,this);} get id(){return this._id||'';}
@@ -445,11 +445,11 @@ test('native device-details refresh shows pending, timeout, and response feedbac
   }
   const parent=new Element(),title=new Element();title.id='p17title';parent.append(title);
   const host=new Element();host.id='p17info';parent.append(host);const page=new Element();page.id='p17';
-  const refreshControl=new Element();
+  const refreshControl=new Element();activeControl=refreshControl;
   const nativeRefresh=function(){calls.push('native refresh');};
   const nativeUpdate=function(node){calls.push(['native update',node._id]);};
   const window={currentNode:{_id:'node/a',conn:1},refreshDetails:nativeRefresh,updateDeviceDetails:nativeUpdate,addEventListener(){}};
-  const document={readyState:'complete',getElementById:id=>ids.get(id)||null,querySelector:selector=>selector.includes('Refresh details information')?refreshControl:null,addEventListener(){},createElement:()=>new Element()};
+  const document={readyState:'complete',getElementById:id=>ids.get(id)||null,querySelector:selector=>selector.includes('Refresh details information')?activeControl:null,addEventListener:(name,fn)=>{(documentEvents[name]||=[]).push(fn);},createElement:()=>new Element()};
   const setTimeout=(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay});return id;};
   const clearTimeout=id=>timers.delete(id);
   vm.runInNewContext(health,{window,document,Date,isFinite,setTimeout,clearTimeout},{timeout:1000});
@@ -465,6 +465,35 @@ test('native device-details refresh shows pending, timeout, and response feedbac
   window.updateDeviceDetails(window.currentNode,{windows:{}});
   assert.deepEqual(calls,['native refresh',['native update','node/a']]);
   assert.equal(status.textContent,'Device details response received.','A native details update is the only success signal');
+
+  // MeshCentral can replace the page title and native toolbar when changing
+  // devices without reloading this script. The delegated refresh hook should
+  // bind the new control, and feedback must be attached to the new title.
+  const replacementParent=new Element(),replacementTitle=new Element();replacementTitle.id='p17title';replacementParent.append(replacementTitle);
+  const replacementControl=new Element();activeControl=replacementControl;window.currentNode={_id:'node/b',conn:1};
+  window.__NightShiftHealth.refresh();
+  assert.equal(ids.get('ns-details-refresh-status').textContent,'','Changing devices clears the previous device response message');
+  assert.equal(ids.get('ns-details-refresh-status').parentNode,replacementParent,'Route-change feedback is attached to the replacement title');
+  const documentClick=documentEvents.click[0];
+  // A reordered toolbar may put an unrelated action first. Positional
+  // guessing must never report a refresh that the user did not request.
+  const otherAction={closest(selector){return selector==='#devListToolbarViewIcons3'?{firstElementChild:this}:null;}};
+  documentClick({target:otherAction});
+  assert.equal(ids.get('ns-details-refresh-status').textContent,'','An unrelated first toolbar action does not start refresh feedback');
+  assert.equal([...timers.values()].filter(timer=>timer.delay===12000).length,0,'An unrelated toolbar click schedules no refresh timeout');
+  const dispatchReplacementClick=()=>documentClick({target:{closest(selector){return selector.includes('Refresh details information')?replacementControl:null;}}});
+  dispatchReplacementClick();
+  const replacementStatus=ids.get('ns-details-refresh-status');
+  assert.equal(replacementStatus.textContent,'Refreshing device details…','A replacement native toolbar still starts feedback');
+  assert.equal(replacementStatus.parentNode,replacementParent,'Feedback is moved to the replacement details title');
+  const refreshTimers=[...timers.entries()].filter(([,timer])=>timer.delay===12000);
+  assert.equal(refreshTimers.length,1,'The replacement request has one active timeout');
+  window.updateDeviceDetails({_id:'node/a'},{windows:{}});
+  assert.equal(replacementStatus.textContent,'Refreshing device details…','A late response from the previous device cannot complete the new request');
+  dispatchReplacementClick();
+  assert.equal([...timers.values()].filter(timer=>timer.delay===12000).length,1,'Repeated refresh replaces rather than duplicates its timer');
+  window.updateDeviceDetails(window.currentNode,{windows:{}});
+  assert.equal(replacementStatus.textContent,'Device details response received.','The current device native response completes the replacement request');
 });
 
 test('elapsed uptime formatting is deterministic and rejects future boot dates',()=>{
@@ -899,17 +928,21 @@ test('alert delivery failures retain the in-page notice and explain browser fall
 
 test('fleet connection alerts observe native device updates only for opted-in devices',()=>{
   const alertsSource=read('public/scripts/night-shift/alerts.js'),notifications=[],nativeCalls=[];
-  const nodes=[{_id:'node/a',name:'Allowed',conn:0},{_id:'node/b',name:'Muted',conn:0}];
+  const nodes=[{_id:'node/a',name:'Allowed',conn:0},{_id:'node/b',name:'Muted',conn:0},{_id:'node/c',name:'By ID',conn:0}];
   class Notification { constructor(title,options){notifications.push({title,options});} }
   Notification.permission='granted';
-  const window={nodes,Notification,getstore:key=>key==='nsAlerts.node/a'?'{"e":1}':'{}',updateDeviceViewDevice(node){nativeCalls.push(node._id);}};
+  const window={nodes,Notification,getstore:key=>(key==='nsAlerts.node/a'||key==='nsAlerts.node/c')?'{"e":1}':'{}',updateDeviceViewDevice(node){nativeCalls.push(typeof node==='string'?node:node._id);}};
   const document={readyState:'complete',getElementById(){return null;},addEventListener(){}};
   vm.runInNewContext(alertsSource,{window,document,console,Date,MutationObserver:undefined},{timeout:1000});
   nodes[0].conn=1;window.updateDeviceViewDevice(nodes[0]);
   nodes[1].conn=1;window.updateDeviceViewDevice(nodes[1]);
-  assert.equal(notifications.length,1,'Only a device with its own saved alert preference produces a notification');
+  nodes[2].conn=1;window.updateDeviceViewDevice('node/c');
+  window.updateDeviceViewDevice('node/c');
+  window.updateDeviceViewDevice('node/missing');
+  assert.equal(notifications.length,2,'Only opted-in devices alert; unchanged states and unknown node IDs are ignored');
   assert.match(notifications[0].options.body,/Allowed connection: agent/);
-  assert.deepEqual(nativeCalls,['node/a','node/b'],'The original MeshCentral view updater still runs for both devices');
+  assert.match(notifications[1].options.body,/By ID connection: agent/,'Native node-ID updates are resolved before alert evaluation');
+  assert.deepEqual(nativeCalls,['node/a','node/b','node/c','node/c','node/missing'],'All native calls retain their original object or string argument');
 });
 
 test('PWA install shortcut uses native browser installability and user gesture',()=>{
@@ -1006,6 +1039,21 @@ test('remote viewer information drawer preserves native details navigation',()=>
   assert.match(viewer,/Escape/);
   assert.match(viewer,/window\.desktop/);
   assert.doesNotMatch(viewer,/new\s+WebSocket|meshserver\.send|gotoDevice/);
+});
+
+test('remote viewer Info toggle reserves a responsive slot beside the masthead account controls',()=>{
+  const infoRule=css.match(/\.ns-viewer-info-toggle\{([^}]+)\}/);
+  assert.ok(infoRule,'the fixed Info control has a responsive position rule');
+  assert.match(infoRule[1],/right:calc\(1rem \+ clamp\(4rem,26vw,15rem\)\)/,
+    'a width-scaled account-control reserve keeps Info clear at desktop and landscape widths');
+  const accountReservePx=width=>Math.min(15*16,Math.max(4*16,width*.26));
+  assert.ok(accountReservePx(904)>=219,'the landscape reservation exceeds the measured 219px account control');
+  assert.ok(accountReservePx(1440)>=219,'the wide desktop reservation still clears the account control');
+  assert.ok(accountReservePx(412)>=44,'phone widths reserve at least the avatar and caret control width');
+  const phoneRule=css.match(/@media\(max-width:700px\)\{\.ns-viewer-info-drawer\{[^}]+\}\.ns-viewer-info-toggle\{([^}]+)\}/);
+  assert.ok(phoneRule,'phone drawer and toggle adjustments remain scoped to the narrow viewport');
+  assert.match(phoneRule[1],/top:/);
+  assert.doesNotMatch(phoneRule[1],/right:/,'the phone rule must not move Info back over the account controls');
 });
 
 test('floating desktop viewer controls use only visible native controls and auto-hide',()=>{
@@ -1360,6 +1408,13 @@ test('short coarse-pointer phone landscape keeps the remote dock visible above 9
   assert.equal(desktop.byId.get('ns-mobile-dock').hidden,true,'tablet/desktop landscape with a fine pointer keeps native desktop controls');
   assert.match(js,/orientation: landscape.*max-width: 1024px.*max-height: 600px.*pointer: coarse/,'The wider breakpoint is limited to short coarse-pointer landscape screens');
   assert.match(css,/@media\(max-width:1024px\) and \(max-height:600px\) and \(orientation:landscape\) and \(pointer:coarse\)\s*\{[\s\S]*?\.ns-mobile-dock\s*\{[\s\S]*?body\.ns-mobile-remote #column_l\s*\{padding-bottom:calc\(92px/,'The dock is compact and the native remote canvas receives bottom clearance at phone landscape widths');
+  const coarseControls=css.match(/@media\(max-width:1024px\) and \(max-height:600px\) and \(orientation:landscape\) and \(pointer:coarse\)\s*\{([\s\S]*?)\n\}/);
+  assert.ok(coarseControls,'The short coarse-pointer landscape override is present');
+  assert.match(coarseControls[1],/body\.ns-shell-ready\.ns-mobile-remote \.ns-viewer-controls\s*\{bottom:calc\(110px \+ env\(safe-area-inset-bottom\)\)\}/,'Remote viewer actions sit above the touch dock at 977x440 coarse-pointer landscape widths');
+  const coarseSelector='body.ns-shell-ready.ns-mobile-remote .ns-viewer-controls';
+  const laterDesktopSelector='body.ns-shell-ready .ns-viewer-controls';
+  const classSpecificity=selector=>(selector.match(/\.[\w-]+/g)||[]).length;
+  assert.ok(classSpecificity(coarseSelector)>classSpecificity(laterDesktopSelector),'The coarse-landscape offset outranks the later desktop controls rule in the CSS cascade');
 });
 
 test('phone remote workspace puts the live viewer before setup panels',()=>{
@@ -1552,12 +1607,12 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
       if(selector==='*')return this.children.flatMap(child=>[child,...child.querySelectorAll('*')]);
       return [];
     }
-    focus(){this.focused=true;}
+    focus(){this.focused=true;document.activeElement=this;}
     contains(node){for(let current=node;current;current=current.parentNode)if(current===this)return true;return false;}
   }
   const body=new MockElement('body');
   const document={
-    body,documentElement:new MockElement('html'),readyState:'complete',visibilityState:'visible',
+    body,documentElement:new MockElement('html'),readyState:'complete',visibilityState:'visible',activeElement:null,
     createElement:tag=>new MockElement(tag),
     getElementById:id=>ids.get(id)||null,
     querySelector:()=>null,querySelectorAll:()=>[],events:{},addEventListener(name,handler){(this.events[name]||=[]).push(handler);}
@@ -1836,6 +1891,17 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   window.multiDesktop={'node//offline':{State:1,contype:1},'node//online':{State:3,contype:1}};
   window.__NightShiftDiagnostics.refresh();
   window.__NightShiftSessions.refresh();
+  // A remote session can remain in multiDesktop after the current device is
+  // cleared (for example while switching or after an interrupted connection).
+  // The session toolbar must remain usable and assign one sequential tab stop.
+  window.currentNode=null;
+  assert.doesNotThrow(()=>window.__NightShiftSessions.refresh(),'Background sessions without a current device must not throw');
+  const fallbackTabs=ids.get('ns-session-tabs').children.filter(node=>node.classList.contains('ns-session-tab'));
+  assert.equal(fallbackTabs.length,2,'Both background sessions remain available');
+  assert.deepEqual(fallbackTabs.map(node=>node.tabIndex),[0,-1],'The first session is keyboard reachable when none is current');
+  assert.equal(fallbackTabs.filter(node=>node.getAttribute('aria-current')==='true').length,0,'No background session is marked current');
+  window.currentNode=window.nodes[0];
+  window.__NightShiftSessions.refresh();
   const sessionTabs=ids.get('ns-session-tabs');
   assert.ok(sessionTabs,'Remote workspace exposes tabs for native live sessions');
   assert.equal(sessionTabs.parentNode,column,'Open sessions remain available from the shared workspace, outside the hidden remote desktop page');
@@ -1868,14 +1934,41 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.doesNotMatch(sessionsSource,/panel\.replaceChildren\(/,'Rerendering leaves the live region mounted for reliable announcements');
   assert.match(sessionAnnouncement.textContent,/2 remote sessions\./,'Newly opened sessions are announced after the initial render');
   window.multiDesktop['node//offline'].State=3;
+  currentSessionTab.focus();
   window.__NightShiftSessions.refresh();
+  const refreshedCurrentTab=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab')&&node.getAttribute('aria-current')==='true');
+  assert.notEqual(refreshedCurrentTab,currentSessionTab,'A session update rebuilds the session tab element');
+  assert.equal(document.activeElement,refreshedCurrentTab,'Session-tab focus is restored after the native state rerender');
+  assert.equal(refreshedCurrentTab.tabIndex,0,'The restored session remains the single roving tab stop');
   assert.match(sessionAnnouncement.textContent,/Archive: Connected\./,'A background session state change names the session that changed');
+  const archiveClose=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close')&&node.dataset.sessionId==='node//offline');
+  archiveClose.focus();
+  window.multiDesktop['node//offline'].State=4;
+  window.__NightShiftSessions.refresh();
+  const refreshedArchiveClose=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close')&&node.dataset.sessionId==='node//offline');
+  assert.equal(document.activeElement,refreshedArchiveClose,'Disconnect-action focus is restored after a session-state rerender');
+  assert.equal(refreshedArchiveClose.tabIndex,0,'The restored disconnect action remains keyboard reachable');
   archiveTab.click();
   assert.equal(opened.at(-1),'node//offline','Switching a tab delegates to native gotoDevice permissions and routing');
   const closeArchive=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close'));
   assert.ok(closeArchive,'Background session tabs expose an explicit disconnect action');
   closeArchive.click();
   assert.deepEqual(disconnectedSessions,['node//offline'],'Disconnect delegates to MeshCentral native rights checks');
+  const focusedClose=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab-close')&&node.dataset.sessionId==='node//offline');
+  focusedClose.focus();
+  delete window.multiDesktop['node//offline'];
+  window.__NightShiftSessions.refresh();
+  const survivingSession=sessionTabs.children.find(node=>node.classList.contains('ns-session-tab'));
+  assert.equal(document.activeElement,survivingSession,'When a focused session closes, focus moves to a surviving session tab');
+  assert.equal(survivingSession.tabIndex,0,'The surviving session tab becomes the sole roving tab stop');
+  survivingSession.focus();
+  window.currentNode=null;window.desktop=null;
+  delete window.multiDesktop['node//online'];
+  window.__NightShiftSessions.refresh();
+  assert.equal(sessionTabs.hidden,true,'The empty session toolbar is hidden after the final session closes');
+  assert.equal(document.activeElement,nativeConnect,'Focus transfers to an available native connection action after final-session removal');
+  window.currentNode=window.nodes[0];window.multiDesktop['node//online']={State:3,contype:1};
+  window.__NightShiftSessions.refresh();
   window.desktop={State:3,contype:1,m:{displays:{'0':'Display 1','1':'Display 2'},SetDisplay:index=>monitorSelections.push(index),SendCompressionLevel:(encoding,quality,scaling,framerate)=>compressionUpdates.push({encoding,quality,scaling,framerate})}};
   window.__NightShiftProfiles.refresh();
   const profilePanel=ids.get('ns-connection-profile');
@@ -1930,10 +2023,10 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   window.meshserver.State=2;window.meshserver.onStateChanged(window.meshserver,2,0);
   assert.equal(diagnostic('control').children[1].textContent,'Connected','Socket reconnect updates diagnostics without another DOM mutation');
   assert.equal(diagnostic('device').children[1].textContent,'Agent via relay','Device route reports native agent and relay flags');
-  window.desktop.webRtcActive=true;
+  window.desktop.webRtcActive=false;
   window.webRtcDesktop={webrtc:{iceConnectionState:'checking'},webchannel:{readyState:'connecting'}};
   window.__NightShiftDiagnostics.refresh();
-  assert.equal(diagnostic('webrtc').children[1].textContent,'ICE checking · data channel connecting','ICE negotiation and channel state are reported from the native WebRTC objects');
+  assert.equal(diagnostic('webrtc').children[1].textContent,'Soft-KVM WebRTC · ICE checking · data channel connecting','Soft-KVM negotiation is reported from its native WebRTC objects');
   window.webRtcDesktop.webrtc.iceConnectionState='failed';
   assert.equal(window.webRtcDesktopReset(),'native WebRTC reset','WebRTC state observation preserves the native reset return value');
   assert.equal(webRtcResetCalls,1,'WebRTC state observation still invokes MeshCentral native cleanup');
@@ -1943,9 +2036,16 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.match(guidance.textContent,/WebRTC ICE failed.*native desktop session remains active/i,'ICE failure guidance reflects MeshCentral reset behavior and available session recovery');
   window.webRtcDesktop={webrtc:{iceConnectionState:'connected'},webchannel:{readyState:'open'}};
   window.__NightShiftDiagnostics.refresh();
-  assert.equal(diagnostic('webrtc').children[1].textContent,'ICE connected · data channel open','A later successful WebRTC connection replaces stale failure status');
-  assert.equal(diagnostic('session').children[1].textContent,'MeshAgent desktop · WebRTC · Connected','The active WebRTC transport is reported when its native data channel is open');
+  assert.equal(diagnostic('webrtc').children[1].textContent,'Soft-KVM WebRTC · ICE connected · data channel open','A later successful Soft-KVM connection replaces stale failure status');
+  assert.equal(diagnostic('session').children[1].textContent,'MeshAgent desktop · Connected','Soft-KVM state is not confused with the Agent redirect transport');
   assert.doesNotMatch(guidance.textContent,/WebRTC ICE failed/i,'Recovered WebRTC clears stale failure guidance');
+  window.webRtcDesktop=null;
+  window.desktop={State:3,contype:1,webRtcActive:true,webrtc:{iceConnectionState:'connected'},webchannel:{readyState:'open'}};
+  window.__NightShiftDiagnostics.refresh();
+  assert.equal(diagnostic('webrtc').children[1].textContent,'Agent WebRTC · ICE connected · data channel open','The normal Agent redirect WebRTC peer and channel are reported');
+  assert.equal(diagnostic('session').children[1].textContent,'MeshAgent desktop · WebRTC · Connected','Native Agent WebRTC state is reflected in the session transport label');
+  window.desktop.webRtcActive=false;window.desktop.webrtc=null;window.desktop.webchannel=null;
+  window.__NightShiftDiagnostics.refresh();
   window.webRtcDesktop={webrtc:{iceConnectionState:'failed'},webchannel:{readyState:'connecting'}};
   window.webRtcDesktopReset();
   assert.match(guidance.textContent,/WebRTC ICE failed/i,'A fresh failure is attributed to its active session');
@@ -1965,14 +2065,19 @@ test('Night Shift structural shell uses live DOM data and native navigation', ()
   assert.equal(nativeConnect.focused,true,'Connection shortcut focuses the available native Connect control');
   window.desktop={State:3,contype:4,webRtcActive:false};
   nativeStatus.textContent='Connected, RDP';
+  nativeDisconnect.hidden=false;
   window.__NightShiftDiagnostics.refresh();
   assert.equal(diagnostic('session').children[1].textContent,'Browser RDP · Connected','Session transport and state use native MeshCentral values');
-  assert.equal(diagnostic('display').children[1].textContent,'Canvas mounted','Remote-display diagnosis checks the native canvas without intercepting input');
-  assert.equal(showNativeControls.hidden,true,'Native connect shortcut is hidden while the session is active');
+  assert.equal(diagnostic('display').children[1].textContent,'Canvas present; desktop frames not verified','A mounted canvas is not misreported as confirmed desktop frame delivery');
+  assert.equal(showNativeControls.hidden,false,'Native recovery shortcut remains available even with an active canvas');
+  assert.equal(showNativeControls.textContent,'Show native disconnect control','Connected sessions prioritize the native Disconnect recovery path');
+  assert.match(guidance.textContent,/mounted canvas does not prove that desktop frames are arriving/i,'Blank-display guidance distinguishes canvas presence from real video');
+  showNativeControls.click();
+  assert.equal(nativeDisconnect.focused,true,'Recovery shortcut focuses native Disconnect without invoking it');
   window.desktop.State=4;
   window.__NightShiftDiagnostics.refresh();
   assert.equal(diagnostic('session').children[1].textContent,'Browser RDP · Connected','MeshCentral terminal connected state is also treated as active');
-  assert.equal(showNativeControls.hidden,true,'Native connect shortcut stays hidden in state four');
+  assert.equal(showNativeControls.hidden,false,'Native recovery control remains reachable in native connected state four');
   window.navigator.onLine=false;window.meshserver.State=0;
   window.__NightShiftDiagnostics.refresh();
   assert.equal(diagnostic('browser').children[1].textContent,'Offline','Offline browser state is distinguished from the MeshCentral channel');
@@ -2090,6 +2195,30 @@ test('desktop Server General uses the workspace scroller instead of nesting a vi
   assert.match(css,/body\.ns-shell-ready #column_l \{[\s\S]*?overflow-y:auto!important/,'The page workspace remains the single vertical scroll container');
 });
 
+test('desktop native overview, account, and device pages expand into the workspace scroller',()=>{
+  const desktop=css.match(/@media\(min-width:901px\)\s*\{\s*\/\* Native route templates give several content panels[\s\S]*?\n\}/);
+  assert.ok(desktop,'Desktop native panels have a dedicated single-scroll layout rule');
+  for(const id of ['#p1','#p2info','#p10info','#p17info']) assert.ok(desktop[0].includes(`body.ns-shell-ready ${id}`),`${id} clears its native fixed height`);
+  assert.match(desktop[0],/height:auto!important/);
+  assert.match(desktop[0],/max-height:none!important/);
+  assert.match(desktop[0],/overflow-y:visible!important/);
+  assert.match(desktop[0],/#column_l \{padding-bottom:72px!important\}/,'The workspace can scroll the final rows above fixed route tabs');
+});
+
+test('desktop native headings and device console use readable Night Shift colors',()=>{
+  const desktop=css.match(/@media\(min-width:901px\)\s*\{\s*\/\* Native route templates give several content panels[\s\S]*?\n\}/);
+  assert.ok(desktop);
+  for(const id of ['#p10title','#p11title','#p12title','#p13title','#p15title','#p16title','#p17title','#p18title','#p50title','#p60title']) assert.ok(desktop[0].includes(id),`${id} is included in desktop title normalization`);
+  assert.match(desktop[0],/background:var\(--ns-canvas\)!important/);
+  assert.match(desktop[0],/body\.ns-shell-ready\.ns-theme #p15title \{color:var\(--ns-foreground\)!important\}/,'The console title remains legible');
+});
+
+test('desktop floating remote viewer controls clear the fixed device-tab bar',()=>{
+  const desktop=css.match(/@media\(min-width:901px\)\s*\{\s*\/\* Native route templates give several content panels[\s\S]*?\n\}/);
+  assert.ok(desktop);
+  assert.match(desktop[0],/\.ns-viewer-controls \{bottom:3\.5rem\}/);
+});
+
 test('account security settings keep native links and use a responsive desktop workspace',()=>{
   assert.match(css,/@media\(min-width:901px\)[\s\S]*?body\.ns-theme #p2info \{[\s\S]*?grid-template-columns:minmax\(230px/);
   assert.match(css,/body\.ns-theme :is\(#p2AccountSecurity,#p2AccountActions\) \{grid-column:2\/-1/);
@@ -2135,7 +2264,7 @@ test('device detail pages adapt their native fields, notes and status card to mo
   assert.match(css,/@media\(max-width:700px\)[\s\S]*?body\.ns-theme #p10info > table > tbody > tr > td:last-child \{display:flex/);
   assert.match(css,/body\.ns-shell-ready #p10info #p10html \.row\.mb-1 > \.col\.col-md-2\.col-lg-2 \{[\s\S]*?flex:0 0 180px[\s\S]*?word-break:normal/);
   assert.match(css,/body\.ns-shell-ready #p10info #p10html \.row\.mb-1 > \.col\.col-md-10\.col-lg-10 \{[\s\S]*?flex:1 1 0[\s\S]*?min-width:0/);
-  assert.match(css,/@media\(min-width:901px\) \{\s*body\.ns-shell-ready #p10info \{\s*max-height:none!important;\s*overflow:visible!important/);
+  assert.match(css,/@media\(min-width:901px\) \{\s*body\.ns-shell-ready #p10info \{\s*height:auto!important;\s*max-height:none!important;\s*overflow-x:visible!important;\s*overflow-y:visible!important/);
   const template=read('views/default.handlebars');
   assert.match(template,/id=p10html/);
   assert.match(template,/id=p10html2/);
@@ -2341,6 +2470,8 @@ test('mobile themed native page titles override MeshCentral white title bars',()
     assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready :is\(#p4title,#p5title,#p6title,#p41title\) \{background:var\(--ns-canvas\)!important;color:var\(--ns-foreground\)!important\}/,'Night Shift replaces the white title surface and keeps text legible');
   }
   assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready :is\(#p4title,#p5title,#p6title,#p41title\) \.fs-4 \{color:var\(--ns-foreground\)!important\}/);
+  assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready #p15title \{[\s\S]*?background:var\(--ns-canvas\)!important;[\s\S]*?color:var\(--ns-foreground\)!important\}/,'The native Console title overrides upstream white and dark title backgrounds at touch breakpoints');
+  assert.match(css,/body\.is-mobile\.ns-theme\.ns-shell-ready #p15title \* \{color:var\(--ns-foreground\)!important\}/,'Console title text and native controls keep readable contrast in portrait and landscape');
 });
 
 test('mobile device quick actions delegate to MeshCentral route handlers',()=>{

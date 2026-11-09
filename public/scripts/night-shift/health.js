@@ -89,7 +89,7 @@
     if (!node) {
       lastNodeId = null; latestSample = null;
       if (sampleTimer !== null) { clearTimeout(sampleTimer); sampleTimer = null; }
-      if (pendingRefreshNode !== null) {
+      if (pendingRefreshNode !== null || refreshStatus) {
         pendingRefreshNode = null;
         if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
         setRefreshStatus('');
@@ -97,7 +97,7 @@
       Object.keys(values).forEach(function (key) { values[key].textContent = 'Unavailable'; }); return;
     }
     if (lastNodeId !== node._id) {
-      if (pendingRefreshNode !== null && pendingRefreshNode !== node._id) {
+      if ((pendingRefreshNode !== null && pendingRefreshNode !== node._id) || (lastNodeId !== null && refreshStatus)) {
         pendingRefreshNode = null;
         if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
         setRefreshStatus('');
@@ -179,7 +179,7 @@
   }
   function setRefreshStatus(text) {
     var title = $('p17title');
-    if (!refreshStatus && title && title.parentNode) {
+    if (title && title.parentNode && (!refreshStatus || refreshStatus.parentNode !== title.parentNode)) {
       refreshStatus = create('div', 'ns-health-refresh-status');
       refreshStatus.id = 'ns-details-refresh-status';
       refreshStatus.setAttribute('role', 'status');
@@ -199,21 +199,35 @@
     if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
     setRefreshStatus('Device details response received.');
   }
+  function beginDetailsRefreshFeedback() {
+    var node = window.currentNode;
+    if (!node || !node._id || typeof window.refreshDetails !== 'function') return;
+    pendingRefreshNode = node._id;
+    if (refreshTimer !== null) clearTimeout(refreshTimer);
+    setRefreshStatus('Refreshing device details…');
+    refreshTimer = setTimeout(function () {
+      refreshTimer = null;
+      if (pendingRefreshNode === node._id) setRefreshStatus('No device details response yet. You can retry.');
+    }, 12000);
+  }
   function installRefreshFeedback() {
-    var control = document.querySelector('#devListToolbarViewIcons3 [title="Refresh details information."]');
+    // Identify refresh semantically; never infer it from toolbar position.
+    var selector = '#devListToolbarViewIcons3 [title="Refresh details information."], #devListToolbarViewIcons3 [onclick*="refreshDetails"]';
+    var control = typeof document.querySelector === 'function' ? document.querySelector(selector) : null;
     if (control && !control.__nightShiftRefreshFeedback) {
-      control.addEventListener('click', function () {
-        var node = window.currentNode;
-        if (!node || !node._id || typeof window.refreshDetails !== 'function') return;
-        pendingRefreshNode = node._id;
-        if (refreshTimer !== null) clearTimeout(refreshTimer);
-        setRefreshStatus('Refreshing device details…');
-        refreshTimer = setTimeout(function () {
-          refreshTimer = null;
-          if (pendingRefreshNode === node._id) setRefreshStatus('No device details response yet. You can retry.');
-        }, 12000);
-      }, true);
+      control.addEventListener('click', beginDetailsRefreshFeedback, true);
       control.__nightShiftRefreshFeedback = true;
+    }
+    // MeshCentral can replace toolbar nodes during native route changes. Keep
+    // feedback attached to replacement buttons without wrapping its handler.
+    if (typeof document.addEventListener === 'function' && !document.__nightShiftRefreshFeedbackDelegated) {
+      document.addEventListener('click', function (event) {
+        var target = event.target;
+        var delegatedControl = target && typeof target.closest === 'function' ? target.closest(selector) : null;
+        if (!delegatedControl || delegatedControl.__nightShiftRefreshFeedback) return;
+        beginDetailsRefreshFeedback();
+      }, true);
+      document.__nightShiftRefreshFeedbackDelegated = true;
     }
     var nativeUpdate = window.updateDeviceDetails;
     if (typeof nativeUpdate === 'function' && !nativeUpdate.__nightShiftRefreshFeedback) {
@@ -227,9 +241,11 @@
     }
   }
   function boot() {
+    // Install the delegated handler on every route. The browser may load
+    // Devices first and navigate to Details later without reloading this file.
+    installRefreshFeedback();
     if (!$('p17')) return;
     installClearHook();
-    installRefreshFeedback();
     update();
     var graphControl = document.querySelector('#devListToolbarViewIcons3 [title="Show device CPU and memory usage."]');
     if (graphControl) graphControl.addEventListener('click',function () {

@@ -190,11 +190,18 @@
       if (node && typeof node._id === 'string') fleetStates[node._id] = state(node);
     });
   }
+  function resolveFleetNode(value) {
+    var id = typeof value === 'string' ? value : value && value._id;
+    if (typeof id !== 'string' || !Array.isArray(window.nodes)) return null;
+    // Only track devices in MeshCentral's currently authorized inventory.
+    return window.nodes.find(function (node) { return node && node._id === id; }) || null;
+  }
   function installFleetConnectionHook() {
     var nativeUpdate = window.updateDeviceViewDevice;
     if (fleetHookInstalled || typeof nativeUpdate !== 'function') return;
-    window.updateDeviceViewDevice = function (node) {
-      if (node && typeof node._id === 'string') {
+    window.updateDeviceViewDevice = function (nodeRef) {
+      var node = resolveFleetNode(nodeRef);
+      if (node) {
         var current = state(node), previous = fleetStates[node._id];
         fleetStates[node._id] = current;
         if (previous !== undefined && previous !== 'unknown' && previous !== current) {

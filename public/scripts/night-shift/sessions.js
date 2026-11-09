@@ -89,11 +89,34 @@
     var node = findNode(id);
     if (node && typeof window.toggleKvmDevice === 'function') window.toggleKvmDevice(node);
   }
+  function focusAfterLastSession() {
+    // The final tab may be removed while it owns focus. Prefer the native
+    // reconnect action, then a persistent page navigation/workspace target.
+    ['connectbutton1','connectbutton1r','connectbutton1h','LeftMenuMyDevices','ns-search-trigger','column_l'].some(function (id) {
+      var target = $(id);
+      if (!target || typeof target.focus !== 'function' || target.disabled || target.hidden) return false;
+      for (var parent = target.parentElement || target.parentNode; parent && parent.nodeType === 1; parent = parent.parentElement || parent.parentNode) {
+        if (parent.hidden) return false;
+      }
+      if (target.getClientRects && !target.getClientRects().length) return false;
+      if (id === 'column_l' && typeof target.setAttribute === 'function') target.setAttribute('tabindex','-1');
+      target.focus();
+      return true;
+    });
+  }
   function render() {
     var page = $('p11'), area = $('deskarea0');
     if (!page || !area) return;
     build();
     if (!panel) return;
+    var focused = document.activeElement;
+    var restoreFocus = null;
+    if (focused && panel.contains && panel.contains(focused) && focused.dataset && focused.dataset.sessionId) {
+      restoreFocus = {
+        id:focused.dataset.sessionId,
+        close:!!(focused.classList && focused.classList.contains('ns-session-tab-close'))
+      };
+    }
     var open = sessions();
     Array.prototype.slice.call(panel.children || []).forEach(function (child) {
       if (child !== announcement) panel.removeChild(child);
@@ -125,11 +148,12 @@
     previousSessions = snapshot;
     if (!open.length) {
       if (announcement.parentNode !== panel) panel.append(announcement);
+      if (restoreFocus) focusAfterLastSession();
       return;
     }
     var heading = create('span','ns-session-tabs-heading','Sessions');
       panel.insertBefore(heading,announcement);
-    open.forEach(function (entry) {
+    open.forEach(function (entry, index) {
       var name = entry.node.name || entry.node.host || 'Remote device';
       var state = sessionState(entry.session);
       var tab = create('button','ns-session-tab');
@@ -148,6 +172,7 @@
         var close = create('button','ns-session-tab-close','×');
         close.type = 'button';
         close.tabIndex = -1;
+        close.dataset.sessionId = entry.id;
         close.setAttribute('aria-label','Disconnect ' + name);
         close.title = 'Disconnect ' + name;
         close.addEventListener('click',function (event) {
@@ -159,6 +184,25 @@
       }
     });
     if (announcement.parentNode !== panel) panel.append(announcement);
+    if (restoreFocus) {
+      var controls = Array.prototype.filter.call(panel.children,function (child) {
+        return child.classList && (child.classList.contains('ns-session-tab') || child.classList.contains('ns-session-tab-close'));
+      });
+      var target = controls.find(function (control) {
+        return control.dataset.sessionId === restoreFocus.id &&
+          control.classList.contains(restoreFocus.close ? 'ns-session-tab-close' : 'ns-session-tab');
+      });
+      if (!target) target = controls.find(function (control) {
+        return control.dataset.sessionId === restoreFocus.id && control.classList.contains('ns-session-tab');
+      });
+      if (!target) target = controls.find(function (control) {
+        return control.classList.contains('ns-session-tab') && control.getAttribute('aria-current') === 'true';
+      }) || controls.find(function (control) { return control.classList.contains('ns-session-tab'); });
+      if (target) {
+        controls.forEach(function (control) { control.tabIndex = control === target ? 0 : -1; });
+        target.focus();
+      }
+    }
   }
   function schedule() {
     if (queued) return;

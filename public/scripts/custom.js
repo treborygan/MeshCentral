@@ -1531,8 +1531,10 @@
     actionButton.type = 'button';
     actionButton.addEventListener('click',function () {
       var state = window.desktop && (Number.isInteger(window.desktop.State) ? window.desktop.State : window.desktop.state);
-      var recoveringDisplay = Number.isInteger(state) && state >= 3 && !($('Desk') && $('Desk').getClientRects && $('Desk').getClientRects().length);
-      var controls = recoveringDisplay ? ['disconnectbutton1','connectbutton1','connectbutton1r','connectbutton1h'] : ['connectbutton1','connectbutton1r','connectbutton1h'];
+      // Connected canvases may be blank or consent-gated. Keep an explicit
+      // recovery path to the native Disconnect control even if a canvas exists.
+      var pendingOrActive = Number.isInteger(state) && state > 0;
+      var controls = pendingOrActive ? ['disconnectbutton1','connectbutton1','connectbutton1r','connectbutton1h'] : ['connectbutton1','connectbutton1r','connectbutton1h'];
       for (var i = 0; i < controls.length; i++) {
         var target = $(controls[i]);
         if (nativeControlAvailable(controls[i])) {
@@ -1559,18 +1561,26 @@
     if (!desktop) return 'No active session';
     var transport = desktop.contype === 1 ? 'MeshAgent desktop' :
       (desktop.contype === 2 ? 'Intel AMT KVM' : (desktop.contype === 4 ? 'Browser RDP' : 'Native transport'));
-    var channel = window.webRtcDesktop && window.webRtcDesktop.webchannel;
+    var channel = desktop.webchannel;
     if (desktop.webRtcActive && channel && channel.readyState === 'open') transport += ' · WebRTC';
     var state = Number.isInteger(desktop.State) ? desktop.State : desktop.state;
     return transport + ' · ' + (stateNames[state] || 'State unavailable');
   }
   function webRtcStatus() {
-    var session = window.webRtcDesktop;
-    if (!session) return lastWebRtcFailure ? 'ICE ' + lastWebRtcFailure.state + ' · link reset by MeshCentral' : 'Not active';
-    var peer = session.webrtc, channel = session.webchannel, parts = [];
-    if (peer && typeof peer.iceConnectionState === 'string') parts.push('ICE ' + peer.iceConnectionState);
-    if (channel && typeof channel.readyState === 'string') parts.push('data channel ' + channel.readyState);
-    return parts.length ? parts.join(' · ') : 'Negotiating';
+    var desktop = window.desktop, softKvm = window.webRtcDesktop, links = [];
+    function describe(session, label, active) {
+      if (!session) return;
+      var peer = session.webrtc, channel = session.webchannel, details = [];
+      if (peer && typeof peer.iceConnectionState === 'string') details.push('ICE ' + peer.iceConnectionState);
+      if (channel && typeof channel.readyState === 'string') details.push('data channel ' + channel.readyState);
+      if (active || details.length) links.push(label + (details.length ? ' · ' + details.join(' · ') : ' active'));
+    }
+    // MeshCentral has two WebRTC paths: the Agent redirect uses `desktop`,
+    // while `webRtcDesktop` is the optional software KVM data-channel path.
+    describe(desktop, 'Agent WebRTC', !!(desktop && desktop.webRtcActive));
+    describe(softKvm, 'Soft-KVM WebRTC', !!(softKvm && softKvm.webRtcActive));
+    if (links.length) return links.join(' | ');
+    return lastWebRtcFailure ? 'ICE ' + lastWebRtcFailure.state + ' · link reset by MeshCentral' : 'Not active';
   }
   function nativeControlAvailable(id) {
     var target = $(id);
@@ -1601,9 +1611,14 @@
     var active = Number.isInteger(desktopState) && desktopState >= 3;
     var canvas = $('Desk');
     var canvasMounted = !!(canvas && canvas.getClientRects && canvas.getClientRects().length);
-    rows.display.textContent = active ? (canvasMounted ? 'Canvas mounted' : 'Connected; canvas not mounted') : 'No active display session';
+    rows.display.textContent = active ? (canvasMounted ? 'Canvas present; desktop frames not verified' : 'Connected; canvas not mounted') : 'No active display session';
     rows.cloudflare.textContent = 'Not observable after page load';
-    if (actionButton) actionButton.hidden = active && canvasMounted;
+    if (actionButton) {
+      var canDisconnect = nativeControlAvailable('disconnectbutton1');
+      var canConnect = nativeControlAvailable('connectbutton1') || nativeControlAvailable('connectbutton1r') || nativeControlAvailable('connectbutton1h');
+      actionButton.textContent = active && canDisconnect ? 'Show native disconnect control' : 'Show native connection controls';
+      actionButton.hidden = !canDisconnect && !canConnect;
+    }
     if (guidance) {
       var route = window.currentNode && typeof window.currentNode.conn === 'number' ? window.currentNode.conn : null;
       var next = 'Choose a native connection control to start a remote session.';
@@ -1615,7 +1630,7 @@
         : 'No Agent or AMT route is currently reported for this device, and Browser RDP is unavailable. Check the device status and use an enabled native connection method.';
       else if (Number.isInteger(desktopState) && (desktopState === 1 || desktopState === 2)) next = 'The native remote session is still connecting. Wait for its state to change before retrying.';
       else if (active && !canvasMounted) next = 'The session reports connected, but the display canvas is not mounted. Use the native Disconnect control before reconnecting.';
-      else if (active) next = 'The native session is connected. Connection, input, monitor and recording controls remain available in MeshCentral.';
+      else if (active) next = 'The native session reports connected, but a mounted canvas does not prove that desktop frames are arriving. If the view is blank, use the native Disconnect control and check the session logs before reconnecting.';
       else if (window.currentNode && typeof route === 'number') next = 'Device route status is shown above. Start, change or reset the session with MeshCentral’s native controls.';
       guidance.textContent = next;
     }
@@ -1766,11 +1781,34 @@
     var node = findNode(id);
     if (node && typeof window.toggleKvmDevice === 'function') window.toggleKvmDevice(node);
   }
+  function focusAfterLastSession() {
+    // The final tab may be removed while it owns focus. Prefer the native
+    // reconnect action, then a persistent page navigation/workspace target.
+    ['connectbutton1','connectbutton1r','connectbutton1h','LeftMenuMyDevices','ns-search-trigger','column_l'].some(function (id) {
+      var target = $(id);
+      if (!target || typeof target.focus !== 'function' || target.disabled || target.hidden) return false;
+      for (var parent = target.parentElement || target.parentNode; parent && parent.nodeType === 1; parent = parent.parentElement || parent.parentNode) {
+        if (parent.hidden) return false;
+      }
+      if (target.getClientRects && !target.getClientRects().length) return false;
+      if (id === 'column_l' && typeof target.setAttribute === 'function') target.setAttribute('tabindex','-1');
+      target.focus();
+      return true;
+    });
+  }
   function render() {
     var page = $('p11'), area = $('deskarea0');
     if (!page || !area) return;
     build();
     if (!panel) return;
+    var focused = document.activeElement;
+    var restoreFocus = null;
+    if (focused && panel.contains && panel.contains(focused) && focused.dataset && focused.dataset.sessionId) {
+      restoreFocus = {
+        id:focused.dataset.sessionId,
+        close:!!(focused.classList && focused.classList.contains('ns-session-tab-close'))
+      };
+    }
     var open = sessions();
     Array.prototype.slice.call(panel.children || []).forEach(function (child) {
       if (child !== announcement) panel.removeChild(child);
@@ -1802,11 +1840,12 @@
     previousSessions = snapshot;
     if (!open.length) {
       if (announcement.parentNode !== panel) panel.append(announcement);
+      if (restoreFocus) focusAfterLastSession();
       return;
     }
     var heading = create('span','ns-session-tabs-heading','Sessions');
       panel.insertBefore(heading,announcement);
-    open.forEach(function (entry) {
+    open.forEach(function (entry, index) {
       var name = entry.node.name || entry.node.host || 'Remote device';
       var state = sessionState(entry.session);
       var tab = create('button','ns-session-tab');
@@ -1825,6 +1864,7 @@
         var close = create('button','ns-session-tab-close','×');
         close.type = 'button';
         close.tabIndex = -1;
+        close.dataset.sessionId = entry.id;
         close.setAttribute('aria-label','Disconnect ' + name);
         close.title = 'Disconnect ' + name;
         close.addEventListener('click',function (event) {
@@ -1836,6 +1876,25 @@
       }
     });
     if (announcement.parentNode !== panel) panel.append(announcement);
+    if (restoreFocus) {
+      var controls = Array.prototype.filter.call(panel.children,function (child) {
+        return child.classList && (child.classList.contains('ns-session-tab') || child.classList.contains('ns-session-tab-close'));
+      });
+      var target = controls.find(function (control) {
+        return control.dataset.sessionId === restoreFocus.id &&
+          control.classList.contains(restoreFocus.close ? 'ns-session-tab-close' : 'ns-session-tab');
+      });
+      if (!target) target = controls.find(function (control) {
+        return control.dataset.sessionId === restoreFocus.id && control.classList.contains('ns-session-tab');
+      });
+      if (!target) target = controls.find(function (control) {
+        return control.classList.contains('ns-session-tab') && control.getAttribute('aria-current') === 'true';
+      }) || controls.find(function (control) { return control.classList.contains('ns-session-tab'); });
+      if (target) {
+        controls.forEach(function (control) { control.tabIndex = control === target ? 0 : -1; });
+        target.focus();
+      }
+    }
   }
   function schedule() {
     if (queued) return;
@@ -2242,7 +2301,7 @@
     if (!node) {
       lastNodeId = null; latestSample = null;
       if (sampleTimer !== null) { clearTimeout(sampleTimer); sampleTimer = null; }
-      if (pendingRefreshNode !== null) {
+      if (pendingRefreshNode !== null || refreshStatus) {
         pendingRefreshNode = null;
         if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
         setRefreshStatus('');
@@ -2250,7 +2309,7 @@
       Object.keys(values).forEach(function (key) { values[key].textContent = 'Unavailable'; }); return;
     }
     if (lastNodeId !== node._id) {
-      if (pendingRefreshNode !== null && pendingRefreshNode !== node._id) {
+      if ((pendingRefreshNode !== null && pendingRefreshNode !== node._id) || (lastNodeId !== null && refreshStatus)) {
         pendingRefreshNode = null;
         if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
         setRefreshStatus('');
@@ -2332,7 +2391,7 @@
   }
   function setRefreshStatus(text) {
     var title = $('p17title');
-    if (!refreshStatus && title && title.parentNode) {
+    if (title && title.parentNode && (!refreshStatus || refreshStatus.parentNode !== title.parentNode)) {
       refreshStatus = create('div', 'ns-health-refresh-status');
       refreshStatus.id = 'ns-details-refresh-status';
       refreshStatus.setAttribute('role', 'status');
@@ -2352,21 +2411,35 @@
     if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
     setRefreshStatus('Device details response received.');
   }
+  function beginDetailsRefreshFeedback() {
+    var node = window.currentNode;
+    if (!node || !node._id || typeof window.refreshDetails !== 'function') return;
+    pendingRefreshNode = node._id;
+    if (refreshTimer !== null) clearTimeout(refreshTimer);
+    setRefreshStatus('Refreshing device details…');
+    refreshTimer = setTimeout(function () {
+      refreshTimer = null;
+      if (pendingRefreshNode === node._id) setRefreshStatus('No device details response yet. You can retry.');
+    }, 12000);
+  }
   function installRefreshFeedback() {
-    var control = document.querySelector('#devListToolbarViewIcons3 [title="Refresh details information."]');
+    // Identify refresh semantically; never infer it from toolbar position.
+    var selector = '#devListToolbarViewIcons3 [title="Refresh details information."], #devListToolbarViewIcons3 [onclick*="refreshDetails"]';
+    var control = typeof document.querySelector === 'function' ? document.querySelector(selector) : null;
     if (control && !control.__nightShiftRefreshFeedback) {
-      control.addEventListener('click', function () {
-        var node = window.currentNode;
-        if (!node || !node._id || typeof window.refreshDetails !== 'function') return;
-        pendingRefreshNode = node._id;
-        if (refreshTimer !== null) clearTimeout(refreshTimer);
-        setRefreshStatus('Refreshing device details…');
-        refreshTimer = setTimeout(function () {
-          refreshTimer = null;
-          if (pendingRefreshNode === node._id) setRefreshStatus('No device details response yet. You can retry.');
-        }, 12000);
-      }, true);
+      control.addEventListener('click', beginDetailsRefreshFeedback, true);
       control.__nightShiftRefreshFeedback = true;
+    }
+    // MeshCentral can replace toolbar nodes during native route changes. Keep
+    // feedback attached to replacement buttons without wrapping its handler.
+    if (typeof document.addEventListener === 'function' && !document.__nightShiftRefreshFeedbackDelegated) {
+      document.addEventListener('click', function (event) {
+        var target = event.target;
+        var delegatedControl = target && typeof target.closest === 'function' ? target.closest(selector) : null;
+        if (!delegatedControl || delegatedControl.__nightShiftRefreshFeedback) return;
+        beginDetailsRefreshFeedback();
+      }, true);
+      document.__nightShiftRefreshFeedbackDelegated = true;
     }
     var nativeUpdate = window.updateDeviceDetails;
     if (typeof nativeUpdate === 'function' && !nativeUpdate.__nightShiftRefreshFeedback) {
@@ -2380,9 +2453,11 @@
     }
   }
   function boot() {
+    // Install the delegated handler on every route. The browser may load
+    // Devices first and navigate to Details later without reloading this file.
+    installRefreshFeedback();
     if (!$('p17')) return;
     installClearHook();
-    installRefreshFeedback();
     update();
     var graphControl = document.querySelector('#devListToolbarViewIcons3 [title="Show device CPU and memory usage."]');
     if (graphControl) graphControl.addEventListener('click',function () {
@@ -3056,11 +3131,18 @@
       if (node && typeof node._id === 'string') fleetStates[node._id] = state(node);
     });
   }
+  function resolveFleetNode(value) {
+    var id = typeof value === 'string' ? value : value && value._id;
+    if (typeof id !== 'string' || !Array.isArray(window.nodes)) return null;
+    // Only track devices in MeshCentral's currently authorized inventory.
+    return window.nodes.find(function (node) { return node && node._id === id; }) || null;
+  }
   function installFleetConnectionHook() {
     var nativeUpdate = window.updateDeviceViewDevice;
     if (fleetHookInstalled || typeof nativeUpdate !== 'function') return;
-    window.updateDeviceViewDevice = function (node) {
-      if (node && typeof node._id === 'string') {
+    window.updateDeviceViewDevice = function (nodeRef) {
+      var node = resolveFleetNode(nodeRef);
+      if (node) {
         var current = state(node), previous = fleetStates[node._id];
         fleetStates[node._id] = current;
         if (previous !== undefined && previous !== 'unknown' && previous !== current) {
