@@ -212,14 +212,14 @@
   }
   function installRefreshFeedback() {
     var selector = '#devListToolbarViewIcons3 [title="Refresh details information."]';
-    var control = document.querySelector(selector);
+    var control = typeof document.querySelector === 'function' ? document.querySelector(selector) : null;
     if (control && !control.__nightShiftRefreshFeedback) {
       control.addEventListener('click', beginDetailsRefreshFeedback, true);
       control.__nightShiftRefreshFeedback = true;
     }
     // MeshCentral can replace toolbar nodes during native route changes. Keep
     // feedback attached to replacement buttons without wrapping its handler.
-    if (!document.__nightShiftRefreshFeedbackDelegated) {
+    if (typeof document.addEventListener === 'function' && !document.__nightShiftRefreshFeedbackDelegated) {
       document.addEventListener('click', function (event) {
         var target = event.target;
         var delegatedControl = target && typeof target.closest === 'function' ? target.closest(selector) : null;
