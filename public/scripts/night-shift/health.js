@@ -211,7 +211,8 @@
     }, 12000);
   }
   function installRefreshFeedback() {
-    var selector = '#devListToolbarViewIcons3 [title="Refresh details information."]';
+    // Identify refresh semantically; never infer it from toolbar position.
+    var selector = '#devListToolbarViewIcons3 [title="Refresh details information."], #devListToolbarViewIcons3 [onclick*="refreshDetails"]';
     var control = typeof document.querySelector === 'function' ? document.querySelector(selector) : null;
     if (control && !control.__nightShiftRefreshFeedback) {
       control.addEventListener('click', beginDetailsRefreshFeedback, true);
@@ -223,14 +224,6 @@
       document.addEventListener('click', function (event) {
         var target = event.target;
         var delegatedControl = target && typeof target.closest === 'function' ? target.closest(selector) : null;
-        if (!delegatedControl && target && typeof target.closest === 'function') {
-          // Some toolbar renderers can replace the original labeled child.
-          // The first toolbar icon is the refresh action, so recognize clicks
-          // anywhere inside that rendered icon if its label no longer matches.
-          var toolbar = target.closest('#devListToolbarViewIcons3');
-          var firstControl = toolbar && toolbar.firstElementChild;
-          if (firstControl && (firstControl === target || firstControl.contains(target))) delegatedControl = firstControl;
-        }
         if (!delegatedControl || delegatedControl.__nightShiftRefreshFeedback) return;
         beginDetailsRefreshFeedback();
       }, true);
