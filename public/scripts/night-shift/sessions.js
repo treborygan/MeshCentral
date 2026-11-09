@@ -89,6 +89,21 @@
     var node = findNode(id);
     if (node && typeof window.toggleKvmDevice === 'function') window.toggleKvmDevice(node);
   }
+  function focusAfterLastSession() {
+    // The final tab may be removed while it owns focus. Prefer the native
+    // reconnect action, then a persistent page navigation/workspace target.
+    ['connectbutton1','connectbutton1r','connectbutton1h','LeftMenuMyDevices','ns-search-trigger','column_l'].some(function (id) {
+      var target = $(id);
+      if (!target || typeof target.focus !== 'function' || target.disabled || target.hidden) return false;
+      for (var parent = target.parentElement || target.parentNode; parent && parent.nodeType === 1; parent = parent.parentElement || parent.parentNode) {
+        if (parent.hidden) return false;
+      }
+      if (target.getClientRects && !target.getClientRects().length) return false;
+      if (id === 'column_l' && typeof target.setAttribute === 'function') target.setAttribute('tabindex','-1');
+      target.focus();
+      return true;
+    });
+  }
   function render() {
     var page = $('p11'), area = $('deskarea0');
     if (!page || !area) return;
@@ -133,6 +148,7 @@
     previousSessions = snapshot;
     if (!open.length) {
       if (announcement.parentNode !== panel) panel.append(announcement);
+      if (restoreFocus) focusAfterLastSession();
       return;
     }
     var heading = create('span','ns-session-tabs-heading','Sessions');
