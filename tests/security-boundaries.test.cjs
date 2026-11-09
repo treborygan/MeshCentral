@@ -321,4 +321,3 @@ test('Agent service-stop handler rejects view-only commands and permits control/
   assert.deepEqual(dispatch(8), { stopped: 1, lookedUp: 1 }, 'remote-control right reaches the mocked service handler');
   assert.deepEqual(dispatch(0xFFFFFFFF), { stopped: 1, lookedUp: 1 }, 'administrator right reaches the mocked service handler');
 });
-
