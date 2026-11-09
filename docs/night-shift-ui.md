@@ -347,3 +347,7 @@ An active native session and a visible `#Desk` canvas do **not** establish that 
 The diagnostic now reports `Canvas present; desktop frames not verified`. If the native Disconnect control is available, the shortcut remains visible and focuses that existing control without clicking it. When the session is disconnected, it offers available native Connect methods instead. It never sends input, starts or terminates a remote session, changes permissions, or claims successful image streaming. Focused regression coverage checks connected states 3 and 4, honest frame-status wording, and recovery focus.
 
 This remains a **source-only** UI/diagnostic correction. The cause of blank screens (agent/consent/session relay/transport/frame delivery) still requires runtime evidence and actual Android/desktop acceptance. No PCRN deployment occurred.
+
+### PR #4 head checks (2026-11-09)
+
+GitHub check diagnostics for `fix/night-shift-session-tab-fallback` at `77d8a6eaa715ced455a54f0201378f0425a8c634` report success for UI syntax, CodeQL, pinned-source security build, and Windows installer parsing. These checks validate the PR source and build paths; they do not complete authenticated browser, active remote-display, or physical-device acceptance. PR #4 remains draft pending its documented release gates.
