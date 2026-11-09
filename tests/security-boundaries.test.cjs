@@ -321,3 +321,51 @@ test('Agent service-stop handler rejects view-only commands and permits control/
   assert.deepEqual(dispatch(8), { stopped: 1, lookedUp: 1 }, 'remote-control right reaches the mocked service handler');
   assert.deepEqual(dispatch(0xFFFFFFFF), { stopped: 1, lookedUp: 1 }, 'administrator right reaches the mocked service handler');
 });
+
+test('Agent mutating command guards deny view-only or missing rights and permit control/admin', () => {
+  const source = read('agents/meshcore.js');
+  const rightsHelper = extractFunction(source, 'function server_hasControlRights(data)');
+  const actionNames = ['pskill', 'serviceStart', 'serviceRestart', 'deskBackground', 'openUrl', 'setclip'];
+  const cases = actionNames.map(name => extractFunction(source, `case '${name}':`)).join('\n');
+
+  function dispatch(type, rights) {
+    const effects = Object.fromEntries(actionNames.map(name => [name, 0]));
+    const requireCalls = [];
+    const modules = {
+      'service-manager': { manager: { getService: () => ({
+        start: () => effects.serviceStart++, restart: () => effects.serviceRestart++
+      }) } },
+      MeshAgent: { isService: false, _wallpaper: 'fixture-wallpaper' },
+      'user-sessions': { consoleUid: () => 1 },
+      'linux-gnome-helpers': {
+        getDesktopWallpaper: () => '/dev/null',
+        setDesktopWallpaper: () => effects.deskBackground++
+      },
+      clipboard: value => { assert.equal(value, 'fixture clipboard'); effects.setclip++; }
+    };
+    const context = vm.createContext({
+      MESHRIGHT_REMOTECONTROL: 8, MESHRIGHT_REMOTEVIEW: 256, MESHRIGHT_ADMIN: 0xFFFFFFFF,
+      process: { platform: 'linux', kill: pid => { assert.equal(pid, 123); effects.pskill++; } },
+      pendingSetClip: false,
+      mesh: { SendCommand: () => {} },
+      MeshServerLogEx: () => {}, sendConsoleText: () => {},
+      openUserDesktopUrl: url => { assert.equal(url, 'https://fixture.test'); effects.openUrl++; return {}; },
+      require: name => { requireCalls.push(name); assert.ok(modules[name], `unexpected module access: ${name}`); return modules[name]; }
+    });
+    vm.runInContext(`${rightsHelper}; function dispatch(data) { switch (data.type) { ${cases} } }; globalThis.__tested = dispatch;`, context, { timeout: 1000 });
+    context.__tested({ type, rights, value: '123|fixture', serviceName: 'fixture', url: 'https://fixture.test', data: 'fixture clipboard' });
+    return { effects, requireCalls };
+  }
+
+  for (const type of actionNames) {
+    for (const rights of [8 | 256, undefined]) {
+      const denied = dispatch(type, rights);
+      assert.equal(denied.effects[type], 0, `${type} must have no side effect for view-only or missing rights`);
+      assert.deepEqual(denied.requireCalls, [], `${type} must be denied before loading its action module`);
+    }
+    for (const rights of [8, 0xFFFFFFFF]) {
+      const allowed = dispatch(type, rights);
+      assert.equal(allowed.effects[type], 1, `${type} reaches its mocked action with remote-control or administrator rights`);
+    }
+  }
+});
