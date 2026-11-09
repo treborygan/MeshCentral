@@ -2383,22 +2383,18 @@
       document.addEventListener('click', function (event) {
         var target = event.target;
         var delegatedControl = target && typeof target.closest === 'function' ? target.closest(selector) : null;
+        if (!delegatedControl && target && typeof target.closest === 'function') {
+          // Font Awesome may replace the native <i> with an SVG and move its
+          // title/handler attributes. The first toolbar icon is the refresh
+          // action, so recognize clicks anywhere inside that rendered icon.
+          var toolbar = target.closest('#devListToolbarViewIcons3');
+          var firstControl = toolbar && toolbar.firstElementChild;
+          if (firstControl && (firstControl === target || firstControl.contains(target))) delegatedControl = firstControl;
+        }
         if (!delegatedControl || delegatedControl.__nightShiftRefreshFeedback) return;
         beginDetailsRefreshFeedback();
       }, true);
       document.__nightShiftRefreshFeedbackDelegated = true;
-    }
-    // MeshCentral invokes this global from the native refresh icon's inline
-    // handler. Hook the invocation directly as a fallback for icon DOM that
-    // does not expose a matching click target after Font Awesome rendering.
-    var nativeRefresh = window.refreshDetails;
-    if (typeof nativeRefresh === 'function' && !nativeRefresh.__nightShiftRefreshFeedback) {
-      var wrappedRefresh = function () {
-        beginDetailsRefreshFeedback();
-        return nativeRefresh.apply(this, arguments);
-      };
-      wrappedRefresh.__nightShiftRefreshFeedback = true;
-      window.refreshDetails = wrappedRefresh;
     }
     var nativeUpdate = window.updateDeviceDetails;
     if (typeof nativeUpdate === 'function' && !nativeUpdate.__nightShiftRefreshFeedback) {
