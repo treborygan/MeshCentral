@@ -168,3 +168,7 @@ At source head `f3769efe5ca666bac13782f957c7fb6a5e6612fe`, hosted Night Shift UI
 The authenticated Software route waited 31 seconds, then displayed `No response` and stated that the device agent returned no usable software data. No retry was sent. This confirms the loading timeout reaches its explicit no-response state; it does not establish why the agent response is missing.
 
 Physical Redmi testing, exact 904×407 landscape acceptance, and real RDP frame/input acceptance remain open. No remote session was started and no installation or service change was made. See [the deployment record](night-shift-deployment.md#authenticated-browser-acceptance-recheck--2026-11-09) for the live findings.
+
+### 2026-11-09 live route retry
+
+The latest authenticated PCRN Desktop accessibility state reports the Agent route and enabled native Agent/RDP Connect controls, with no active session or display. This supersedes the earlier observation of an unavailable route. Computer-use input remained unsafe because its screenshot showed a different Chrome `New tab` surface than the authenticated page represented by the accessibility tree; the attempted click failed before input. The current route is available at the UI level, but live connection, consent, frames, and input remain unverified. Current-head CI and local regression/installer/pinned-source checks pass. Installed 1.3.1 security provenance remains blocked by the two absent reviewed markers. See [the current deployment evidence](night-shift-deployment.md#authenticated-route-and-browser-bridge-retry--2026-11-09).
