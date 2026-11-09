@@ -199,21 +199,34 @@
     if (refreshTimer !== null) { clearTimeout(refreshTimer); refreshTimer = null; }
     setRefreshStatus('Device details response received.');
   }
+  function beginDetailsRefreshFeedback() {
+    var node = window.currentNode;
+    if (!node || !node._id || typeof window.refreshDetails !== 'function') return;
+    pendingRefreshNode = node._id;
+    if (refreshTimer !== null) clearTimeout(refreshTimer);
+    setRefreshStatus('Refreshing device details…');
+    refreshTimer = setTimeout(function () {
+      refreshTimer = null;
+      if (pendingRefreshNode === node._id) setRefreshStatus('No device details response yet. You can retry.');
+    }, 12000);
+  }
   function installRefreshFeedback() {
-    var control = document.querySelector('#devListToolbarViewIcons3 [title="Refresh details information."]');
+    var selector = '#devListToolbarViewIcons3 [title="Refresh details information."]';
+    var control = document.querySelector(selector);
     if (control && !control.__nightShiftRefreshFeedback) {
-      control.addEventListener('click', function () {
-        var node = window.currentNode;
-        if (!node || !node._id || typeof window.refreshDetails !== 'function') return;
-        pendingRefreshNode = node._id;
-        if (refreshTimer !== null) clearTimeout(refreshTimer);
-        setRefreshStatus('Refreshing device details…');
-        refreshTimer = setTimeout(function () {
-          refreshTimer = null;
-          if (pendingRefreshNode === node._id) setRefreshStatus('No device details response yet. You can retry.');
-        }, 12000);
-      }, true);
+      control.addEventListener('click', beginDetailsRefreshFeedback, true);
       control.__nightShiftRefreshFeedback = true;
+    }
+    // MeshCentral can replace toolbar nodes during native route changes. Keep
+    // feedback attached to replacement buttons without wrapping its handler.
+    if (!document.__nightShiftRefreshFeedbackDelegated) {
+      document.addEventListener('click', function (event) {
+        var target = event.target;
+        var delegatedControl = target && typeof target.closest === 'function' ? target.closest(selector) : null;
+        if (!delegatedControl || delegatedControl.__nightShiftRefreshFeedback) return;
+        beginDetailsRefreshFeedback();
+      }, true);
+      document.__nightShiftRefreshFeedbackDelegated = true;
     }
     var nativeUpdate = window.updateDeviceDetails;
     if (typeof nativeUpdate === 'function' && !nativeUpdate.__nightShiftRefreshFeedback) {
