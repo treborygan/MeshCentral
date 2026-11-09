@@ -28,6 +28,22 @@ Keep this work separate from Night Shift PR #4 and its frontend-only deployment 
 - The build fixture passed pinned upstream/overlay provenance, packaging of reviewed marker files and schema, the direct dependency delta, reproducible archive integrity, and Night Shift asset hashes. These are source/package checks; they do **not** prove authorization behavior.
 - Not run: end-to-end denied/permitted tests for direct Agent file transfer, pending-2FA relay entry/resume, or command-right enforcement. Not run: live agent, browser remote-control, database restore, or service-level tests. The candidate is not release-ready.
 
+## Focused authorization boundary contracts — 2026-11-09
+
+Official GitHub API reads reconfirmed that `72e40656fcd153226a5af70e2f6e0ea9326ef3ea` is current upstream `master` and has a valid GitHub signature; `/releases/latest` still resolves to tag `1.3.1` at `f436143527458d56da0336ea3047c006703fb4e4`. This is unreleased source for a same-version package candidate, not evidence of a new published release. The upstream branch currently includes Nov 9 security-rights work in addition to the Nov 2 file-sharing enforcement and Nov 7 dependency updates. The existing exact-source candidate remains pinned to current `master`.
+
+Added `tests/security-boundaries.test.cjs`, a local Node contract suite that executes extracted production function bodies with isolated mocks. It verifies:
+
+- Direct `devicefile.ashx` tunnel initiation denies No Files and missing remote-control rights, and permits file-capable and administrator rights.
+- Agent protocol 10 stops before path access for denied rights and reaches file handling for permitted/admin rights.
+- The relay rights helper distinguishes browser RDP file access from TCP-routed protocol 10.
+- The actual pending-2FA wrapper closes and resumes the paused socket without entering the relay handler, while completed setup continues.
+- The pending-2FA predicate and the standard `webrelay.ashx`, primary `meshrelay.ashx`, and alternate agent-port `meshrelay.ashx` registrations retain their required conditions and wrapper.
+
+The suite must be run with `MESHCENTRAL_SOURCE_ROOT` pointing at the exact source/package under review; this prevents accidentally testing the older MeshCentral files in the overlay worktree. Against an extracted official `72e40656fcd153226a5af70e2f6e0ea9326ef3ea` tree, `node --test tests/security-boundaries.test.cjs` passes 11/11 and `git diff --check` passes. Coverage includes both direct file-transfer gates, local and peer server command routing under remote-control/view-only/admin rights, the Agent's service-stop guard with a mocked service manager, pending-2FA close/resume behavior and its standard relay route registrations, plus protocol-specific relay rights. No live agent or device was contacted.
+
+`tests/Test-PinnedMeshCentralBuild.ps1` now runs the boundary suite against the extracted package root as part of the provenance fixture; this integration has not yet been run after the change. These source-boundary contracts are not full HTTP/WebSocket integration tests. Other Agent command actions (process kill, service start/restart, clipboard, URL, wallpaper, notification, console and software/uninstall), alternate authentication/resume paths outside the covered registrations, live-agent transfers, and restore/service qualification remain unverified. `SECURITY_PROVENANCE_GATE=BLOCKED`; no production package, service, or configuration changed.
+
 ## Remediation work
 
 1. Pin an exact official upstream commit and tag/release context. Review its full source and dependency diff against the installed 1.3.1 package and the prior pinned candidate. Record commit IDs, package-lock versions, integrity hashes, and every added, removed, or changed dependency.

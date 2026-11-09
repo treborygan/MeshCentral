@@ -89,9 +89,22 @@ try {
     if ((Get-FileHash -LiteralPath $builtPath -Algorithm SHA256).Hash -ne $asset.Manifest) { throw "Night Shift asset hash disagrees with manifest: $($asset.Relative)" }
     if ((Read-NormalizedText $builtPath) -cne (Read-NormalizedText $expectedPath)) { throw "Packaged Night Shift asset differs from the pinned overlay commit: $($asset.Relative)" }
   }
+  $authorizationTests = Join-Path $PSScriptRoot 'security-boundaries.test.cjs'
+  if (-not (Test-Path -LiteralPath $authorizationTests -PathType Leaf)) { throw 'Pinned-source authorization contract tests are missing.' }
+  $node = (Get-Command node.exe -ErrorAction Stop).Source
+  $previousSourceRoot = $env:MESHCENTRAL_SOURCE_ROOT
+  try {
+    $env:MESHCENTRAL_SOURCE_ROOT = $packageRoot
+    & $node --test $authorizationTests
+    if ($LASTEXITCODE -ne 0) { throw "Pinned-source authorization contracts failed (exit $LASTEXITCODE)." }
+  } finally {
+    if ($null -eq $previousSourceRoot) { Remove-Item Env:MESHCENTRAL_SOURCE_ROOT -ErrorAction SilentlyContinue }
+    else { $env:MESHCENTRAL_SOURCE_ROOT = $previousSourceRoot }
+  }
   Write-Output 'PINNED_UPSTREAM_BUILD=PASS'
   Write-Output 'SOURCE_AND_OVERLAY_PROVENANCE=PASS'
   Write-Output 'SECURITY_MARKERS_AND_SCHEMA=PASS'
+  Write-Output 'AUTHORIZATION_BOUNDARY_TESTS=PASS'
   Write-Output 'DIRECT_DEPENDENCY_DELTA=PASS'
   Write-Output 'PACKAGE_REPRODUCIBILITY=PASS'
   Write-Output 'NIGHT_SHIFT_ASSETS=PASS'
