@@ -73,6 +73,53 @@ try {
   Assert-Equal ([IO.File]::ReadAllText($installedJs)) $oldJs 'Rollback did not restore JavaScript'
   Write-Output 'EXISTING_FILE_INSTALL_ROLLBACK=PASS'
 
+  # A failed preflight may not restore only one of the two overrides.
+  $currentCss = 'Night Shift later CSS must remain'
+  $currentJs = 'Night Shift later JS must remain'
+  [IO.File]::WriteAllText($installedCss, $currentCss)
+  [IO.File]::WriteAllText($installedJs, $currentJs)
+  $manifestFile = Join-Path $backup.FullName 'manifest.json'
+  $manifestText = [IO.File]::ReadAllText($manifestFile)
+  $backupJs = Join-Path $backup.FullName 'scripts\custom.js'
+  $backupJsOriginal = [IO.File]::ReadAllText($backupJs)
+
+  function Assert-RollbackRejected([string]$Scenario) {
+    $rejected = $false
+    try { & $installer -MeshRoot $existingRoot -RollbackFrom $backup.FullName -Confirm:$false | Out-Null }
+    catch { $rejected = $true }
+    if (-not $rejected) { throw "Rollback unexpectedly accepted $Scenario." }
+    Assert-Equal ([IO.File]::ReadAllText($installedCss)) $currentCss "$Scenario altered CSS"
+    Assert-Equal ([IO.File]::ReadAllText($installedJs)) $currentJs "$Scenario altered JavaScript"
+  }
+
+  try {
+    [IO.File]::WriteAllText($backupJs, 'tampered rollback copy')
+    Assert-RollbackRejected 'tampered backup digest'
+  } finally { [IO.File]::WriteAllText($backupJs, $backupJsOriginal) }
+  Write-Output 'ROLLBACK_TAMPER_PRECHECK=PASS'
+
+  $missingJs = $backupJs + '.test-missing'
+  try {
+    Move-Item -LiteralPath $backupJs -Destination $missingJs -Force
+    Assert-RollbackRejected 'missing second backup asset'
+  } finally {
+    if (Test-Path -LiteralPath $missingJs) { Move-Item -LiteralPath $missingJs -Destination $backupJs -Force }
+  }
+  Write-Output 'ROLLBACK_MISSING_ASSET_PRECHECK=PASS'
+
+  try {
+    $badManifest = $manifestText | ConvertFrom-Json
+    $badManifest.files[1].relative = $badManifest.files[0].relative
+    $badManifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $manifestFile -Encoding utf8
+    Assert-RollbackRejected 'duplicate manifest entry'
+  } finally { [IO.File]::WriteAllText($manifestFile, $manifestText) }
+  Write-Output 'ROLLBACK_DUPLICATE_MANIFEST_PRECHECK=PASS'
+
+  & $installer -MeshRoot $existingRoot -RollbackFrom $backup.FullName -Confirm:$false | Out-Null
+  Assert-Equal ([IO.File]::ReadAllText($installedCss)) $oldCss 'Verified rollback did not restore original CSS'
+  Assert-Equal ([IO.File]::ReadAllText($installedJs)) $oldJs 'Verified rollback did not restore original JavaScript'
+  Write-Output 'ROLLBACK_RECOVERY_AFTER_REJECTED_BACKUPS=PASS'
+
   $newRoot = New-Fixture 'new-overrides'
   & $installer -MeshRoot $newRoot -SourceRoot $repoRoot -Confirm:$false | Out-Null
   $newPublic = Join-Path $newRoot 'meshcentral-web\public'
